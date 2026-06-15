@@ -107,4 +107,3 @@ Manual completo em `docs/brand-guide.html`.
 ## Licença
 
 Projeto proprietário. Todos os direitos reservados.
-
