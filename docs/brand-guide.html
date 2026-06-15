@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TáNaMão Brasil — Brand Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #FAFAFA;
+  color: #111827;
+  line-height: 1.6;
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 40px;
+}
+
+h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; }
+
+/* COVER */
+.cover {
+  background: linear-gradient(135deg, #0C8C5E 0%, #07634A 100%);
+  padding: 80px 40px;
+  border-radius: 24px;
+  color: white;
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+  overflow: hidden;
+}
+.cover::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(232, 168, 23, 0.15);
+}
+.cover::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.cover h1 {
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+.cover p {
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+/* SECTIONS */
+.section {
+  margin-bottom: 56px;
+}
+.section-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.section-sub {
+  font-size: 15px;
+  color: #6B7280;
+  margin-bottom: 28px;
+}
+.divider {
+  width: 48px;
+  height: 4px;
+  background: #0C8C5E;
+  border-radius: 2px;
+  margin-bottom: 32px;
+}
+
+/* COLOR SWATCHES */
+.colors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.color-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  background: white;
+}
+.color-swatch {
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  padding: 12px 16px;
+}
+.color-swatch span {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  font-family: 'DM Sans', monospace;
+}
+.color-info {
+  padding: 14px 16px;
+}
+.color-name {
+  font-family: 'Outfit';
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.color-meta {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+.color-purpose {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* TYPOGRAPHY */
+.type-specimen {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 32px;
+  margin-bottom: 16px;
+}
+.type-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9CA3AF;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.type-display {
+  font-family: 'Outfit';
+  font-weight: 900;
+  font-size: 42px;
+  color: #111827;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+.type-body-demo {
+  font-family: 'DM Sans';
+  font-size: 16px;
+  color: #4B5563;
+  line-height: 1.7;
+}
+.type-weights {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.type-weight {
+  font-family: 'Outfit';
+  font-size: 24px;
+  color: #111827;
+}
+
+/* LOGO RULES */
+.logo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.logo-box {
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #E5E7EB;
+  min-height: 180px;
+  position: relative;
+}
+.logo-box .label {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.logo-box.dark { background: #111827; }
+.logo-box.dark .label { color: rgba(255,255,255,0.4); }
+.logo-box.light { background: #FFFFFF; }
+.logo-box.green { background: #0C8C5E; }
+.logo-box.green .label { color: rgba(255,255,255,0.5); }
+.logo-box.gray { background: #F3F4F6; }
+
+/* PLANS TABLE */
+.plans-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+}
+.plans-table th {
+  font-family: 'Outfit';
+  font-weight: 700;
+  font-size: 14px;
+  padding: 16px;
+  text-align: left;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+.plans-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #F3F4F6;
+  color: #4B5563;
+}
+.plans-table tr:last-child td { border-bottom: none; }
+.check { color: #0C8C5E; font-weight: 700; }
+.cross { color: #D1D5DB; }
+
+/* BANNER PRICING */
+.banner-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.banner-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 24px;
+  text-align: center;
+}
+.banner-card.featured {
+  border: 2px solid #E8573A;
+  position: relative;
+}
+.banner-card .badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #E8573A;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-family: 'Outfit';
+}
+.banner-price {
+  font-family: 'Outfit';
+  font-weight: 900;
+  font-size: 28px;
+  margin: 12px 0 4px;
+}
+
+/* PSYCHOLOGY */
+.psych-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.psych-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 24px;
+}
+.psych-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.psych-card p {
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.5;
+}
+.psych-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+/* SCREENS */
+.screens-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.screen-frame {
+  min-width: 220px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  padding: 16px;
+  text-align: center;
+}
+.screen-frame .mock {
+  height: 140px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+.screen-frame .name {
+  font-family: 'Outfit';
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.screen-frame .desc {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <p style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.6; margin-bottom: 20px;">Brand Guide v1.0</p>
+    <h1>TáNa<span style="opacity: 0.85">Mão</span> Brasil</h1>
+    <p>Manual de Identidade Visual & Estratégia de Produto</p>
+    <p style="font-size: 13px; opacity: 0.5; margin-top: 40px;">Marketplace de Profissionais · 2025</p>
+  </div>
+
+  <!-- 1. CONCEITO -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">01 — Conceito</h2>
+    <p class="section-sub">A essência da marca em uma frase.</p>
+    <div style="background: white; border-radius: 16px; border: 1px solid #E5E7EB; padding: 32px;">
+      <p style="font-family: 'Outfit'; font-size: 22px; font-weight: 700; color: #0C8C5E; margin-bottom: 16px;">
+        "O profissional certo, na palma da sua mão."
+      </p>
+      <p style="font-size: 14px; color: #6B7280; line-height: 1.7;">
+        <strong>TáNaMão Brasil</strong> é um marketplace que conecta quem precisa de um serviço a profissionais qualificados da sua região. O nome é um jogo com a expressão brasileira "tá na mão" — sinônimo de algo pronto, acessível, resolvido. A mão no logo representa tanto a solução ao alcance quanto a rede de conexões entre profissionais.
+      </p>
+      <div style="display: flex; gap: 16px; margin-top: 20px;">
+        <div style="flex: 1; background: #E6F5EF; border-radius: 12px; padding: 16px; text-align: center;">
+          <div style="font-size: 24px; margin-bottom: 6px;">🤝</div>
+          <div style="font-family: 'Outfit'; font-size: 13px; font-weight: 700; color: #0C8C5E;">Conexão</div>
+        </div>
+        <div style="flex: 1; background: #FEF7E0; border-radius: 12px; padding: 16px; text-align: center;">
+          <div style="font-size: 24px; margin-bottom: 6px;">⚡</div>
+          <div style="font-family: 'Outfit'; font-size: 13px; font-weight: 700; color: #92600A;">Agilidade</div>
+        </div>
+        <div style="flex: 1; background: #FEF0ED; border-radius: 12px; padding: 16px; text-align: center;">
+          <div style="font-size: 24px; margin-bottom: 6px;">✅</div>
+          <div style="font-family: 'Outfit'; font-size: 13px; font-weight: 700; color: #E8573A;">Confiança</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PALETA DE CORES -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">02 — Paleta de Cores</h2>
+    <p class="section-sub">Cada cor tem uma função estratégica baseada em psicologia das cores.</p>
+    <div class="colors-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background: #0C8C5E;"><span>#0C8C5E</span></div>
+        <div class="color-info">
+          <div class="color-name">Verde Petróleo</div>
+          <div class="color-meta">RGB 12, 140, 94 · Primária</div>
+          <div class="color-purpose">Confiança, crescimento, profissionalismo. Cor dominante da marca — usada em logo, CTAs primários e elementos de navegação ativa.</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background: #07634A;"><span>#07634A</span></div>
+        <div class="color-info">
+          <div class="color-name">Verde Escuro</div>
+          <div class="color-meta">RGB 7, 99, 74 · Primária Dark</div>
+          <div class="color-purpose">Variação de profundidade. Hovers, gradientes e estados ativos. Gera hierarquia visual com a primária.</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background: #E8A817;"><span>#E8A817</span></div>
+        <div class="color-info">
+          <div class="color-name">Âmbar Ouro</div>
+          <div class="color-meta">RGB 232, 168, 23 · Accent</div>
+          <div class="color-purpose">Valor, premium, calor. Remete às cores do Brasil. Selo Premium, badges de destaque e elementos que comunicam valor agregado.</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background: #E8573A; color: white;"><span>#E8573A</span></div>
+        <div class="color-info">
+          <div class="color-name">Coral Ação</div>
+          <div class="color-meta">RGB 232, 87, 58 · CTA</div>
+          <div class="color-purpose">Urgência, energia, conversão. Selo Pro, botões de ação secundários, notificações e gatilho de escassez. Chama a atenção sem agredir.</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background: #111827;"><span>#111827</span></div>
+        <div class="color-info">
+          <div class="color-name">Dark Ink</div>
+          <div class="color-meta">RGB 17, 24, 39 · Texto</div>
+          <div class="color-purpose">Sofisticação e legibilidade. Títulos, textos principais e seções de destaque com fundo escuro.</div>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background: #E6F5EF; border: 1px solid #D4EDE3;"><span style="color: #0C8C5E;">#E6F5EF</span></div>
+        <div class="color-info">
+          <div class="color-name">Verde Mist</div>
+          <div class="color-meta">RGB 230, 245, 239 · Background</div>
+          <div class="color-purpose">Fundos suaves, áreas de destaque sutil, badges e tags. Cria respiro visual sem competir com elementos ativos.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. TIPOGRAFIA -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">03 — Tipografia</h2>
+    <p class="section-sub">Duas fontes complementares para display e corpo de texto.</p>
+    
+    <div class="type-specimen">
+      <div class="type-label">Display · Headlines · Botões</div>
+      <div class="type-display">Outfit</div>
+      <p style="font-family: 'Outfit'; font-size: 15px; color: #6B7280; margin-bottom: 16px;">
+        Geométrica, moderna, com peso visual forte. Transmite autoridade sem ser corporativa. Perfeita para títulos, preços e CTAs.
+      </p>
+      <div class="type-weights">
+        <span class="type-weight" style="font-weight: 400;">Regular 400</span>
+        <span class="type-weight" style="font-weight: 600;">Semi 600</span>
+        <span class="type-weight" style="font-weight: 700;">Bold 700</span>
+        <span class="type-weight" style="font-weight: 800;">Extra 800</span>
+        <span class="type-weight" style="font-weight: 900;">Black 900</span>
+      </div>
+    </div>
+    
+    <div class="type-specimen">
+      <div class="type-label">Body · Descrições · Interface</div>
+      <div style="font-family: 'DM Sans'; font-size: 38px; font-weight: 700; color: #111827; margin-bottom: 8px;">DM Sans</div>
+      <p class="type-body-demo">
+        Humanista, legível e confortável em telas pequenas. Ideal para descrições, labels de formulário e textos de interface. Complementa a Outfit sem competir por atenção.
+      </p>
+      <div class="type-weights">
+        <span style="font-family: 'DM Sans'; font-size: 20px; font-weight: 400;">Regular 400</span>
+        <span style="font-family: 'DM Sans'; font-size: 20px; font-weight: 500;">Medium 500</span>
+        <span style="font-family: 'DM Sans'; font-size: 20px; font-weight: 600;">Semi 600</span>
+        <span style="font-family: 'DM Sans'; font-size: 20px; font-weight: 700;">Bold 700</span>
+      </div>
+    </div>
+
+    <div style="background: white; border-radius: 16px; border: 1px solid #E5E7EB; padding: 24px; margin-top: 16px;">
+      <div class="type-label">Escala Tipográfica</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <span style="font-size: 11px; color: #9CA3AF; width: 60px;">H1 — 28px</span>
+          <span style="font-family: 'Outfit'; font-size: 28px; font-weight: 900; color: #111827;">Encontre o profissional</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <span style="font-size: 11px; color: #9CA3AF; width: 60px;">H2 — 22px</span>
+          <span style="font-family: 'Outfit'; font-size: 22px; font-weight: 800; color: #111827;">Categorias populares</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <span style="font-size: 11px; color: #9CA3AF; width: 60px;">H3 — 18px</span>
+          <span style="font-family: 'Outfit'; font-size: 18px; font-weight: 700; color: #111827;">Destaques da semana</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <span style="font-size: 11px; color: #9CA3AF; width: 60px;">Body — 15px</span>
+          <span style="font-family: 'DM Sans'; font-size: 15px; color: #4B5563;">Profissional com mais de 10 anos de experiência.</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <span style="font-size: 11px; color: #9CA3AF; width: 60px;">Small — 13px</span>
+          <span style="font-family: 'DM Sans'; font-size: 13px; color: #6B7280;">127 avaliações · São Paulo, SP</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 16px;">
+          <span style="font-size: 11px; color: #9CA3AF; width: 60px;">Micro — 11px</span>
+          <span style="font-family: 'DM Sans'; font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.1em;">BADGE · LABEL · META</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. LOGO -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">04 — Logo</h2>
+    <p class="section-sub">Variações e regras de aplicação.</p>
+    
+    <div class="logo-grid">
+      <div class="logo-box light">
+        <div style="text-align: center;">
+          <div style="font-family: 'Outfit'; font-weight: 900; font-size: 32px; color: #111827;">TáNa<span style="color: #0C8C5E;">Mão</span></div>
+          <div style="font-family: 'DM Sans'; font-weight: 500; font-size: 12px; color: #6B7280; letter-spacing: 0.15em; text-transform: uppercase;">BRASIL</div>
+        </div>
+        <span class="label">Fundo claro</span>
+      </div>
+      <div class="logo-box dark">
+        <div style="text-align: center;">
+          <div style="font-family: 'Outfit'; font-weight: 900; font-size: 32px; color: #FFFFFF;">TáNa<span style="color: #0C8C5E;">Mão</span></div>
+          <div style="font-family: 'DM Sans'; font-weight: 500; font-size: 12px; color: rgba(255,255,255,0.6); letter-spacing: 0.15em; text-transform: uppercase;">BRASIL</div>
+        </div>
+        <span class="label">Fundo escuro</span>
+      </div>
+      <div class="logo-box green">
+        <div style="text-align: center;">
+          <div style="font-family: 'Outfit'; font-weight: 900; font-size: 32px; color: #FFFFFF;">TáNa<span style="opacity: 0.85;">Mão</span></div>
+          <div style="font-family: 'DM Sans'; font-weight: 500; font-size: 12px; color: rgba(255,255,255,0.6); letter-spacing: 0.15em;">BRASIL</div>
+        </div>
+        <span class="label">Monocromático</span>
+      </div>
+      <div class="logo-box gray">
+        <div style="text-align: center; opacity: 0.6;">
+          <div style="font-family: 'Outfit'; font-weight: 900; font-size: 32px; color: #6B7280;">TáNaMão</div>
+          <div style="font-family: 'DM Sans'; font-weight: 500; font-size: 12px; color: #9CA3AF; letter-spacing: 0.15em;">BRASIL</div>
+        </div>
+        <span class="label">Desativado</span>
+      </div>
+    </div>
+
+    <div style="background: white; border-radius: 16px; border: 1px solid #E5E7EB; padding: 24px; margin-top: 16px;">
+      <div class="type-label">Regras do Logo</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px; color: #6B7280;">
+        <div>✅ Área de respiro mínima: 1x a altura do "B" de Brasil ao redor</div>
+        <div>✅ Tamanho mínimo: 120px de largura para digital</div>
+        <div>❌ Nunca rotacionar ou distorcer proporções</div>
+        <div>❌ Nunca aplicar sobre fotos sem overlay escuro (70%+ opacidade)</div>
+        <div>❌ Nunca alterar as cores fora das variações definidas</div>
+        <div>❌ Nunca usar outline, sombra ou efeitos 3D no logo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. PSICOLOGIA APLICADA -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">05 — Psicologia Aplicada</h2>
+    <p class="section-sub">Gatilhos mentais e estratégias de conversão integradas ao design.</p>
+    
+    <div class="psych-grid">
+      <div class="psych-card">
+        <div class="psych-icon">🏆</div>
+        <h4>Autoridade</h4>
+        <p>Selos "Pro" e "Premium" funcionam como badges de credibilidade. O usuário percebe profissionais com selo como mais qualificados, mesmo antes de ver avaliações.</p>
+      </div>
+      <div class="psych-card">
+        <div class="psych-icon">⏳</div>
+        <h4>Escassez Posicional</h4>
+        <p>"Destaque nas buscas" e "1º lugar na região" criam escassez real — há posições limitadas. Profissional sente urgência de assinar antes que o concorrente ocupe o espaço.</p>
+      </div>
+      <div class="psych-card">
+        <div class="psych-icon">⭐</div>
+        <h4>Prova Social</h4>
+        <p>Avaliações com estrelas + número de reviews. Profissionais com muitas avaliações sobem no ranking visual. O "4.832 profissionais" na home reforça a massa crítica.</p>
+      </div>
+      <div class="psych-card">
+        <div class="psych-icon">🎁</div>
+        <h4>Reciprocidade</h4>
+        <p>Plano Free funcional (não inútil). O profissional recebe valor real antes de pagar. Quando o limite de 10 chats/mês chega, ele já experimentou o benefício e quer mais.</p>
+      </div>
+      <div class="psych-card">
+        <div class="psych-icon">🎯</div>
+        <h4>Ancoragem de Preço</h4>
+        <p>Premium (R$69,90) ancora o Pro (R$29,90) como "barato". O plano Pro é o real target de conversão — o Popular badge confirma. O Free existe para gerar base de usuários.</p>
+      </div>
+      <div class="psych-card">
+        <div class="psych-icon">🔴</div>
+        <h4>Psicologia das Cores</h4>
+        <p>Verde = "seguro para prosseguir". Âmbar = "isso tem valor". Coral = "aja agora". O botão de CTA mais importante é sempre coral ou verde — nunca cinza ou neutro.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. MONETIZAÇÃO -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">06 — Modelo de Monetização</h2>
+    <p class="section-sub">Três pilares de receita: assinaturas, banners e serviços futuros.</p>
+    
+    <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Planos de Assinatura</h3>
+    <table class="plans-table">
+      <thead>
+        <tr>
+          <th>Recurso</th>
+          <th style="color: #0C8C5E;">Free</th>
+          <th style="color: #E8573A;">Pro · R$29,90/mês</th>
+          <th style="color: #E8A817;">Premium · R$69,90/mês</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Perfil com foto</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Categorias de serviço</td><td>Até 3</td><td>Ilimitadas</td><td>Ilimitadas</td></tr>
+        <tr><td>Receber avaliações</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+        <tr><td>Chat com clientes</td><td>10/mês</td><td>Ilimitado</td><td>Ilimitado</td></tr>
+        <tr><td>Destaque nas buscas</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓ (1º lugar)</td></tr>
+        <tr><td>Selo verificado</td><td class="cross">✗</td><td>Selo Pro</td><td>Selo Premium</td></tr>
+        <tr><td>Portfólio</td><td class="cross">✗</td><td>20 fotos</td><td>Ilimitado + vídeo</td></tr>
+        <tr><td>Relatório de views</td><td class="cross">✗</td><td class="check">✓</td><td class="check">✓ (avançado)</td></tr>
+        <tr><td>Link WhatsApp/site</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
+        <tr><td>Banner rotativo</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓ (incluso)</td></tr>
+        <tr><td>Suporte prioritário</td><td class="cross">✗</td><td class="cross">✗</td><td class="check">✓</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 16px;">Banners Publicitários</h3>
+    <div class="banner-grid">
+      <div class="banner-card">
+        <div style="font-family: 'Outfit'; font-weight: 700; color: #0C8C5E;">Semanal</div>
+        <div class="banner-price" style="color: #0C8C5E;">R$ 49,90</div>
+        <div style="font-size: 13px; color: #6B7280;">7 dias no carrossel</div>
+        <div style="font-size: 12px; color: #9CA3AF; margin-top: 4px;">~5.000 impressões</div>
+      </div>
+      <div class="banner-card featured">
+        <span class="badge">MELHOR CUSTO</span>
+        <div style="font-family: 'Outfit'; font-weight: 700; color: #E8573A;">Mensal</div>
+        <div class="banner-price" style="color: #E8573A;">R$ 149,90</div>
+        <div style="font-size: 13px; color: #6B7280;">30 dias no carrossel</div>
+        <div style="font-size: 12px; color: #9CA3AF; margin-top: 4px;">~22.000 impressões</div>
+      </div>
+      <div class="banner-card">
+        <div style="font-family: 'Outfit'; font-weight: 700; color: #E8A817;">Trimestral</div>
+        <div class="banner-price" style="color: #E8A817;">R$ 349,90</div>
+        <div style="font-size: 13px; color: #6B7280;">90 dias + destaque</div>
+        <div style="font-size: 12px; color: #9CA3AF; margin-top: 4px;">~70.000 impressões</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. TELAS DO APP -->
+  <div class="section">
+    <div class="divider"></div>
+    <h2 class="section-title">07 — Estrutura de Telas</h2>
+    <p class="section-sub">Mapa de navegação do aplicativo.</p>
+    
+    <div class="screens-row">
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #E6F5EF, #D4EDE3);">🏠</div>
+        <div class="name">Home</div>
+        <div class="desc">Banner, busca, categorias, destaques</div>
+      </div>
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #FEF7E0, #FDE9A8);">📂</div>
+        <div class="name">Categorias</div>
+        <div class="desc">Grid 12+ categorias com contagem</div>
+      </div>
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #FEF0ED, #FDDDD5);">🔍</div>
+        <div class="name">Busca</div>
+        <div class="desc">Lista + filtros (pro, premium, etc)</div>
+      </div>
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #EEF2FF, #DDD6FE);">👤</div>
+        <div class="name">Perfil</div>
+        <div class="desc">Avaliações, portfólio, contato</div>
+      </div>
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #E6F5EF, #FEF7E0);">💳</div>
+        <div class="name">Planos</div>
+        <div class="desc">Free, Pro, Premium comparativo</div>
+      </div>
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #F3F4F6, #E5E7EB);">📝</div>
+        <div class="name">Cadastro</div>
+        <div class="desc">Profissional, empresa ou cliente</div>
+      </div>
+      <div class="screen-frame">
+        <div class="mock" style="background: linear-gradient(135deg, #FEF7E0, #FDE68A);">📢</div>
+        <div class="name">Anuncie</div>
+        <div class="desc">Pacotes de banner publicitário</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="text-align: center; padding: 40px 0; color: #9CA3AF; font-size: 13px;">
+    <div style="font-family: 'Outfit'; font-weight: 800; font-size: 18px; color: #111827; margin-bottom: 4px;">
+      TáNa<span style="color: #0C8C5E;">Mão</span> <span style="font-weight: 500; font-size: 12px; color: #9CA3AF; letter-spacing: 0.1em;">BRASIL</span>
+    </div>
+    Brand Guide v1.0 · 2025
+  </div>
+
+</div>
+</body>
+</html>
