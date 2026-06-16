@@ -82,7 +82,7 @@ const PROS = [
     hours:"Seg-Sáb: 7h às 20h | Dom: Emergências",
     social:{ ig:"@carlos.eletricista", fb:"carlos.eletricista", li:"carlos-silva-elet" },
     categories:["Eletricista","Instalações","Manutenção"],
-    since:"2009", jobs:1450, views:3842,
+    since:"2009", jobs:1450, views:3842, emergency24h:true,
     userReviews:[
       {n:"Maria S.",r:5,t:"Excelente! Pontual e muito atencioso. Resolveu tudo em 2h.",d:"2 dias atrás"},
       {n:"Pedro L.",r:5,t:"Trabalho impecável, super recomendo. Preço justo.",d:"1 semana atrás"},
@@ -95,14 +95,14 @@ const PROS = [
     hours:"Seg-Sex: 9h às 18h",
     social:{ ig:"@ana.interiores", fb:"ana.oliveira.design", li:"ana-oliveira-design" },
     categories:["Design","Interiores","Consultoria"],
-    since:"2015", jobs:320, views:1567,
+    since:"2015", jobs:320, views:1567, emergency24h:false,
     userReviews:[{n:"Lucas M.",r:5,t:"Projeto incrível! Transformou meu apê.",d:"3 dias atrás"},{n:"Carla R.",r:4,t:"Ótimo gosto, entregou no prazo.",d:"1 semana atrás"}]},
   { id:3, name:"Roberto Santos", role:"Encanador", rating:4.7, reviews:203, city:"Belo Horizonte, MG", price:"R$ 60", badge:"premium", av:"RS", on:false,
     desc:"Especialista em instalações hidráulicas, desentupimento, troca de registros e reparos em geral.",
     whatsapp:"5531999990003", phone:"(31) 99999-0003", email:"roberto@email.com",
     address:"Rua da Bahia, 800 - Centro, Belo Horizonte - MG",
     hours:"Seg-Sáb: 6h às 19h",
-    social:{ ig:"@roberto.encanador" }, categories:["Encanador","Hidráulica"], since:"2010", jobs:2100, views:4210,
+    social:{ ig:"@roberto.encanador" }, categories:["Encanador","Hidráulica"], since:"2010", jobs:2100, views:4210, emergency24h:true,
     userReviews:[{n:"Fernanda A.",r:5,t:"Resolveu um vazamento complexo rapidamente.",d:"5 dias atrás"}]},
   { id:4, name:"Mariana Costa", role:"Fotógrafa", rating:5.0, reviews:56, city:"Curitiba, PR", price:"R$ 200", badge:"pro", av:"MC", on:true,
     desc:"Fotografia de eventos, retratos profissionais, ensaios e fotografia de produto para e-commerce.",
@@ -110,34 +110,34 @@ const PROS = [
     address:"Rua XV de Novembro, 300 - Centro, Curitiba - PR",
     hours:"Seg-Sáb: 8h às 20h",
     social:{ ig:"@mari.fotografia", fb:"mari.costa.foto", li:"mariana-costa-foto" },
-    categories:["Fotografia","Eventos","Produto"], since:"2017", jobs:680, views:2890,
+    categories:["Fotografia","Eventos","Produto"], since:"2017", jobs:680, views:2890, emergency24h:false,
     userReviews:[{n:"João P.",r:5,t:"Fotos do casamento ficaram perfeitas!",d:"1 dia atrás"}]},
   { id:5, name:"João Pereira", role:"Pintor Residencial", rating:4.6, reviews:178, city:"Salvador, BA", price:"R$ 70", badge:null, av:"JP", on:true,
     desc:"Pintura interna e externa, texturização, grafiato e efeitos decorativos.",
     whatsapp:"5571999990005", phone:"(71) 99999-0005", email:"joao@email.com",
     address:"Rua Chile, 150 - Pelourinho, Salvador - BA",
-    hours:"Seg-Sáb: 7h às 17h", social:{}, categories:["Pintor","Texturização"], since:"2012", jobs:900, views:1234,
+    hours:"Seg-Sáb: 7h às 17h", social:{}, categories:["Pintor","Texturização"], since:"2012", jobs:900, views:1234, emergency24h:false,
     userReviews:[{n:"Rita M.",r:4,t:"Bom trabalho, acabamento bonito.",d:"4 dias atrás"}]},
   { id:6, name:"Fernanda Lima", role:"Cabeleireira", rating:4.9, reviews:312, city:"Brasília, DF", price:"R$ 50", badge:"pro", av:"FL", on:true,
     desc:"Corte, coloração, tratamentos capilares e penteados. Atendo em domicílio.",
     whatsapp:"5561999990006", phone:"(61) 99999-0006", email:"fer@hair.com",
     address:"SQS 308 Bloco A - Asa Sul, Brasília - DF",
     hours:"Seg-Sáb: 8h às 21h | Dom: 9h às 14h",
-    social:{ ig:"@fer.hair", fb:"fernanda.lima.hair" }, categories:["Cabeleireira","Coloração"], since:"2014", jobs:4200, views:5678,
+    social:{ ig:"@fer.hair", fb:"fernanda.lima.hair" }, categories:["Cabeleireira","Coloração"], since:"2014", jobs:4200, views:5678, emergency24h:false,
     userReviews:[{n:"Camila T.",r:5,t:"Melhor cabeleireira de Brasília!",d:"2 dias atrás"},{n:"Bruna S.",r:5,t:"Atende super bem em domicílio.",d:"1 semana atrás"}]},
   { id:7, name:"Lucas Mendes", role:"Técnico AC", rating:4.8, reviews:94, city:"Manaus, AM", price:"R$ 120", badge:"premium", av:"LM", on:true,
     desc:"Instalação, limpeza e manutenção de splits. Todas as marcas. Garantia de 90 dias.",
     whatsapp:"5592999990007", phone:"(92) 99999-0007", email:"lucas@ac.com",
     address:"Av. Eduardo Ribeiro, 600 - Centro, Manaus - AM",
     hours:"Seg-Sáb: 7h às 18h",
-    social:{ ig:"@lucas.arcond", li:"lucas-mendes-ac" }, categories:["Ar Condicionado","Manutenção"], since:"2016", jobs:780, views:2103,
+    social:{ ig:"@lucas.arcond", li:"lucas-mendes-ac" }, categories:["Ar Condicionado","Manutenção"], since:"2016", jobs:780, views:2103, emergency24h:true,
     userReviews:[{n:"marcos R.",r:5,t:"Limpou 3 splits em 1 manhã. Top!",d:"3 dias atrás"}]},
   { id:8, name:"Patrícia Almeida", role:"Diarista", rating:4.9, reviews:445, city:"São Paulo, SP", price:"R$ 180", badge:"pro", av:"PA", on:true,
     desc:"Limpeza residencial completa, passadoria, organização. Pontual e detalhista.",
     whatsapp:"5511999990008", phone:"(11) 99999-0008", email:"patricia@email.com",
     address:"Vila Mariana, São Paulo - SP",
     hours:"Seg-Sex: 7h às 17h",
-    social:{ ig:"@pat.limpeza" }, categories:["Diarista","Limpeza","Organização"], since:"2011", jobs:5600, views:7890,
+    social:{ ig:"@pat.limpeza" }, categories:["Diarista","Limpeza","Organização"], since:"2011", jobs:5600, views:7890, emergency24h:false,
     userReviews:[{n:"Lucia F.",r:5,t:"Casa ficou impecável! Super pontual.",d:"1 dia atrás"},{n:"Roberto C.",r:5,t:"Melhor diarista que já contratei.",d:"5 dias atrás"}]},
 ];
 
@@ -207,7 +207,7 @@ function Avatar({ ini, size=48, badge }) {
   return (<div style={{ position:"relative", flexShrink:0 }}><div style={{ width:size, height:size, borderRadius:size*0.3, background:bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:font.d, fontWeight:700, fontSize:size*0.36, color:fg }}>{ini}</div>{badge&&<div style={{ position:"absolute", bottom:-2, right:-2, width:size*0.36, height:size*0.36, borderRadius:size*0.12, background:badge==="premium"?C.acc:C.cor, display:"flex", alignItems:"center", justifyContent:"center", border:`2px solid ${C.w}` }}>{badge==="premium"?I.crown("#fff",size*0.18):I.bolt("#fff",size*0.18)}</div>}</div>);
 }
 function Badge({ type }) {
-  const s={premium:{bg:C.accLt,c:"#92600A",icon:I.crown("#92600A",10),t:"Premium"},pro:{bg:C.corLt,c:C.cor,icon:I.bolt(C.cor,10),t:"Pro"}}; const b=s[type]; if(!b) return null;
+  const s={premium:{bg:C.accLt,c:"#92600A",icon:I.crown("#92600A",10),t:"Premium"},pro:{bg:C.corLt,c:C.cor,icon:I.bolt(C.cor,10),t:"Pro"},emergency:{bg:"#FEE2E2",c:"#DC2626",icon:null,t:"🚨 24h"}}; const b=s[type]; if(!b) return null;
   return <span style={{ display:"inline-flex", alignItems:"center", gap:3, background:b.bg, color:b.c, fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:5 }}>{b.icon} {b.t}</span>;
 }
 function Btn({ children, v="primary", full, sz="md", onClick, style:st }) {
@@ -359,6 +359,7 @@ function ProCard({ p, onClick, fav, onFav, i }) {
         <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:2 }}>
           <span style={{ fontFamily:font.d, fontSize:14, fontWeight:700, color:C.dk, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</span>
           {p.badge&&<Badge type={p.badge}/>}
+          {p.emergency24h&&<Badge type="emergency"/>}
         </div>
         <div style={{ fontSize:12, color:C.g, marginBottom:3 }}>{p.role}</div>
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11 }}>
@@ -465,6 +466,7 @@ function Profile({ nav, data }) {
         <p style={{ fontSize:13, color:C.g, lineHeight:1.65 }}>{p.desc}</p>
         {p.categories&&<div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:8 }}>{p.categories.map((c,i)=><span key={i} style={{ background:C.priLt, color:C.pri, fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:8 }}>{c}</span>)}</div>}
         <div style={{ fontSize:11, color:C.gL, marginTop:8 }}>🗓️ No TáNaMão desde {p.since}</div>
+        {p.emergency24h&&<div style={{ marginTop:8, background:"#FEE2E2", borderRadius:10, padding:"10px 14px", display:"flex", alignItems:"center", gap:8 }}><span style={{ fontSize:18 }}>🚨</span><div><div style={{ fontFamily:font.d, fontSize:13, fontWeight:700, color:"#DC2626" }}>Atendimento 24 horas</div><div style={{ fontSize:11, color:"#991B1B" }}>Disponível para emergências a qualquer hora</div></div></div>}
       </div>
 
       {/* Contact Info */}
@@ -626,8 +628,8 @@ function Categories({ nav }) {
 
 function Search({ nav }) {
   const [fl,setFl]=useState("todos"); const [favs,setFavs]=useState({});
-  const filtered=PROS.filter(p=>{if(fl==="premium")return p.badge==="premium";if(fl==="pro")return p.badge==="pro";if(fl==="disponíveis")return p.on;return true;});
-  return (<div className="screen-content"><TopBar title="Profissionais" onBack={()=>nav("home")}/><div className="filter-scroll">{["todos","premium","pro","disponíveis"].map(f=><button key={f} onClick={()=>setFl(f)} className={`filter-chip ${fl===f?"active":""}`}>{f}</button>)}</div><div className="pro-list" style={{padding:"4px 16px 0"}}>{filtered.map((p,i)=><ProCard key={p.id} p={p} onClick={()=>nav("profile",p)} fav={favs[p.id]} onFav={()=>setFavs(f=>({...f,[p.id]:!f[p.id]}))} i={i}/>)}</div></div>);
+  const filtered=PROS.filter(p=>{if(fl==="premium")return p.badge==="premium";if(fl==="pro")return p.badge==="pro";if(fl==="disponíveis")return p.on;if(fl==="24h")return p.emergency24h;return true;});
+  return (<div className="screen-content"><TopBar title="Profissionais" onBack={()=>nav("home")}/><div className="filter-scroll">{["todos","premium","pro","24h","disponíveis"].map(f=><button key={f} onClick={()=>setFl(f)} className={`filter-chip ${fl===f?"active":""}`}>{f==="24h"?"🚨 24h":f}</button>)}</div><div className="pro-list" style={{padding:"4px 16px 0"}}>{filtered.map((p,i)=><ProCard key={p.id} p={p} onClick={()=>nav("profile",p)} fav={favs[p.id]} onFav={()=>setFavs(f=>({...f,[p.id]:!f[p.id]}))} i={i}/>)}</div></div>);
 }
 
 function ChatList({ nav }) {
@@ -663,7 +665,9 @@ function PlansScreen({ nav, trial }) {
     if(pl.name==="Free"){showToast("Você já está no plano Free");return;}
     setSelected(pl);
   };
-  const confirmPlan=()=>{trackEvent("Subscribe",{value:selected.price,currency:"BRL",plan:selected.name});playNotifSound();showToast(`✅ Plano ${selected.name} ativado com sucesso!`);setSelected(null);};
+  const confirmPlan=()=>{trackEvent("Subscribe",{value:selected.price,currency:"BRL",plan:selected.name});playNotifSound();setSelected(null);setPayment(selected);};
+  const [payment,setPayment]=useState(null);
+  const processPayment=(method)=>{playNotifSound();showToast(`✅ Plano ${payment.name} ativado via ${method}!`);setPayment(null);};
 
   return (<div className="screen-content"><TopBar title="Planos" onBack={()=>nav("home")}/>
     {trial.active&&<div style={{margin:"12px 16px 0",padding:"14px 16px",borderRadius:14,background:`linear-gradient(135deg,${C.cor},#C9432A)`,color:"#fff"}}><div style={{fontFamily:font.d,fontSize:15,fontWeight:800}}>🎁 Trial ativo: {trial.daysLeft} dias restantes</div><div style={{fontSize:12,opacity:.8,marginTop:2}}>Todos os recursos Pro liberados. Após o trial, volta ao plano Free.</div></div>}
@@ -672,6 +676,28 @@ function PlansScreen({ nav, trial }) {
 
     {/* Confirmation Modal */}
     {selected&&<div onClick={()=>setSelected(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:C.w,borderRadius:20,padding:24,maxWidth:340,width:"100%",textAlign:"center"}}><div style={{fontSize:36,marginBottom:12}}>{selected.name==="Pro"?"⚡":"👑"}</div><h3 style={{fontFamily:font.d,fontSize:20,fontWeight:900,marginBottom:6}}>Assinar {selected.name}</h3><div style={{fontFamily:font.d,fontSize:28,fontWeight:900,color:selected.color,marginBottom:4}}>{selected.price}<span style={{fontSize:14,color:C.gL,fontWeight:400}}>/mês</span></div><p style={{fontSize:13,color:C.g,marginBottom:20,lineHeight:1.5}}>Você terá acesso a todos os recursos do plano {selected.name}. Pode cancelar a qualquer momento.</p><div style={{display:"flex",gap:8}}><Btn v="ghost" full onClick={()=>setSelected(null)}>Cancelar</Btn><Btn v={selected.name==="Pro"?"coral":"accent"} full onClick={confirmPlan}>Confirmar</Btn></div></div></div>}
+
+    {/* Payment Modal */}
+    {payment&&<div onClick={()=>setPayment(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:210,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:C.w,borderRadius:"20px 20px 0 0",padding:24,maxWidth:480,width:"100%",animation:"sheetUp .3s ease"}}>
+      <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><div style={{width:36,height:4,borderRadius:2,background:C.gB}}/></div>
+      <h3 style={{fontFamily:font.d,fontSize:18,fontWeight:900,marginBottom:4,textAlign:"center"}}>Pagamento</h3>
+      <p style={{fontSize:13,color:C.g,textAlign:"center",marginBottom:16}}>Plano {payment.name} — {payment.price}/mês</p>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <button onClick={()=>processPayment("Mercado Pago")} style={{display:"flex",alignItems:"center",gap:12,padding:"16px",borderRadius:14,border:`2px solid ${C.gB}`,background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:font.b,transition:"border-color .2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=C.blue} onMouseLeave={e=>e.currentTarget.style.borderColor=C.gB}>
+          <div style={{width:44,height:44,borderRadius:12,background:"#009EE3",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:14}}>MP</div>
+          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:C.dk}}>Mercado Pago</div><div style={{fontSize:11,color:C.gL}}>Cartão, Pix, boleto</div></div>{I.arrow(C.gL,14)}
+        </button>
+        <button onClick={()=>processPayment("Pix")} style={{display:"flex",alignItems:"center",gap:12,padding:"16px",borderRadius:14,border:`2px solid ${C.gB}`,background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:font.b,transition:"border-color .2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=C.pri} onMouseLeave={e=>e.currentTarget.style.borderColor=C.gB}>
+          <div style={{width:44,height:44,borderRadius:12,background:"#32BCAD",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>
+          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:C.dk}}>Pix</div><div style={{fontSize:11,color:C.gL}}>Aprovação instantânea</div></div>{I.arrow(C.gL,14)}
+        </button>
+        <button onClick={()=>processPayment("Cartão de Crédito")} style={{display:"flex",alignItems:"center",gap:12,padding:"16px",borderRadius:14,border:`2px solid ${C.gB}`,background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:font.b,transition:"border-color .2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=C.acc} onMouseLeave={e=>e.currentTarget.style.borderColor=C.gB}>
+          <div style={{width:44,height:44,borderRadius:12,background:C.accLt,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>💳</div>
+          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:C.dk}}>Cartão de Crédito</div><div style={{fontSize:11,color:C.gL}}>Até 12x sem juros</div></div>{I.arrow(C.gL,14)}
+        </button>
+      </div>
+      <div style={{textAlign:"center",marginTop:14}}><span style={{fontSize:11,color:C.gL}}>🔒 Pagamento seguro e criptografado</span></div>
+    </div></div>}
 
     <Toast msg={toast} visible={!!toast}/>
   </div>);
@@ -702,6 +728,10 @@ function Register({ nav }) {
       <div style={{display:"flex",gap:8,marginTop:4}}><input className="form-input" placeholder="Sua categoria não está na lista? Digite aqui..." style={{flex:1,fontSize:13}} onFocus={e=>e.target.style.borderColor=accent} onBlur={e=>e.target.style.borderColor=C.gB} id="customCat"/><Btn v={type==="pro"?"primary":"accent"} sz="sm" onClick={()=>{const inp=document.getElementById("customCat");if(inp&&inp.value.trim()){playNotifSound();inp.value="";}}}>+</Btn></div>
       <textarea className="form-input" placeholder="Descreva seus serviços..." style={{minHeight:60,resize:"vertical"}} onFocus={e=>e.target.style.borderColor=accent} onBlur={e=>e.target.style.borderColor=C.gB}/>
       <InputF ph="WhatsApp (com DDD)"/><InputF ph="Instagram (ex: @seunome)"/><InputF ph="Facebook (opcional)"/><InputF ph="LinkedIn (opcional)"/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderTop:`1px solid ${C.gBg}`,marginTop:4}}>
+        <div><div style={{fontSize:14,fontWeight:600,color:C.dk}}>🚨 Atendimento 24h</div><div style={{fontSize:11,color:C.gL,marginTop:1}}>Emergências a qualquer hora</div></div>
+        <div onClick={e=>{const el=e.currentTarget;const on=el.dataset.on==="1";el.dataset.on=on?"0":"1";el.style.background=on?C.gB:C.cor;el.querySelector("div").style.transform=on?"translateX(0)":"translateX(20px)";}} style={{width:48,height:28,borderRadius:14,background:C.gB,cursor:"pointer",padding:3,transition:"background .2s"}} data-on="0"><div style={{width:22,height:22,borderRadius:11,background:"#fff",boxShadow:"0 1px 3px rgba(0,0,0,0.15)",transition:"transform .2s"}}/></div>
+      </div>
       <Btn v={type==="pro"?"primary":"accent"} full sz="lg" onClick={()=>setStep(3)} style={{marginTop:8}}>Finalizar</Btn></div>}
     {step===2&&type==="cli"&&<div className="form-col"><h3 className="form-title">Segurança</h3><InputF ph="Criar senha" type="password"/><InputF ph="Confirmar senha" type="password"/><Btn v="coral" full sz="lg" onClick={()=>setStep(3)} style={{marginTop:8}}>Criar conta</Btn></div>}
   </div><Toast msg={toast} visible={!!toast}/></div>);
