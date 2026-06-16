@@ -14,6 +14,19 @@ const C = {
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
 // ══════════════════════════════════════════════════════════════
+// META PIXEL EVENTS
+// ══════════════════════════════════════════════════════════════
+function trackEvent(event, data) {
+  try { if(window.fbq) window.fbq('track', event, data); } catch(e) {}
+}
+// Events used:
+// trackEvent('CompleteRegistration') — cadastro finalizado
+// trackEvent('Lead') — perfil completo
+// trackEvent('Subscribe', {value, currency:'BRL'}) — assinou plano
+// trackEvent('Contact') — clicou WhatsApp ou chat
+// trackEvent('ViewContent', {content_name}) — visualizou perfil
+
+// ══════════════════════════════════════════════════════════════
 // NOTIFICATION SOUND SYSTEM
 // ══════════════════════════════════════════════════════════════
 let audioCtx = null;
@@ -389,19 +402,45 @@ function Profile({ nav, data }) {
     showToast(`Avaliação de ${myRating} estrela${myRating>1?"s":""} enviada!`);
   };
 
+  // Track profile view
+  useEffect(()=>{trackEvent("ViewContent",{content_name:p.name,content_category:p.role});},[]);
+
   const openWhatsApp = () => {
+    trackEvent("Contact",{content_name:p.name});
     const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil e gostaria de um orçamento.`);
     window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank");
   };
 
   return (
     <div className="screen-content" style={{ paddingBottom:90 }}>
-      <TopBar title="Perfil" onBack={()=>nav("back")} right={<button onClick={()=>setFav(!fav)} className="icon-btn">{I.heart(C.gL,20,fav)}</button>}/>
+      {/* Cover Photo */}
+      <div style={{ position:"relative" }}>
+        <div style={{ height:160, background:p.badge==="premium"?`linear-gradient(135deg, ${C.acc}88 0%, ${C.pri} 100%)`:p.badge==="pro"?`linear-gradient(135deg, ${C.cor}88 0%, ${C.pri} 100%)`:`linear-gradient(135deg, ${C.priLt} 0%, ${C.pri}44 100%)`, position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:-30, right:-30, width:120, height:120, borderRadius:"50%", background:"rgba(255,255,255,0.08)" }}/>
+          <div style={{ position:"absolute", bottom:-40, left:-20, width:140, height:140, borderRadius:"50%", background:"rgba(255,255,255,0.05)" }}/>
+          <div style={{ position:"absolute", bottom:8, right:8, background:"rgba(0,0,0,0.3)", borderRadius:8, padding:"4px 8px", fontSize:10, color:"#fff", display:"flex", alignItems:"center", gap:4, cursor:"pointer" }}>📷 Capa</div>
+        </div>
+        {/* Back + Fav buttons over cover */}
+        <div style={{ position:"absolute", top:12, left:12, right:12, display:"flex", justifyContent:"space-between" }}>
+          <button onClick={()=>nav("back")} style={{ width:38, height:38, borderRadius:12, border:"none", background:"rgba(0,0,0,0.3)", backdropFilter:"blur(8px)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.back("#fff",20)}</button>
+          <button onClick={()=>setFav(!fav)} style={{ width:38, height:38, borderRadius:12, border:"none", background:"rgba(0,0,0,0.3)", backdropFilter:"blur(8px)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.heart("#fff",20,fav)}</button>
+        </div>
+        {/* Profile Photo overlapping cover */}
+        <div style={{ position:"absolute", bottom:-40, left:"50%", transform:"translateX(-50%)" }}>
+          <div style={{ position:"relative" }}>
+            <div style={{ width:88, height:88, borderRadius:26, border:`4px solid ${C.w}`, boxShadow:"0 4px 12px rgba(0,0,0,0.1)", overflow:"hidden" }}>
+              <Avatar ini={p.av} size={80} badge={p.badge}/>
+            </div>
+            <div style={{ position:"absolute", bottom:0, right:-4, width:28, height:28, borderRadius:9, background:C.pri, border:`2.5px solid ${C.w}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
+              <span style={{ fontSize:12 }}>📷</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Hero */}
-      <div style={{ textAlign:"center", padding:"8px 16px 16px" }}>
-        <Avatar ini={p.av} size={80} badge={p.badge}/>
-        <h2 style={{ fontFamily:font.d, fontSize:22, fontWeight:800, marginTop:10, color:C.dk }}>{p.name}</h2>
+      {/* Name & Info (below cover) */}
+      <div style={{ textAlign:"center", padding:"48px 16px 16px" }}>
+        <h2 style={{ fontFamily:font.d, fontSize:22, fontWeight:800, color:C.dk }}>{p.name}</h2>
         <div style={{ fontSize:13, color:C.g, marginTop:3 }}>{p.role}</div>
         <div style={{ display:"flex", justifyContent:"center", gap:4, marginTop:6, alignItems:"center" }}>{I.pin(C.gL,13)}<span style={{ fontSize:12, color:C.gL }}>{p.city}</span></div>
         {p.badge&&<div style={{ marginTop:8 }}><Badge type={p.badge}/></div>}
@@ -551,6 +590,7 @@ function ChatView({ nav, data }) {
   };
 
   const openWhatsApp=()=>{
+    trackEvent("Contact",{content_name:p.name});
     if(p.whatsapp){
       const msg=encodeURIComponent(`Olá ${p.name}! Continuando nossa conversa do TáNaMão...`);
       window.open(`https://wa.me/${p.whatsapp}?text=${msg}`,"_blank");
@@ -623,7 +663,7 @@ function PlansScreen({ nav, trial }) {
     if(pl.name==="Free"){showToast("Você já está no plano Free");return;}
     setSelected(pl);
   };
-  const confirmPlan=()=>{playNotifSound();showToast(`✅ Plano ${selected.name} ativado com sucesso!`);setSelected(null);};
+  const confirmPlan=()=>{trackEvent("Subscribe",{value:selected.price,currency:"BRL",plan:selected.name});playNotifSound();showToast(`✅ Plano ${selected.name} ativado com sucesso!`);setSelected(null);};
 
   return (<div className="screen-content"><TopBar title="Planos" onBack={()=>nav("home")}/>
     {trial.active&&<div style={{margin:"12px 16px 0",padding:"14px 16px",borderRadius:14,background:`linear-gradient(135deg,${C.cor},#C9432A)`,color:"#fff"}}><div style={{fontFamily:font.d,fontSize:15,fontWeight:800}}>🎁 Trial ativo: {trial.daysLeft} dias restantes</div><div style={{fontSize:12,opacity:.8,marginTop:2}}>Todos os recursos Pro liberados. Após o trial, volta ao plano Free.</div></div>}
@@ -649,6 +689,7 @@ function Register({ nav }) {
       {k:"cli",icon:I.user(C.cor),t:"Busco Profissional",s:"Quero contratar um serviço",c:C.cor,bg:C.corLt},
     ].map((o,i)=><div key={o.k} className={`reg-option anim-in d${i+2}`} onClick={()=>{setType(o.k);setStep(1);}}><div className="reg-icon" style={{background:o.bg}}>{o.icon}</div><div style={{flex:1}}><div style={{fontFamily:font.d,fontSize:15,fontWeight:700}}>{o.t}</div><div style={{fontSize:12,color:C.g,marginTop:1}}>{o.s}</div></div>{I.arrow(o.c,16)}</div>)}</div></div></div>);
 
+  if(step===3){trackEvent("CompleteRegistration",{registration_type:type});}
   if(step===3) return (<div className="screen-content"><TopBar title="" onBack={()=>nav("home")}/><div style={{textAlign:"center",padding:"48px 16px"}}><div className="anim-in success-icon">🎉</div><h3 className="anim-in d1" style={{fontFamily:font.d,fontSize:22,fontWeight:900,marginBottom:6}}>Cadastro realizado!</h3>
     {type!=="cli"&&<div className="anim-in d2" style={{background:C.priLt,borderRadius:12,padding:"12px 16px",marginBottom:16}}><div style={{fontFamily:font.d,fontSize:14,fontWeight:700,color:C.pri}}>🎁 7 dias grátis ativados!</div><div style={{fontSize:12,color:C.g,marginTop:2}}>Todos os recursos Pro liberados. Você será notificado 5 dias antes de expirar.</div></div>}
     <p className="anim-in d3" style={{fontSize:13,color:C.g,lineHeight:1.6,marginBottom:24}}>{type!=="cli"?"Perfil sendo verificado. Confirmação por e-mail em 24h.":"Conta criada! Busque profissionais agora."}</p>
@@ -675,23 +716,218 @@ function Advertise({ nav }) {
     ].map((pk,i)=><div key={i} className={`ad-pkg anim-in d${i+1} ${pk.pop?"popular":""}`} style={{borderColor:pk.pop?pk.c:C.gB}}>{pk.pop&&<span className="pkg-badge" style={{background:pk.c}}>MELHOR CUSTO</span>}<div style={{fontFamily:font.d,fontSize:15,fontWeight:700}}>{pk.n}</div><div style={{fontFamily:font.d,fontSize:26,fontWeight:900,color:pk.c,margin:"6px 0"}}>{pk.p}</div><div style={{fontSize:12,color:C.g}}>{pk.d}</div><div style={{fontSize:11,color:C.gL,marginBottom:12}}>📊 {pk.v}</div><Btn v={pk.pop?"coral":"outline"} full sz="md">Contratar</Btn></div>)}</div></div></div>);
 }
 
-function Settings({ nav, trial }) {
+// ══════════════════════════════════════════════════════════════
+// SETTINGS SUB-SCREENS
+// ══════════════════════════════════════════════════════════════
+function EditProfile({ nav }) {
+  const [toast,setToast]=useState("");
+  const [name,setName]=useState("Seu Nome");
+  const [phone,setPhone]=useState("(11) 99999-0000");
+  const [email,setEmail]=useState("voce@email.com");
+  const [wpp,setWpp]=useState("(11) 99999-0000");
+  const [addr,setAddr]=useState("");
+  const [bio,setBio]=useState("");
+  const [profileImg,setProfileImg]=useState(null);
+  const [coverImg,setCoverImg]=useState(null);
+  const showToast=(m)=>{setToast(m);setTimeout(()=>setToast(""),2500);};
+  const save=()=>{playNotifSound();showToast("✅ Perfil salvo com sucesso!");};
+
+  const handleImg=(e,setter)=>{
+    const file=e.target.files?.[0];
+    if(file){const reader=new FileReader();reader.onload=(ev)=>setter(ev.target.result);reader.readAsDataURL(file);}
+  };
+
+  const F=({label,val,set,ph,type})=>(<div><div style={{fontSize:12,fontWeight:600,color:C.dk,marginBottom:4}}>{label}</div><input value={val} onChange={e=>set(e.target.value)} placeholder={ph} type={type||"text"} className="form-input" onFocus={e=>e.target.style.borderColor=C.pri} onBlur={e=>e.target.style.borderColor=C.gB}/></div>);
+
+  return (<div className="screen-content"><TopBar title="Editar Perfil" onBack={()=>nav("back")}/>
+    <div style={{padding:"16px"}}>
+      {/* Cover Photo */}
+      <div className="anim-in" style={{position:"relative",marginBottom:50}}>
+        <label style={{cursor:"pointer",display:"block"}}>
+          <input type="file" accept="image/*" onChange={e=>handleImg(e,setCoverImg)} style={{display:"none"}}/>
+          <div style={{height:130,borderRadius:16,background:coverImg?`url(${coverImg}) center/cover`:`linear-gradient(135deg, ${C.priLt} 0%, ${C.pri}44 100%)`,display:"flex",alignItems:"center",justifyContent:"center",border:`2px dashed ${coverImg?'transparent':C.gB}`,overflow:"hidden",position:"relative"}}>
+            {!coverImg&&<div style={{textAlign:"center",color:C.gL}}><div style={{fontSize:28}}>🖼️</div><div style={{fontSize:11,fontWeight:600,marginTop:4}}>Adicionar foto de capa</div></div>}
+            <div style={{position:"absolute",bottom:8,right:8,background:"rgba(0,0,0,0.4)",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#fff",fontWeight:600}}>📷 {coverImg?"Trocar":"Adicionar"}</div>
+          </div>
+        </label>
+        {/* Profile Photo overlapping */}
+        <label style={{cursor:"pointer",position:"absolute",bottom:-36,left:"50%",transform:"translateX(-50%)"}}>
+          <input type="file" accept="image/*" onChange={e=>handleImg(e,setProfileImg)} style={{display:"none"}}/>
+          <div style={{position:"relative"}}>
+            <div style={{width:76,height:76,borderRadius:22,border:`3px solid ${C.w}`,boxShadow:"0 4px 12px rgba(0,0,0,0.1)",overflow:"hidden",background:profileImg?`url(${profileImg}) center/cover`:C.priLt,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {!profileImg&&<span style={{fontFamily:font.d,fontWeight:800,fontSize:26,color:C.pri}}>VC</span>}
+            </div>
+            <div style={{position:"absolute",bottom:-2,right:-2,width:26,height:26,borderRadius:8,background:C.pri,border:`2px solid ${C.w}`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11}}>📷</span></div>
+          </div>
+        </label>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <F label="Nome completo" val={name} set={setName} ph="Seu nome"/>
+        <F label="E-mail" val={email} set={setEmail} ph="email@exemplo.com" type="email"/>
+        <F label="Telefone" val={phone} set={setPhone} ph="(11) 99999-0000"/>
+        <F label="WhatsApp" val={wpp} set={setWpp} ph="(11) 99999-0000"/>
+        <F label="Endereço" val={addr} set={setAddr} ph="Rua, número, cidade - UF"/>
+        <div><div style={{fontSize:12,fontWeight:600,color:C.dk,marginBottom:4}}>Bio</div>
+        <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Fale sobre você e seus serviços..." className="form-input" style={{minHeight:70,resize:"vertical"}} onFocus={e=>e.target.style.borderColor=C.pri} onBlur={e=>e.target.style.borderColor=C.gB}/></div>
+        <Btn v="primary" full sz="lg" onClick={save} style={{marginTop:8}}>Salvar Alterações</Btn>
+      </div>
+    </div><Toast msg={toast} visible={!!toast}/></div>);
+}
+
+function PrivacyScreen({ nav }) {
+  const [toggles,setToggles]=useState({phone:true,email:false,addr:true,online:true,reviews:true});
+  const Toggle=({label,desc,k})=>(<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 0",borderBottom:`1px solid ${C.gBg}`}}>
+    <div><div style={{fontSize:14,fontWeight:600,color:C.dk}}>{label}</div><div style={{fontSize:11,color:C.gL,marginTop:1}}>{desc}</div></div>
+    <div onClick={()=>setToggles(t=>({...t,[k]:!t[k]}))} style={{width:48,height:28,borderRadius:14,background:toggles[k]?C.pri:C.gB,cursor:"pointer",padding:3,transition:"background .2s",display:"flex",alignItems:toggles[k]?"center":"center",justifyContent:toggles[k]?"flex-end":"flex-start"}}>
+      <div style={{width:22,height:22,borderRadius:11,background:"#fff",boxShadow:"0 1px 3px rgba(0,0,0,0.15)",transition:"all .2s"}}/>
+    </div></div>);
+  return (<div className="screen-content"><TopBar title="Privacidade" onBack={()=>nav("back")}/>
+    <div style={{padding:"8px 16px"}}>
+      <div className="anim-in" style={{background:C.priLt,borderRadius:14,padding:16,marginBottom:16}}>
+        <div style={{fontFamily:font.d,fontSize:14,fontWeight:700,color:C.pri,marginBottom:4}}>🔒 Seus dados estão protegidos</div>
+        <div style={{fontSize:12,color:C.g,lineHeight:1.5}}>Controle quem pode ver suas informações.</div>
+      </div>
+      <Toggle label="Exibir telefone" desc="Visível no seu perfil" k="phone"/>
+      <Toggle label="Exibir e-mail" desc="Visível no seu perfil" k="email"/>
+      <Toggle label="Exibir endereço" desc="Apenas cidade e estado" k="addr"/>
+      <Toggle label="Mostrar status online" desc="Outros veem quando você está ativo" k="online"/>
+      <Toggle label="Receber avaliações" desc="Clientes podem te avaliar" k="reviews"/>
+    </div></div>);
+}
+
+function ModerationScreen({ nav }) {
   const [toast,setToast]=useState("");
   const showToast=(m)=>{setToast(m);setTimeout(()=>setToast(""),2500);};
+  const reports=[
+    {user:"Anônimo",text:"Comentário ofensivo no perfil de Carlos S.",status:"pending",time:"2h"},
+    {user:"Maria R.",text:"Spam em mensagens",status:"resolved",time:"1d"},
+    {user:"Sistema",text:"Palavra proibida detectada automaticamente",status:"blocked",time:"3d"},
+  ];
+  const statusColors={pending:{bg:C.accLt,c:"#92600A",t:"Pendente"},resolved:{bg:C.priLt,c:C.pri,t:"Resolvido"},blocked:{bg:C.corLt,c:C.cor,t:"Bloqueado"}};
+  return (<div className="screen-content"><TopBar title="Moderação" onBack={()=>nav("back")}/>
+    <div style={{padding:"12px 16px"}}>
+      <div className="anim-in" style={{display:"flex",gap:8,marginBottom:16}}>
+        {[{n:"3",l:"Pendentes",c:C.acc},{n:"12",l:"Resolvidos",c:C.pri},{n:"5",l:"Bloqueados",c:C.cor}].map((s,i)=>
+          <div key={i} style={{flex:1,background:"#fff",borderRadius:12,padding:"12px 8px",border:`1.5px solid ${C.gB}`,textAlign:"center"}}>
+            <div style={{fontFamily:font.d,fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
+            <div style={{fontSize:10,color:C.gL}}>{s.l}</div></div>)}
+      </div>
+      <h3 style={{fontFamily:font.d,fontSize:15,fontWeight:700,marginBottom:10}}>Denúncias recentes</h3>
+      {reports.map((r,i)=>{const st=statusColors[r.status];return(
+        <div key={i} className={`anim-in d${i+1}`} style={{background:"#fff",borderRadius:14,border:`1.5px solid ${C.gB}`,padding:14,marginBottom:8}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <span style={{fontFamily:font.d,fontSize:13,fontWeight:700}}>{r.user}</span>
+            <span style={{background:st.bg,color:st.c,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{st.t}</span>
+          </div>
+          <div style={{fontSize:12,color:C.g,lineHeight:1.5,marginBottom:6}}>{r.text}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:C.gL}}>{r.time}</span>
+            {r.status==="pending"&&<div style={{display:"flex",gap:6}}>
+              <button onClick={()=>showToast("✅ Denúncia resolvida")} style={{background:C.pri,color:"#fff",border:"none",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:font.d}}>Resolver</button>
+              <button onClick={()=>showToast("🚫 Usuário bloqueado")} style={{background:C.cor,color:"#fff",border:"none",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:font.d}}>Bloquear</button>
+            </div>}
+          </div>
+        </div>);})}
+    </div><Toast msg={toast} visible={!!toast}/></div>);
+}
+
+function AppearanceScreen({ nav }) {
+  const [dark,setDark]=useState(false);
+  const [fontSize,setFontSize]=useState("normal");
+  return (<div className="screen-content"><TopBar title="Aparência" onBack={()=>nav("back")}/>
+    <div style={{padding:"12px 16px"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 0",borderBottom:`1px solid ${C.gBg}`}}>
+        <div><div style={{fontSize:14,fontWeight:600}}>Tema escuro</div><div style={{fontSize:11,color:C.gL}}>Reduz brilho da tela</div></div>
+        <div onClick={()=>setDark(!dark)} style={{width:48,height:28,borderRadius:14,background:dark?C.pri:C.gB,cursor:"pointer",padding:3,transition:"background .2s",display:"flex",alignItems:"center",justifyContent:dark?"flex-end":"flex-start"}}>
+          <div style={{width:22,height:22,borderRadius:11,background:"#fff",boxShadow:"0 1px 3px rgba(0,0,0,0.15)"}}/>
+        </div>
+      </div>
+      <div style={{padding:"16px 0"}}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:10}}>Tamanho da fonte</div>
+        <div style={{display:"flex",gap:8}}>
+          {[{k:"small",l:"Pequena"},{k:"normal",l:"Normal"},{k:"large",l:"Grande"}].map(o=>
+            <button key={o.k} onClick={()=>setFontSize(o.k)} style={{flex:1,padding:"10px",borderRadius:10,border:`2px solid ${fontSize===o.k?C.pri:C.gB}`,background:fontSize===o.k?C.priLt:"#fff",color:fontSize===o.k?C.pri:C.dk,fontWeight:fontSize===o.k?700:500,fontSize:13,cursor:"pointer",fontFamily:font.b}}>{o.l}</button>
+          )}
+        </div>
+      </div>
+      <div style={{background:C.gBg,borderRadius:14,padding:16,marginTop:8}}>
+        <div style={{fontSize:12,color:C.g}}>Pré-visualização</div>
+        <div style={{marginTop:8,padding:12,background:"#fff",borderRadius:10,fontSize:fontSize==="small"?12:fontSize==="large"?16:14,color:C.dk}}>Assim ficará o texto no app com a fonte {fontSize==="small"?"pequena":fontSize==="large"?"grande":"normal"}.</div>
+      </div>
+    </div></div>);
+}
+
+function HelpScreen({ nav }) {
+  const [open,setOpen]=useState(null);
+  const faqs=[
+    {q:"Como me cadastrar?",a:"Vá em Perfil > Cadastro, escolha se é Profissional, Empresa ou Cliente e preencha seus dados. O cadastro é gratuito e inclui 7 dias de trial com todos os recursos Pro."},
+    {q:"O trial é realmente grátis?",a:"Sim. 7 dias completos sem pedir cartão de crédito. Após o período, seu perfil volta ao plano Free automaticamente. Nenhuma cobrança surpresa."},
+    {q:"Como recebo clientes?",a:"Depois de completar seu perfil, você aparece nas buscas da sua região. Clientes podem te chamar pelo chat do app ou diretamente pelo WhatsApp."},
+    {q:"Como funciona a avaliação?",a:"Clientes avaliam de 1 a 5 estrelas após o serviço. Avaliações passam por moderação automática para evitar conteúdo ofensivo. Você pode denunciar avaliações indevidas."},
+    {q:"Posso cancelar meu plano?",a:"Sim, a qualquer momento em Configurações > Assinatura. O acesso continua até o fim do período pago."},
+    {q:"Como funciona o banner publicitário?",a:"Empresas e profissionais podem anunciar no carrossel principal do app. Pacotes a partir de R$ 49,90 por semana com milhares de impressões."},
+    {q:"Meus dados estão seguros?",a:"Sim. Seus dados são protegidos e você controla a visibilidade de cada informação em Configurações > Privacidade."},
+  ];
+  return (<div className="screen-content"><TopBar title="Ajuda" onBack={()=>nav("back")}/>
+    <div style={{padding:"12px 16px"}}>
+      <div className="anim-in" style={{background:C.priLt,borderRadius:14,padding:16,marginBottom:16,textAlign:"center"}}>
+        <div style={{fontSize:28,marginBottom:6}}>❓</div>
+        <div style={{fontFamily:font.d,fontSize:15,fontWeight:700,color:C.pri}}>Como podemos ajudar?</div>
+      </div>
+      {faqs.map((f,i)=>(
+        <div key={i} className={`anim-in d${Math.min(i+1,6)}`} onClick={()=>setOpen(open===i?null:i)} style={{background:"#fff",borderRadius:14,border:`1.5px solid ${open===i?C.pri:C.gB}`,padding:"14px 16px",marginBottom:8,cursor:"pointer",transition:"border-color .2s"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontFamily:font.d,fontSize:14,fontWeight:700,color:C.dk}}>{f.q}</span>
+            <span style={{fontSize:18,color:C.gL,transition:"transform .2s",transform:open===i?"rotate(45deg)":"rotate(0)"}}>+</span>
+          </div>
+          {open===i&&<div style={{fontSize:13,color:C.g,lineHeight:1.6,marginTop:10,paddingTop:10,borderTop:`1px solid ${C.gBg}`}}>{f.a}</div>}
+        </div>
+      ))}
+      <div style={{textAlign:"center",marginTop:16}}>
+        <div style={{fontSize:13,color:C.g,marginBottom:8}}>Ainda precisa de ajuda?</div>
+        <Btn v="outline" sz="md">📧 Enviar e-mail para suporte</Btn>
+      </div>
+    </div></div>);
+}
+
+function TermsScreen({ nav }) {
+  return (<div className="screen-content"><TopBar title="Termos de Uso" onBack={()=>nav("back")}/>
+    <div style={{padding:"12px 16px"}}>
+      <div style={{background:"#fff",borderRadius:14,border:`1.5px solid ${C.gB}`,padding:20}}>
+        <h3 style={{fontFamily:font.d,fontSize:17,fontWeight:800,marginBottom:12}}>Termos de Uso e Política de Privacidade</h3>
+        <div style={{fontSize:13,color:C.g,lineHeight:1.7}}>
+          <p style={{marginBottom:12}}><strong>1. Sobre o TáNaMão Brasil</strong><br/>O TáNaMão Brasil é uma plataforma marketplace que conecta profissionais prestadores de serviço a clientes que buscam esses serviços. A plataforma não se responsabiliza pela qualidade dos serviços prestados.</p>
+          <p style={{marginBottom:12}}><strong>2. Cadastro</strong><br/>O usuário deve fornecer informações verdadeiras no cadastro. Informações falsas podem resultar em suspensão da conta. O trial de 7 dias é gratuito e não requer dados de pagamento.</p>
+          <p style={{marginBottom:12}}><strong>3. Avaliações e Moderação</strong><br/>Avaliações passam por sistema de moderação automática e manual. Conteúdo ofensivo, discriminatório ou falso será removido. Usuários que violarem repetidamente serão banidos.</p>
+          <p style={{marginBottom:12}}><strong>4. Planos e Pagamentos</strong><br/>Os planos Pro (R$ 29,90/mês) e Premium (R$ 69,90/mês) podem ser cancelados a qualquer momento. Não há multa de cancelamento. O reembolso é proporcional ao período não utilizado.</p>
+          <p style={{marginBottom:12}}><strong>5. Privacidade</strong><br/>Seus dados pessoais são protegidos conforme a LGPD. Não compartilhamos informações com terceiros sem seu consentimento. Você pode solicitar a exclusão dos seus dados a qualquer momento.</p>
+          <p><strong>6. Contato</strong><br/>Para dúvidas: suporte@tanamao.com.br</p>
+        </div>
+        <div style={{fontSize:11,color:C.gL,marginTop:16,textAlign:"center"}}>Última atualização: Junho 2025</div>
+      </div>
+    </div></div>);
+}
+
+function Settings({ nav, trial }) {
+  const [showLogout,setShowLogout]=useState(false);
   const items=[
-    {icon:"👤",t:"Editar Perfil",s:"Nome, foto, endereço, WhatsApp",action:()=>showToast("Abrindo editor de perfil...")},
+    {icon:"👤",t:"Editar Perfil",s:"Nome, foto, endereço, WhatsApp",action:()=>nav("editProfile")},
     {icon:"🔔",t:"Notificações",s:"Sons e alertas",action:()=>nav("notifs")},
-    {icon:"🔒",t:"Privacidade",s:"Dados e segurança",action:()=>showToast("Configurações de privacidade")},
+    {icon:"🔒",t:"Privacidade",s:"Dados e segurança",action:()=>nav("privacy")},
     {icon:"💳",t:"Assinatura",s:trial.active?`Trial: ${trial.daysLeft} dias restantes`:"Plano Free",action:()=>nav("plans")},
-    {icon:"🛡️",t:"Moderação",s:"Denúncias e bloqueios",action:()=>showToast("Painel de moderação")},
-    {icon:"🎨",t:"Aparência",s:"Tema claro/escuro",action:()=>showToast("Em breve!")},
-    {icon:"❓",t:"Ajuda",s:"FAQ e suporte",action:()=>showToast("Central de ajuda")},
-    {icon:"📋",t:"Termos de Uso",s:"Política de privacidade",action:()=>showToast("Abrindo termos...")},
-    {icon:"🚪",t:"Sair",s:"Encerrar sessão",action:()=>showToast("Sessão encerrada")},
+    {icon:"🛡️",t:"Moderação",s:"Denúncias e bloqueios",action:()=>nav("moderation")},
+    {icon:"🎨",t:"Aparência",s:"Tema e tamanho de fonte",action:()=>nav("appearance")},
+    {icon:"❓",t:"Ajuda",s:"FAQ e suporte",action:()=>nav("help")},
+    {icon:"📋",t:"Termos de Uso",s:"Política de privacidade",action:()=>nav("terms")},
+    {icon:"🚪",t:"Sair",s:"Encerrar sessão",action:()=>setShowLogout(true)},
   ];
   return (<div className="screen-content"><TopBar title="Configurações" onBack={()=>nav("home")}/><div style={{padding:"8px 16px"}}><div className="anim-in settings-user"><Avatar ini="VC" size={52}/><div style={{flex:1}}><div style={{fontFamily:font.d,fontSize:16,fontWeight:700}}>Você</div><div style={{fontSize:12,color:trial.active?C.cor:C.g}}>{trial.active?`Trial: ${trial.daysLeft} dias`:"Plano Free"}</div></div><Btn v="primary" sz="sm" onClick={()=>nav("plans")}>Upgrade</Btn></div>
     <div style={{display:"flex",flexDirection:"column",gap:1,marginTop:12}}>{items.map((it,i)=><div key={i} className={`settings-item anim-in d${Math.min(i+1,6)}`} onClick={it.action} style={{cursor:"pointer"}}><span style={{fontSize:20}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{it.t}</div><div style={{fontSize:11,color:C.gL}}>{it.s}</div></div>{I.arrow(C.gL,14)}</div>)}</div>
-    <div style={{textAlign:"center",marginTop:24}}><LogoText size={24}/><div style={{fontSize:11,color:C.gL,marginTop:6}}>Versão 2.1.0</div></div></div><Toast msg={toast} visible={!!toast}/></div>);
+    <div style={{textAlign:"center",marginTop:24}}><LogoText size={24}/><div style={{fontSize:11,color:C.gL,marginTop:6}}>Versão 2.2.0</div></div></div>
+    {/* Logout modal */}
+    {showLogout&&<div onClick={()=>setShowLogout(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:C.w,borderRadius:20,padding:24,maxWidth:320,width:"100%",textAlign:"center"}}><div style={{fontSize:36,marginBottom:12}}>🚪</div><h3 style={{fontFamily:font.d,fontSize:18,fontWeight:900,marginBottom:6}}>Sair da conta?</h3><p style={{fontSize:13,color:C.g,marginBottom:20}}>Você precisará fazer login novamente.</p><div style={{display:"flex",gap:8}}><Btn v="ghost" full onClick={()=>setShowLogout(false)}>Cancelar</Btn><Btn v="coral" full onClick={()=>{setShowLogout(false);nav("home");}}>Sair</Btn></div></div></div>}
+  </div>);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -705,7 +941,7 @@ export default function App() {
 
   const tabs=[{id:"home",icon:I.home,label:"Início"},{id:"categories",icon:I.grid,label:"Categorias"},{id:"chatlist",icon:I.chat,label:"Chat"},{id:"register",icon:I.user,label:"Perfil"}];
   const activeTab=["home","categories","chatlist","register"].includes(screen)?screen:null;
-  const showNav=!["chatview"].includes(screen);
+  const showNav=!["chatview","editProfile","privacy","moderation","appearance","help","terms"].includes(screen);
 
   const renderScreen=()=>{switch(screen){
     case "home":return <Home nav={nav} trial={trial}/>;
@@ -719,6 +955,12 @@ export default function App() {
     case "register":return <Register nav={nav}/>;
     case "advertise":return <Advertise nav={nav}/>;
     case "settings":return <Settings nav={nav} trial={trial}/>;
+    case "editProfile":return <EditProfile nav={nav}/>;
+    case "privacy":return <PrivacyScreen nav={nav}/>;
+    case "moderation":return <ModerationScreen nav={nav}/>;
+    case "appearance":return <AppearanceScreen nav={nav}/>;
+    case "help":return <HelpScreen nav={nav}/>;
+    case "terms":return <TermsScreen nav={nav}/>;
     default:return <Home nav={nav} trial={trial}/>;
   }};
 
