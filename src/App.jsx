@@ -14,17 +14,21 @@ const C = {
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
 // ══════════════════════════════════════════════════════════════
-// META PIXEL EVENTS
+// META PIXEL EVENTS - PROFESSIONAL CONVERSION TRACKING
 // ══════════════════════════════════════════════════════════════
 function trackEvent(event, data) {
-  try { if(window.fbq) window.fbq('track', event, data); } catch(e) {}
+  try { 
+    if(window.fbq) window.fbq('track', event, data); 
+    console.log(`📊 FB Event: ${event}`, data);
+  } catch(e) {}
 }
-// Events used:
-// trackEvent('CompleteRegistration') — cadastro finalizado
-// trackEvent('Lead') — perfil completo
-// trackEvent('Subscribe', {value, currency:'BRL'}) — assinou plano
-// trackEvent('Contact') — clicou WhatsApp ou chat
-// trackEvent('ViewContent', {content_name}) — visualizou perfil
+// Events mapping:
+// trackEvent('Lead') — professional clicked signup button
+// trackEvent('CompleteRegistration') — finished registration form
+// trackEvent('Subscribe', {value: 99, currency:'BRL'}) — subscribed to plan
+// trackEvent('AddToWishlist') — saved a client inquiry
+// trackEvent('Contact') — sent message to client
+// trackEvent('ViewContent', {content_name: 'Profile'}) — viewed competitor profile
 
 // ══════════════════════════════════════════════════════════════
 // NOTIFICATION SOUND SYSTEM
@@ -142,9 +146,9 @@ const PROS = [
 ];
 
 const BANNERS = [
-  { t:"Eletricista 24h", s:"JM Serviços Elétricos — Emergências em SP", bg:`linear-gradient(135deg, ${C.pri} 0%, ${C.priDk} 100%)`, label:"Anúncio" },
-  { t:"Reformas & Acabamentos", s:"Construtora Horizonte — Orçamento grátis", bg:`linear-gradient(135deg, ${C.acc} 0%, #D4940F 100%)`, label:"Anúncio" },
-  { t:"7 dias grátis!", s:"Teste todos os recursos Pro sem pagar nada", bg:`linear-gradient(135deg, ${C.cor} 0%, #C9432A 100%)`, label:"TáNaMão" },
+  { t:"Receba clientes SEM sair de casa", s:"7 dias grátis. Sem cartão. Sem compromisso.", bg:`linear-gradient(135deg, ${C.pri} 0%, ${C.acc} 100%)`, label:"⏱️ POR TEMPO LIMITADO", cta:true, proOnly:false },
+  { t:"💰 Ganhe R$ 5k+/mês", s:"2.500+ profissionais já estão na plataforma", bg:`linear-gradient(135deg, #E8573A 0%, #D4940F 100%)`, label:"PROOF OF SUCCESS", cta:true, proOnly:false },
+  { t:"Fatura automática em pix", s:"Receba pagamentos de clientes de forma segura", bg:`linear-gradient(135deg, ${C.priDk} 0%, ${C.acc} 100%)`, label:"FACILIDADE", cta:true, proOnly:false },
 ];
 
 const PLANS = [
@@ -286,10 +290,10 @@ function Home({ nav, trial }) {
     <div className="screen-content">
       {/* Trial Banner */}
       {trial.active && (
-        <div className="anim-in" onClick={()=>nav("plans")} style={{ margin:"12px 16px 0", padding:"12px 16px", borderRadius:12, background:`linear-gradient(135deg, ${C.cor} 0%, #C9432A 100%)`, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
-          {I.calendar("#fff",18)}
-          <div style={{ flex:1 }}><div style={{ fontFamily:font.d, fontSize:13, fontWeight:700, color:"#fff" }}>Trial grátis: {trial.daysLeft} dias restantes</div>
-          <div style={{ fontSize:11, color:"rgba(255,255,255,0.75)" }}>Todos os recursos Pro liberados</div></div>
+        <div className="anim-in" onClick={()=>nav("plans")} style={{ margin:"12px 16px 0", padding:"14px 16px", borderRadius:12, background:`linear-gradient(135deg, ${C.acc} 0%, #D4940F 100%)`, display:"flex", alignItems:"center", gap:12, cursor:"pointer", boxShadow:"0 4px 16px rgba(232,168,23,0.25)" }}>
+          {I.zap("#fff",18)}
+          <div style={{ flex:1 }}><div style={{ fontFamily:font.d, fontSize:14, fontWeight:800, color:"#fff" }}>⏰ TRIAL: {trial.daysLeft} dias grátis restantes!</div>
+          <div style={{ fontSize:12, color:"rgba(255,255,255,0.85)" }}>Conclua seu perfil para ganhar R$ 5k+/mês</div></div>
           {I.arrow("#fff",14)}
         </div>
       )}
@@ -322,7 +326,7 @@ function Home({ nav, trial }) {
 
       {/* Stats */}
       <div className="anim-in d3 stats-row">
-        {[{n:"4.832",l:"Profissionais",c:C.pri},{n:"1.245",l:"Empresas",c:C.acc},{n:"12.890",l:"Serviços",c:C.cor}].map((s,i)=><div key={i} className="stat-card"><div style={{ fontFamily:font.d, fontSize:18, fontWeight:800, color:s.c }}>{s.n}</div><div style={{ fontSize:10, color:C.gL, fontWeight:500, marginTop:1 }}>{s.l}</div></div>)}
+        {[{n:"2.547",l:"Profissionais",c:C.pri},{n:"15.890",l:"Clientes ativos",c:C.acc},{n:"R$ 5k+",l:"Ganho médio/mês",c:C.cor}].map((s,i)=><div key={i} className="stat-card"><div style={{ fontFamily:font.d, fontSize:18, fontWeight:800, color:s.c }}>{s.n}</div><div style={{ fontSize:10, color:C.gL, fontWeight:500, marginTop:1 }}>{s.l}</div></div>)}
       </div>
 
       {/* Categories */}
@@ -333,15 +337,19 @@ function Home({ nav, trial }) {
       <div className="anim-in d4"><div className="section-header"><h2 className="section-title">Destaques</h2><button onClick={()=>nav("search")} className="link-btn">Ver todos</button></div>
       <div className="pro-list">{PROS.slice(0,4).map((p,i)=><ProCard key={p.id} p={p} onClick={()=>nav("profile",p)} fav={favs[p.id]} onFav={()=>setFavs(f=>({...f,[p.id]:!f[p.id]}))} i={i}/>)}</div></div>
 
-      {/* CTA */}
-      <div className="anim-in d5" style={{ padding:"4px 16px 0" }}>
-        <div className="cta-dark"><div className="cta-circle"/>
-        <h3 style={{ fontFamily:font.d, fontSize:18, fontWeight:800, color:"#fff", marginBottom:6, position:"relative" }}>É profissional?</h3>
-        <p style={{ fontSize:12, color:"rgba(255,255,255,0.65)", lineHeight:1.5, marginBottom:14, position:"relative" }}>7 dias grátis com todos os recursos. Cadastre-se agora.</p>
-        <div style={{ display:"flex", gap:8, position:"relative" }}>
-          <Btn v="primary" sz="sm" onClick={()=>nav("register")}>Cadastrar</Btn>
-          <Btn v="ghost" sz="sm" style={{ background:"rgba(255,255,255,0.1)", color:"#fff" }} onClick={()=>nav("plans")}>Ver planos</Btn>
-        </div></div>
+      {/* CTA - PROFESSIONAL CONVERSION */}
+      <div className="anim-in d5" style={{ padding:"8px 16px 0" }}>
+        <div style={{ background:`linear-gradient(135deg, ${C.pri} 0%, ${C.priDk} 100%)`, borderRadius:16, padding:22, position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", top:-20, right:-20, width:90, height:90, borderRadius:"50%", background:C.acc, opacity:0.15 }}/>
+          <h3 style={{ fontFamily:font.d, fontSize:20, fontWeight:800, color:"#fff", marginBottom:8, position:"relative" }}>🎯 Você é profissional?</h3>
+          <p style={{ fontSize:13, color:"rgba(255,255,255,0.85)", lineHeight:1.6, marginBottom:4, position:"relative" }><strong>Receba clientes direto do seu celular</strong></p>
+          <p style={{ fontSize:12, color:"rgba(255,255,255,0.7)", lineBottom:1.5, marginBottom:16, position:"relative" }}>✅ 7 dias grátis (sem cartão) · ✅ Fatura em PIX · ✅ +2500 profissionais já ganhando</p>
+          <button onClick={()=>{trackEvent('Lead'); nav("register");}} style={{ width:"100%", padding:"15px", fontSize:15, fontWeight:800, background:C.acc, color:"#fff", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font.d, transition:"transform .1s", letterSpacing:"0.5px" }} onTouchStart={e=>e.currentTarget.style.transform="scale(0.97)"} onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}>CADASTRE-SE AGORA → 7 DIAS GRÁTIS</button>
+          <div style={{ marginTop:12, display:"flex", gap:6, fontSize:11, color:"rgba(255,255,255,0.6)", justifyContent:"space-between" }}>
+            <span>⏰ Oferta válida por tempo limitado</span>
+            <button onClick={()=>nav("plans")} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.8)", cursor:"pointer", textDecoration:"underline", fontSize:11 }}>Ver planos</button>
+          </div>
+        </div>
       </div>
 
       <div style={{ padding:"10px 16px 0" }}>
