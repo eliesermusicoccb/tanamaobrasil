@@ -1,6 +1,34 @@
-node_modules
-dist
+# Vite & Node
+node_modules/
+dist/
+.vite/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
 .env
 .env.local
-.DS_Store
-*.log
+
+# Build
+coverage/
+.cache/
+
+# Arquivos que NÃO devem estar no repositório
+ESTRATEGIA_CONVERSAO_v1.md
+GUIA_REGISTRO_PROFISSIONAL.md
+estrategia-marketing-SP.md
+roteiros-video-ads.md
+ads-tanamao-SP.jsx
+landing-page-tanamao.html
+supabase-schema.sql
+TaNaMao-Brasil.jsx
