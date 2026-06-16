@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import RegisterProfessional from "./RegisterProfessional";
 
 // ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM
@@ -990,7 +991,7 @@ export default function App() {
     case "chatview":return <ChatView nav={nav} data={screenData}/>;
     case "notifs":return <Notifs nav={nav} trial={trial} trialNotifs={trialNotifs}/>;
     case "plans":return <PlansScreen nav={nav} trial={trial}/>;
-    case "register":return <Register nav={nav}/>;
+    case "register":return <RegisterProfessional onBack={()=>nav("home")} onSuccess={(data)=>{console.log("Novo profissional cadastrado:",data); trackEvent('Subscribe',{value:parseInt(data.planPrice||99),currency:'BRL'}); nav("home");}} nav={nav}/>;
     case "advertise":return <Advertise nav={nav}/>;
     case "settings":return <Settings nav={nav} trial={trial}/>;
     case "editProfile":return <EditProfile nav={nav}/>;

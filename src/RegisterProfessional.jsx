@@ -17,7 +17,7 @@ const PLANS = [
 
 function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
 
-export default function RegisterPro({ onBack }) {
+export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [step, setStep] = useState(1);
   const [plan, setPlan] = useState("Premium");
   const [errors, setErrors] = useState({});
@@ -50,6 +50,7 @@ export default function RegisterPro({ onBack }) {
     try {
       await new Promise(r => setTimeout(r, 1500));
       trackEvent("Subscribe", { value: parseInt(PLANS.find(p => p.name === plan).price), currency: "BRL" });
+      if (onSuccess) onSuccess({ ...f, plan });
     } catch (err) {
       setErrors({ sub: "Erro" });
     } finally { setLoading(false); }
@@ -107,7 +108,6 @@ export default function RegisterPro({ onBack }) {
       <style>{styles}</style>
       <div className="sc" ref={scrollRef}>
         <div className="c">
-          {/* Header */}
           {step > 1 && <button onClick={() => { setStep(1); setErrors({}); }} className="btn btn-b" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>← Voltar</button>}
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -121,7 +121,6 @@ export default function RegisterPro({ onBack }) {
             </div>
           </div>
 
-          {/* STEP 1: Profile Info */}
           {step === 1 && (
             <>
               <h1 className="t">Crie seu perfil</h1>
@@ -167,7 +166,7 @@ export default function RegisterPro({ onBack }) {
                 <label className="l">Categorias de serviço *</label>
                 {errors.cats && <div className="et">{errors.cats}</div>}
                 <div className="cg">
-                  {CATS.map(cat => <button key={cat} onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} className={`cb ${f.cats.includes(cat) ? 's' : ''}`}>{cat}</button>)}
+                  {CATS.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} className={`cb ${f.cats.includes(cat) ? 's' : ''}`}>{cat}</button>)}
                 </div>
                 <div className="cc">{f.cats.length}/5 selecionadas</div>
               </div>
@@ -178,11 +177,10 @@ export default function RegisterPro({ onBack }) {
                 {errors.bio && <div className="et">{errors.bio}</div>}
               </div>
 
-              <button onClick={next} className="btn btn-p">Continuar → Escolher Plano</button>
+              <button type="button" onClick={next} className="btn btn-p">Continuar → Escolher Plano</button>
             </>
           )}
 
-          {/* STEP 2: Choose Plan */}
           {step === 2 && (
             <>
               <h1 className="t">Escolha seu plano</h1>
@@ -211,11 +209,10 @@ export default function RegisterPro({ onBack }) {
                 ✅ Primeiros 7 dias grátis · ✅ Sem cartão · ✅ Cancele quando quiser
               </div>
 
-              <button onClick={next} className="btn btn-p">Continuar → Confirmar</button>
+              <button type="button" onClick={next} className="btn btn-p">Continuar → Confirmar</button>
             </>
           )}
 
-          {/* STEP 3: Confirm */}
           {step === 3 && (
             <>
               <h1 className="t">Confirme seu cadastro</h1>
@@ -236,7 +233,7 @@ export default function RegisterPro({ onBack }) {
                 <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
               </div>
 
-              <button onClick={submit} disabled={loading} className="btn btn-p" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "wait" : "pointer" }}>
+              <button type="button" onClick={submit} disabled={loading} className="btn btn-p" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "wait" : "pointer" }}>
                 {loading ? "Criando conta..." : "🎉 Finalizar Cadastro"}
               </button>
               {errors.sub && <div style={{ color: C.cor, fontSize: 13, marginTop: 12, textAlign: "center" }}>{errors.sub}</div>}
