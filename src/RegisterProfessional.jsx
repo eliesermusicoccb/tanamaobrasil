@@ -41,19 +41,85 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   };
 
   const next = () => {
-    if (step === 1) { if (v()) { setStep(2); trackEvent("CompleteRegistration"); scrollRef.current?.scrollTo(0, 0); } }
-    else if (step === 2) { setStep(3); trackEvent("Lead", { plan }); scrollRef.current?.scrollTo(0, 0); }
+    if (step === 1) { 
+      if (v()) { 
+        setStep(2); 
+        trackEvent("CompleteRegistration"); 
+        scrollRef.current?.scrollTo(0, 0); 
+      } 
+    }
+    else if (step === 2) { 
+      setStep(3); 
+      trackEvent("Lead", { plan }); 
+      scrollRef.current?.scrollTo(0, 0); 
+    }
   };
 
   const submit = async () => {
     setLoading(true);
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      trackEvent("Subscribe", { value: parseInt(PLANS.find(p => p.name === plan).price), currency: "BRL" });
-      if (onSuccess) onSuccess({ ...f, plan });
+      // Aguarda Supabase estar carregado
+      if (!window.SupabaseAPI) {
+        throw new Error("Supabase não carregou. Recarregue a página.");
+      }
+
+      // Inicializa Supabase
+      window.SupabaseAPI.initSupabase();
+
+      // Dados do profissional
+      const userData = {
+        name: f.name,
+        email: f.email,
+        password: f.pass,
+        whatsapp: f.wa,
+        city: f.city,
+        categories: f.cats, // Array
+        bio: f.bio,
+        avatar_initials: f.name.substring(0, 2).toUpperCase(),
+        badge: plan === "VIP" ? "premium" : plan === "Premium" ? "pro" : null,
+        trial_active: true,
+        trial_days_left: 7,
+      };
+
+      // Cria o usuário no Supabase
+      const { data: profesional, error: userError } = await window.SupabaseAPI.createUser(userData);
+
+      if (userError) {
+        throw new Error(userError.message || "Erro ao criar usuário");
+      }
+
+      // Cria a assinatura
+      const planPrices = { "Profissional": 99, "Premium": 199, "VIP": 399 };
+      const { data: subscription, error: subError } = await window.SupabaseAPI.createSubscription({
+        professional_id: profesional.id,
+        plan_name: plan,
+        plan_price: planPrices[plan],
+        status: "active",
+        trial_active: true,
+        payment_method: "trial",
+      });
+
+      if (subError) {
+        throw new Error(subError.message || "Erro ao criar plano");
+      }
+
+      // Sucesso
+      trackEvent("Subscribe", { value: planPrices[plan], currency: "BRL" });
+      
+      if (onSuccess) {
+        onSuccess({ 
+          ...f, 
+          plan, 
+          id: profesional.id,
+          subscriptionId: subscription.id 
+        });
+      }
     } catch (err) {
-      setErrors({ sub: "Erro" });
-    } finally { setLoading(false); }
+      console.error("Erro no cadastro:", err);
+      setErrors({ sub: err.message || "Erro ao criar conta. Tente novamente." });
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const styles = `
@@ -81,6 +147,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     .cc { font-size: 11px; color: ${C.gL}; margin-top: 4px; }
     .btn { padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: '${font.d}'; width: 100%; transition: transform 0.1s; }
     .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-p { background: linear-gradient(135deg, ${C.pri}, ${C.acc}); color: #fff; }
     .btn-b { background: ${C.gBg}; color: ${C.dk}; margin-bottom: 12px; }
     .pc { background: #fff; border-radius: 14px; border: 2px solid ${C.gB}; padding: 18px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
@@ -233,7 +300,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
                 <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
               </div>
 
-              <button type="button" onClick={submit} disabled={loading} className="btn btn-p" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "wait" : "pointer" }}>
+              <button type="button" onClick={submit} disabled={loading} className="btn btn-p">
                 {loading ? "Criando conta..." : "🎉 Finalizar Cadastro"}
               </button>
               {errors.sub && <div style={{ color: C.cor, fontSize: 13, marginTop: 12, textAlign: "center" }}>{errors.sub}</div>}
