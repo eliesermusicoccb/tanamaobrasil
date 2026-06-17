@@ -1,0 +1,41 @@
+=================================================================================
+                    ESTRUTURA CORRETA DO PROJETO
+=================================================================================
+
+RAIZ DO PROJETO:
+├── vite.config.js              ✅ CORRETO (não vite_config.js)
+├── package.json
+├── index.html
+├── .gitignore
+├── README.md
+└── src/
+    ├── main.jsx
+    ├── App.jsx                  ✅ App_COMPLETO_COM_REGISTRO.jsx (renomear para App.jsx)
+    └── RegisterProfessional.jsx ✅ NOVO ARQUIVO
+
+=================================================================================
+
+ARQUIVOS QUE DEVEM SER DELETADOS DO REPOSITÓRIO:
+❌ vite_config.js (errado — é vite.config.js)
+
+=================================================================================
+
+CHECKLIST FINAL:
+[ ] Deletar arquivo: vite_config.js
+[ ] Renomear: App_COMPLETO_COM_REGISTRO.jsx → App.jsx
+[ ] Copiar: RegisterProfessional.jsx para src/
+[ ] Copiar: vite.config.js para raiz (sem underscore)
+[ ] Fazer git add e push
+[ ] Verificar build na Vercel
+
+=================================================================================
+
+ARQUIVOS PARA USAR (em /outputs):
+1. App_COMPLETO_COM_REGISTRO.jsx  → renomear para src/App.jsx
+2. RegisterProfessional.jsx        → copiar para src/
+3. vite.config.js                 → copiar para RAIZ (substitui vite_config.js)
+4. package.json (já existe, não mexer)
+5. main.jsx (já existe, não mexer)
+6. index.html (já existe, não mexer)
+
+=================================================================================
