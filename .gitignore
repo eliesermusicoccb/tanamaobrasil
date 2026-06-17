@@ -32,3 +32,5 @@ ads-tanamao-SP.jsx
 landing-page-tanamao.html
 supabase-schema.sql
 TaNaMao-Brasil.jsx
+.env.local
+.env.*.local
