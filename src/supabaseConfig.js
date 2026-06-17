@@ -1,11 +1,6 @@
-// ══════════════════════════════════════════════════════════════
-// SUPABASE CONFIG - CDN (SEM NPM)
-// ══════════════════════════════════════════════════════════════
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const SUPABASE_URL = 'https://awkabegjsamyeqdwcngt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3a2FiZWdqc2FteWVxZHdjbmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTA2MDAsImV4cCI6MjA5NzIyNjYwMH0.TKZjFZ6lmpDbOwD_wEdo5jJdqVWywLRoR3gkaSvtO7o';
-
-// Aguarda o Supabase estar disponível no window
 let supabase = null;
 function initSupabase() {
   if (window.supabase) {
@@ -16,9 +11,6 @@ function initSupabase() {
   return null;
 }
 
-// ══════════════════════════════════════════════════════════════
-// PROFESSIONALS (Profissionais)
-// ══════════════════════════════════════════════════════════════
 async function createUser(userData) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -62,9 +54,6 @@ async function getAllProfessionals() {
   return { data, error };
 }
 
-// ══════════════════════════════════════════════════════════════
-// MESSAGES (Chat)
-// ══════════════════════════════════════════════════════════════
 async function sendMessage(messageData) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -86,9 +75,6 @@ async function getMessages(chatId) {
   return { data, error };
 }
 
-// ══════════════════════════════════════════════════════════════
-// REVIEWS (Avaliações)
-// ══════════════════════════════════════════════════════════════
 async function createReview(reviewData) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -110,9 +96,6 @@ async function getReviews(professionalId) {
   return { data, error };
 }
 
-// ══════════════════════════════════════════════════════════════
-// SUBSCRIPTIONS (Planos)
-// ══════════════════════════════════════════════════════════════
 async function createSubscription(subData) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -136,9 +119,6 @@ async function getUserSubscription(professionalId) {
   return { data, error };
 }
 
-// ══════════════════════════════════════════════════════════════
-// EXPORT FUNCTIONS
-// ══════════════════════════════════════════════════════════════
 window.SupabaseAPI = {
   initSupabase,
   createUser,
