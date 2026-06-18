@@ -45,13 +45,13 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       if (v()) { 
         setStep(2); 
         trackEvent("CompleteRegistration"); 
-        scrollRef.current?.scrollTo(0, 0); 
+        setTimeout(() => scrollRef.current?.scrollTo(0, 0), 100);
       } 
     }
     else if (step === 2) { 
       setStep(3); 
       trackEvent("Lead", { plan }); 
-      scrollRef.current?.scrollTo(0, 0); 
+      setTimeout(() => scrollRef.current?.scrollTo(0, 0), 100);
     }
   };
 
@@ -116,191 +116,141 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     }
   };
 
-  const styles = `
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: '${font.b}'; }
-    input, textarea, select { font-family: '${font.b}'; }
-    .sc { max-width: 480px; margin: 0 auto; min-height: 100vh; overflow-y: auto; }
-    .c { padding: 16px; }
-    .h { padding: 16px 0 12px; display: flex; align-items: center; gap: 12px; }
-    .t { font-family: '${font.d}'; font-size: 22px; font-weight: 800; color: ${C.dk}; }
-    .st { font-size: 13px; color: ${C.gL}; margin-top: 4px; }
-    .pg { display: flex; gap: 6px; margin: 12px 0 24px; }
-    .pd { width: 8px; height: 8px; border-radius: 50%; background: ${C.gB}; }
-    .pd.a { background: ${C.pri}; width: 20px; border-radius: 4px; }
-    .fg { margin-bottom: 16px; }
-    .l { display: block; font-weight: 600; font-size: 14px; color: ${C.dk}; margin-bottom: 8px; }
-    .i { width: 100%; padding: 13px 14px; border: 2px solid ${C.gB}; border-radius: 12px; font-size: 14px; outline: none; }
-    .i:focus { border-color: ${C.pri}; box-shadow: 0 0 0 4px ${C.priGlow}; }
-    .i.e { border-color: ${C.cor}; }
-    .et { color: ${C.cor}; font-size: 12px; margin-top: 4px; }
-    .cg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-    .cb { padding: 12px; border: 2px solid ${C.gB}; border-radius: 10px; background: #fff; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s; }
-    .cb:active { transform: scale(0.95); }
-    .cb.s { background: ${C.priLt}; border-color: ${C.pri}; color: ${C.pri}; }
-    .cc { font-size: 11px; color: ${C.gL}; margin-top: 4px; }
-    .btn { padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: '${font.d}'; width: 100%; transition: transform 0.1s; }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-p { background: linear-gradient(135deg, ${C.pri}, ${C.acc}); color: #fff; }
-    .btn-b { background: ${C.gBg}; color: ${C.dk}; margin-bottom: 12px; }
-    .pc { background: #fff; border-radius: 14px; border: 2px solid ${C.gB}; padding: 18px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
-    .pc:active { transform: scale(0.98); }
-    .pc.p { border-color: ${C.pri}; border-width: 2.5px; background: ${C.priLt}; }
-    .pch { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .pcn { font-family: '${font.d}'; font-size: 16px; font-weight: 800; }
-    .pcp { font-size: 14px; color: ${C.gL}; margin-top: 2px; }
-    .pcf { font-size: 13px; color: ${C.dk}; padding: 8px 0; display: flex; align-items: center; gap: 8px; }
-    .pcf:not(:last-child) { border-bottom: 1px solid ${C.gB}; }
-    .ck { color: ${C.pri}; }
-    .conf { background: ${C.priLt}; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-    .ch { font-weight: 700; color: ${C.pri}; margin-bottom: 12px; font-size: 14px; }
-    .cr { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid ${C.gB}; }
-    .cr:last-child { border: none; }
-    .cv { font-weight: 600; color: ${C.dk}; }
-    .logo { font-family: '${font.d}'; font-weight: 800; font-size: 24px; color: ${C.pri}; }
-    .logo2 { font-size: 12px; color: ${C.gL}; letter-spacing: 0.1em; text-transform: uppercase; }
-    .badge { display: inline-block; background: ${C.accLt}; color: ${C.acc}; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; margin-bottom: 8px; }
-    .span80 { opacity: 0.8; }
-  `;
-
   return (
-    <div style={{ background: C.w }}>
-      <style>{styles}</style>
-      <div className="sc" ref={scrollRef}>
-        <div className="c">
-          {step > 1 && <button onClick={() => { setStep(1); setErrors({}); }} className="btn btn-b" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>← Voltar</button>}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div><div className="logo">TáNaMão</div><div className="logo2">Cadastro Pro</div></div>
-              <div style={{ fontSize: 24 }}>{'●'.repeat(step)}{'○'.repeat(3 - step)}</div>
-            </div>
-            <div className="pg">
-              <div className={`pd ${step >= 1 ? 'a' : ''}`}></div>
-              <div className={`pd ${step >= 2 ? 'a' : ''}`}></div>
-              <div className={`pd ${step >= 3 ? 'a' : ''}`}></div>
-            </div>
+    <div ref={scrollRef} style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", overflowY: "auto", background: C.w, paddingBottom: 80 }}>
+      <div style={{ padding: "16px" }}>
+        {step > 1 && <button onClick={() => { setStep(1); setErrors({}); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: C.gBg, color: C.dk, marginBottom: "12px" }}>← Voltar</button>}
+        
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div><div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 24, color: C.pri }}>TáNaMão</div><div style={{ fontSize: 12, color: C.gL, letterSpacing: "0.1em", textTransform: "uppercase" }}>Cadastro Pro</div></div>
+            <div style={{ fontSize: 24 }}>{'●'.repeat(step)}{'○'.repeat(3 - step)}</div>
           </div>
-
-          {step === 1 && (
-            <>
-              <h1 className="t">Crie seu perfil</h1>
-              <p className="st">Preencha seus dados para começar a receber clientes</p>
-
-              <div className="fg">
-                <label className="l">Nome completo *</label>
-                <input type="text" className={`i ${errors.name ? 'e' : ''}`} value={f.name} onChange={e => { setF({...f, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} placeholder="João Silva"/>
-                {errors.name && <div className="et">{errors.name}</div>}
-              </div>
-
-              <div className="fg">
-                <label className="l">Email *</label>
-                <input type="email" className={`i ${errors.email ? 'e' : ''}`} value={f.email} onChange={e => { setF({...f, email: e.target.value}); if(errors.email) setErrors({...errors, email: null}); }} placeholder="seu@email.com"/>
-                {errors.email && <div className="et">{errors.email}</div>}
-              </div>
-
-              <div className="fg">
-                <label className="l">Senha *</label>
-                <input type="password" className={`i ${errors.pass ? 'e' : ''}`} value={f.pass} onChange={e => { setF({...f, pass: e.target.value}); if(errors.pass) setErrors({...errors, pass: null}); }} placeholder="Min. 8 caracteres"/>
-                {errors.pass && <div className="et">{errors.pass}</div>}
-              </div>
-
-              <div className="fg">
-                <label className="l">Confirmar senha *</label>
-                <input type="password" className={`i ${errors.pass2 ? 'e' : ''}`} value={f.pass2} onChange={e => { setF({...f, pass2: e.target.value}); if(errors.pass2) setErrors({...errors, pass2: null}); }} placeholder="Repita a senha"/>
-                {errors.pass2 && <div className="et">{errors.pass2}</div>}
-              </div>
-
-              <div className="fg">
-                <label className="l">WhatsApp (com DDD) *</label>
-                <input type="tel" className={`i ${errors.wa ? 'e' : ''}`} value={f.wa} onChange={e => { setF({...f, wa: e.target.value}); if(errors.wa) setErrors({...errors, wa: null}); }} placeholder="(11) 99999-0000"/>
-                {errors.wa && <div className="et">{errors.wa}</div>}
-              </div>
-
-              <div className="fg">
-                <label className="l">Cidade *</label>
-                <input type="text" className={`i ${errors.city ? 'e' : ''}`} value={f.city} onChange={e => { setF({...f, city: e.target.value}); if(errors.city) setErrors({...errors, city: null}); }} placeholder="São Paulo, SP"/>
-                {errors.city && <div className="et">{errors.city}</div>}
-              </div>
-
-              <div className="fg">
-                <label className="l">Categorias de serviço *</label>
-                {errors.cats && <div className="et">{errors.cats}</div>}
-                <div className="cg">
-                  {CATS.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} className={`cb ${f.cats.includes(cat) ? 's' : ''}`}>{cat}</button>)}
-                </div>
-                <div className="cc">{f.cats.length}/5 selecionadas</div>
-              </div>
-
-              <div className="fg">
-                <label className="l">Bio (apresentação) * <span className="span80">({f.bio.length}/100)</span></label>
-                <textarea className={`i ${errors.bio ? 'e' : ''}`} value={f.bio} onChange={e => { setF({...f, bio: e.target.value}); if(errors.bio) setErrors({...errors, bio: null}); }} placeholder="Fale sobre sua experiência, especializações..." rows="4" maxLength="100"/>
-                {errors.bio && <div className="et">{errors.bio}</div>}
-              </div>
-
-              <button type="button" onClick={next} className="btn btn-p">Continuar → Escolher Plano</button>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <h1 className="t">Escolha seu plano</h1>
-              <p className="st">Comece com 7 dias grátis, sem cartão de crédito</p>
-
-              <div style={{ margin: "24px 0 16px" }}>
-                {PLANS.map(p => (
-                  <div key={p.name} onClick={() => setPlan(p.name)} className={`pc ${plan === p.name ? 'p' : ''}`}>
-                    <div className="pch">
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 20 }}>{p.icon}</span>
-                          <div className="pcn">{p.name}</div>
-                        </div>
-                        <div className="pcp">R$ {p.price}<span style={{ fontSize: 11, color: C.gL }}>/mês</span></div>
-                        {p.popular && <div className="badge">Mais Popular</div>}
-                      </div>
-                      <div style={{ fontSize: 24 }}>{plan === p.name ? '✓' : ''}</div>
-                    </div>
-                    {p.feats.map((feat, i) => <div key={i} className="pcf"><span className="ck">✓</span> {feat}</div>)}
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ padding: 12, background: C.gBg, borderRadius: 10, fontSize: 12, color: C.g, marginBottom: 16 }}>
-                ✅ Primeiros 7 dias grátis · ✅ Sem cartão · ✅ Cancele quando quiser
-              </div>
-
-              <button type="button" onClick={next} className="btn btn-p">Continuar → Confirmar</button>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <h1 className="t">Confirme seu cadastro</h1>
-              <p className="st">Verifique os dados antes de concluir</p>
-
-              <div className="conf">
-                <div className="ch">Seus Dados</div>
-                <div className="cr"><span>Nome</span><span className="cv">{f.name}</span></div>
-                <div className="cr"><span>Email</span><span className="cv">{f.email}</span></div>
-                <div className="cr"><span>WhatsApp</span><span className="cv">{f.wa}</span></div>
-                <div className="cr"><span>Cidade</span><span className="cv">{f.city}</span></div>
-                <div className="cr"><span>Categorias</span><span className="cv">{f.cats.join(", ")}</span></div>
-              </div>
-
-              <div className="conf">
-                <div className="ch">Seu Plano</div>
-                <div className="cr"><span style={{ fontSize: 15, fontWeight: 700 }}>{plan}</span><span className="cv">R$ {PLANS.find(p => p.name === plan).price}/mês</span></div>
-                <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
-              </div>
-
-              <button type="button" onClick={submit} disabled={loading} className="btn btn-p" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "wait" : "pointer" }}>
-                {loading ? "Criando conta..." : "🎉 Finalizar Cadastro"}
-              </button>
-              {errors.sub && <div style={{ color: C.cor, fontSize: 13, marginTop: 12, textAlign: "center" }}>{errors.sub}</div>}
-            </>
-          )}
+          <div style={{ display: "flex", gap: 6, margin: "12px 0 24px" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 1 ? C.pri : C.gB, ...(step >= 1 && { width: 20, borderRadius: 4 }) }}></div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 2 ? C.pri : C.gB, ...(step >= 2 && { width: 20, borderRadius: 4 }) }}></div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 3 ? C.pri : C.gB, ...(step >= 3 && { width: 20, borderRadius: 4 }) }}></div>
+          </div>
         </div>
+
+        {step === 1 && (
+          <>
+            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Crie seu perfil</h1>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Preencha seus dados para começar a receber clientes</p>
+
+            <div style={{ marginBottom: 16, marginTop: 20 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Nome completo *</label>
+              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.name ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, boxShadow: errors.name ? "" : "none" }} value={f.name} onChange={e => { setF({...f, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} placeholder="João Silva"/>
+              {errors.name && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.name}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Email *</label>
+              <input type="email" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.email ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.email} onChange={e => { setF({...f, email: e.target.value}); if(errors.email) setErrors({...errors, email: null}); }} placeholder="seu@email.com"/>
+              {errors.email && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.email}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Senha *</label>
+              <input type="password" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.pass ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.pass} onChange={e => { setF({...f, pass: e.target.value}); if(errors.pass) setErrors({...errors, pass: null}); }} placeholder="Min. 8 caracteres"/>
+              {errors.pass && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.pass}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Confirmar senha *</label>
+              <input type="password" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.pass2 ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.pass2} onChange={e => { setF({...f, pass2: e.target.value}); if(errors.pass2) setErrors({...errors, pass2: null}); }} placeholder="Repita a senha"/>
+              {errors.pass2 && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.pass2}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>WhatsApp (com DDD) *</label>
+              <input type="tel" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.wa ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.wa} onChange={e => { setF({...f, wa: e.target.value}); if(errors.wa) setErrors({...errors, wa: null}); }} placeholder="(11) 99999-0000"/>
+              {errors.wa && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.wa}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
+              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.city} onChange={e => { setF({...f, city: e.target.value}); if(errors.city) setErrors({...errors, city: null}); }} placeholder="São Paulo, SP"/>
+              {errors.city && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.city}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias de serviço *</label>
+              {errors.cats && <div style={{ color: C.cor, fontSize: 12, marginBottom: 8 }}>{errors.cats}</div>}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginTop: 10 }}>
+                {CATS.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} style={{ padding: 12, border: `2px solid ${f.cats.includes(cat) ? C.pri : C.gB}`, borderRadius: 10, background: f.cats.includes(cat) ? C.priLt : "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s", fontFamily: font.b, color: f.cats.includes(cat) ? C.pri : C.dk }}>{cat}</button>)}
+              </div>
+              <div style={{ fontSize: 11, color: C.gL, marginTop: 4 }}>{f.cats.length}/5 selecionadas</div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Bio (apresentação) * <span style={{ opacity: 0.8 }}>({f.bio.length}/100)</span></label>
+              <textarea style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.bio ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, resize: "vertical" }} value={f.bio} onChange={e => { setF({...f, bio: e.target.value}); if(errors.bio) setErrors({...errors, bio: null}); }} placeholder="Fale sobre sua experiência, especializações..." rows="4" maxLength="100"/>
+              {errors.bio && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.bio}</div>}
+            </div>
+
+            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Escolher Plano</button>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha seu plano</h1>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Comece com 7 dias grátis, sem cartão de crédito</p>
+
+            <div style={{ margin: "24px 0 16px" }}>
+              {PLANS.map(p => (
+                <div key={p.name} onClick={() => setPlan(p.name)} style={{ background: "#fff", borderRadius: 14, border: `2px solid ${plan === p.name ? C.pri : C.gB}`, borderWidth: plan === p.name ? 2.5 : 2, background: plan === p.name ? C.priLt : "#fff", padding: 18, marginBottom: 12, cursor: "pointer", transition: "all 0.2s" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 20 }}>{p.icon}</span>
+                        <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800 }}>{p.name}</div>
+                      </div>
+                      <div style={{ fontSize: 14, color: C.gL, marginTop: 2 }}>R$ {p.price}<span style={{ fontSize: 11, color: C.gL }}>/mês</span></div>
+                      {p.popular && <div style={{ display: "inline-block", background: C.accLt, color: C.acc, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 5, marginBottom: 8, marginTop: 8 }}>Mais Popular</div>}
+                    </div>
+                    <div style={{ fontSize: 24 }}>{plan === p.name ? '✓' : ''}</div>
+                  </div>
+                  {p.feats.map((feat, i) => <div key={i} style={{ fontSize: 13, color: C.dk, padding: "8px 0", display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.gB}` }}><span style={{ color: C.pri }}>✓</span> {feat}</div>)}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ padding: 12, background: C.gBg, borderRadius: 10, fontSize: 12, color: C.g, marginBottom: 16 }}>
+              ✅ Primeiros 7 dias grátis · ✅ Sem cartão · ✅ Cancele quando quiser
+            </div>
+
+            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Confirmar</button>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Confirme seu cadastro</h1>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Verifique os dados antes de concluir</p>
+
+            <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16, marginTop: 20 }}>
+              <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seus Dados</div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Nome</span><span style={{ fontWeight: 600, color: C.dk }}>{f.name}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Email</span><span style={{ fontWeight: 600, color: C.dk }}>{f.email}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>WhatsApp</span><span style={{ fontWeight: 600, color: C.dk }}>{f.wa}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Cidade</span><span style={{ fontWeight: 600, color: C.dk }}>{f.city}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span>Categorias</span><span style={{ fontWeight: 600, color: C.dk }}>{f.cats.join(", ")}</span></div>
+            </div>
+
+            <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seu Plano</div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span style={{ fontSize: 15, fontWeight: 700 }}>{plan}</span><span style={{ fontWeight: 600, color: C.dk }}>R$ {PLANS.find(p => p.name === plan).price}/mês</span></div>
+              <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
+            </div>
+
+            <button type="button" onClick={submit} disabled={loading} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: loading ? "wait" : "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", opacity: loading ? 0.6 : 1, marginBottom: 20 }}>
+              {loading ? "Criando conta..." : "🎉 Finalizar Cadastro"}
+            </button>
+            {errors.sub && <div style={{ color: C.cor, fontSize: 13, marginTop: 12, textAlign: "center" }}>{errors.sub}</div>}
+          </>
+        )}
       </div>
     </div>
   );
