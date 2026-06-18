@@ -17,7 +17,7 @@ const PLANS = [
 
 function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
 
-export default function RegisterPro({ onBack }) {
+export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [step, setStep] = useState(1);
   const [plan, setPlan] = useState("Premium");
   const [errors, setErrors] = useState({});
@@ -41,18 +41,79 @@ export default function RegisterPro({ onBack }) {
   };
 
   const next = () => {
-    if (step === 1) { if (v()) { setStep(2); trackEvent("CompleteRegistration"); scrollRef.current?.scrollTo(0, 0); } }
-    else if (step === 2) { setStep(3); trackEvent("Lead", { plan }); scrollRef.current?.scrollTo(0, 0); }
+    if (step === 1) { 
+      if (v()) { 
+        setStep(2); 
+        trackEvent("CompleteRegistration"); 
+        scrollRef.current?.scrollTo(0, 0); 
+      } 
+    }
+    else if (step === 2) { 
+      setStep(3); 
+      trackEvent("Lead", { plan }); 
+      scrollRef.current?.scrollTo(0, 0); 
+    }
   };
 
   const submit = async () => {
     setLoading(true);
     try {
-      await new Promise(r => setTimeout(r, 1500));
-      trackEvent("Subscribe", { value: parseInt(PLANS.find(p => p.name === plan).price), currency: "BRL" });
+      if (!window.SupabaseAPI) {
+        throw new Error("Supabase não carregou. Recarregue a página.");
+      }
+
+      window.SupabaseAPI.initSupabase();
+
+      const userData = {
+        name: f.name,
+        email: f.email,
+        password: f.pass,
+        whatsapp: f.wa,
+        city: f.city,
+        categories: f.cats,
+        bio: f.bio,
+        avatar_initials: f.name.substring(0, 2).toUpperCase(),
+        badge: plan === "VIP" ? "premium" : plan === "Premium" ? "pro" : null,
+        trial_active: true,
+        trial_days_left: 7,
+      };
+
+      const { data: profesional, error: userError } = await window.SupabaseAPI.createUser(userData);
+
+      if (userError) {
+        throw new Error(userError.message || "Erro ao criar usuário");
+      }
+
+      const planPrices = { "Profissional": 99, "Premium": 199, "VIP": 399 };
+      const { data: subscription, error: subError } = await window.SupabaseAPI.createSubscription({
+        professional_id: profesional.id,
+        plan_name: plan,
+        plan_price: planPrices[plan],
+        status: "active",
+        trial_active: true,
+        payment_method: "trial",
+      });
+
+      if (subError) {
+        throw new Error(subError.message || "Erro ao criar plano");
+      }
+
+      trackEvent("Subscribe", { value: planPrices[plan], currency: "BRL" });
+      
+      if (onSuccess) {
+        onSuccess({ 
+          ...f, 
+          plan, 
+          id: profesional.id,
+          subscriptionId: subscription.id 
+        });
+      }
     } catch (err) {
-      setErrors({ sub: "Erro" });
-    } finally { setLoading(false); }
+      console.error("Erro no cadastro:", err);
+      setErrors({ sub: err.message || "Erro ao criar conta. Tente novamente." });
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const styles = `
@@ -80,6 +141,7 @@ export default function RegisterPro({ onBack }) {
     .cc { font-size: 11px; color: ${C.gL}; margin-top: 4px; }
     .btn { padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: '${font.d}'; width: 100%; transition: transform 0.1s; }
     .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-p { background: linear-gradient(135deg, ${C.pri}, ${C.acc}); color: #fff; }
     .btn-b { background: ${C.gBg}; color: ${C.dk}; margin-bottom: 12px; }
     .pc { background: #fff; border-radius: 14px; border: 2px solid ${C.gB}; padding: 18px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
@@ -107,7 +169,6 @@ export default function RegisterPro({ onBack }) {
       <style>{styles}</style>
       <div className="sc" ref={scrollRef}>
         <div className="c">
-          {/* Header */}
           {step > 1 && <button onClick={() => { setStep(1); setErrors({}); }} className="btn btn-b" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>← Voltar</button>}
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -121,7 +182,6 @@ export default function RegisterPro({ onBack }) {
             </div>
           </div>
 
-          {/* STEP 1: Profile Info */}
           {step === 1 && (
             <>
               <h1 className="t">Crie seu perfil</h1>
@@ -167,7 +227,7 @@ export default function RegisterPro({ onBack }) {
                 <label className="l">Categorias de serviço *</label>
                 {errors.cats && <div className="et">{errors.cats}</div>}
                 <div className="cg">
-                  {CATS.map(cat => <button key={cat} onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} className={`cb ${f.cats.includes(cat) ? 's' : ''}`}>{cat}</button>)}
+                  {CATS.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} className={`cb ${f.cats.includes(cat) ? 's' : ''}`}>{cat}</button>)}
                 </div>
                 <div className="cc">{f.cats.length}/5 selecionadas</div>
               </div>
@@ -178,11 +238,10 @@ export default function RegisterPro({ onBack }) {
                 {errors.bio && <div className="et">{errors.bio}</div>}
               </div>
 
-              <button onClick={next} className="btn btn-p">Continuar → Escolher Plano</button>
+              <button type="button" onClick={next} className="btn btn-p">Continuar → Escolher Plano</button>
             </>
           )}
 
-          {/* STEP 2: Choose Plan */}
           {step === 2 && (
             <>
               <h1 className="t">Escolha seu plano</h1>
@@ -211,11 +270,10 @@ export default function RegisterPro({ onBack }) {
                 ✅ Primeiros 7 dias grátis · ✅ Sem cartão · ✅ Cancele quando quiser
               </div>
 
-              <button onClick={next} className="btn btn-p">Continuar → Confirmar</button>
+              <button type="button" onClick={next} className="btn btn-p">Continuar → Confirmar</button>
             </>
           )}
 
-          {/* STEP 3: Confirm */}
           {step === 3 && (
             <>
               <h1 className="t">Confirme seu cadastro</h1>
@@ -236,7 +294,7 @@ export default function RegisterPro({ onBack }) {
                 <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
               </div>
 
-              <button onClick={submit} disabled={loading} className="btn btn-p" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "wait" : "pointer" }}>
+              <button type="button" onClick={submit} disabled={loading} className="btn btn-p" style={{ opacity: loading ? 0.6 : 1, cursor: loading ? "wait" : "pointer" }}>
                 {loading ? "Criando conta..." : "🎉 Finalizar Cadastro"}
               </button>
               {errors.sub && <div style={{ color: C.cor, fontSize: 13, marginTop: 12, textAlign: "center" }}>{errors.sub}</div>}
