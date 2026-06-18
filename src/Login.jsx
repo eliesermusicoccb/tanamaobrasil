@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { signIn, getProfessionalByEmail } from "./supabaseClient";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -7,7 +8,11 @@ const C = {
 };
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
-function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
+function trackEvent(e, d) { 
+  try { 
+    if (window.fbq) window.fbq("track", e, d); 
+  } catch (x) {} 
+}
 
 export default function Login({ onLoginSuccess }) {
   const [mode, setMode] = useState("login"); // "login" ou "register"
@@ -22,25 +27,33 @@ export default function Login({ onLoginSuccess }) {
 
   const handleLogin = async () => {
     setError("");
-    if (!validateEmail(email)) { setError("Email inválido"); return; }
-    if (!validatePassword(password)) { setError("Senha deve ter 8+ caracteres"); return; }
+    if (!validateEmail(email)) { 
+      setError("Email inválido"); 
+      return; 
+    }
+    if (!validatePassword(password)) { 
+      setError("Senha deve ter 8+ caracteres"); 
+      return; 
+    }
 
     setLoading(true);
     try {
-      if (!window.SupabaseAPI) throw new Error("Supabase não carregou");
+      // ✅ PASSO 1: Autenticar com Supabase Auth (senhas criptografadas)
+      const { data: authData, error: authError } = await signIn(email, password);
 
-      window.SupabaseAPI.initSupabase();
-
-      // Buscar profissional pelo email - CORRIGIDO
-      const { data: professional, error: searchError } = await window.SupabaseAPI.getUserByEmail(email);
-
-      if (searchError || !professional) {
+      if (authError) {
         throw new Error("Email ou senha incorretos");
       }
 
-      // Verificar senha (em produção, use autenticação do Supabase)
-      if (professional.password !== password) {
-        throw new Error("Email ou senha incorretos");
+      if (!authData?.user?.id) {
+        throw new Error("Erro ao fazer login");
+      }
+
+      // ✅ PASSO 2: Buscar perfil profissional (sem a senha!)
+      const { data: professional, error: profileError } = await getProfessionalByEmail(email);
+
+      if (profileError || !professional) {
+        throw new Error("Perfil de profissional não encontrado");
       }
 
       trackEvent("Login", { email });
@@ -51,7 +64,8 @@ export default function Login({ onLoginSuccess }) {
           name: professional.name,
           email: professional.email,
           badge: professional.badge,
-          avatar_initials: professional.avatar_initials
+          avatar_initials: professional.avatar_initials,
+          authUser: authData.user // guardar dados de auth também
         });
       }
     } catch (err) {
@@ -185,7 +199,7 @@ export default function Login({ onLoginSuccess }) {
 
       {/* Footer */}
       <div style={{ marginTop: 40, textAlign: "center", fontSize: 12, color: C.gL }}>
-        <p>🔒 Seus dados estão seguros com criptografia</p>
+        <p>🔒 Suas senhas estão seguras com criptografia de grau militar</p>
       </div>
     </div>
   );
