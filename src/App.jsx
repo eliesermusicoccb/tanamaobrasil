@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
+import Login from "./Login";
 
 // ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM
@@ -133,6 +134,7 @@ const I = {
   search: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
   filter: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
   whatsapp: (c, s) => <svg width={s} height={s} viewBox="0 0 24 24" fill={c}><path d="M17.6 6.3c-1.5-1.5-3.5-2.3-5.6-2.3-4.4 0-8 3.6-8 8 0 1.4.4 2.8 1.1 4L2 22l4.2-1.1c1.2.6 2.5 1 3.9 1h.1c4.4 0 8-3.6 8-8 0-2.1-.9-4.2-2.5-5.7zM12 20.1c-1.2 0-2.4-.3-3.5-.9l-.3-.1-2.8.7.7-2.8-.1-.3c-.6-1.1-.9-2.3-.9-3.5 0-3.6 3-6.6 6.6-6.6 1.8 0 3.5.7 4.8 2 1.2 1.2 1.9 2.9 1.9 4.7 0 3.6-3 6.6-6.7 6.6z"/></svg>,
+  logout: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5m0 0l-5-5" /></svg>,
   star: (c) => <svg width="16" height="16" viewBox="0 0 24 24" fill={c}><polygon points="12 2 15.09 10.26 24 10.27 17.18 16.70 20.27 25 12 19.54 3.73 25 6.82 16.70 0 10.27 8.91 10.26 12 2"/></svg>,
   heart: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill={c} stroke={c} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
   phone: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
@@ -159,12 +161,12 @@ function Avatar({ ini, size = 40, badge = null }) {
   );
 }
 
-function TopBar({ title, onBack }) {
+function TopBar({ title, onBack, rightIcon, onRightClick }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: `1px solid ${C.gB}` }}>
       <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>{I.back(C.g)}</button>
       <h1 style={{ fontFamily: font.d, fontSize: 18, fontWeight: 800, color: C.dk }}>{title}</h1>
-      <div style={{ width: 24 }}/>
+      {rightIcon ? <button onClick={onRightClick} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>{rightIcon}</button> : <div style={{ width: 24 }}/>}
     </div>
   );
 }
@@ -188,7 +190,7 @@ function Btn({ v = "secondary", full = false, sz = "md", onClick, children, disa
 // ══════════════════════════════════════════════════════════════
 // SCREENS
 // ══════════════════════════════════════════════════════════════
-function Home({ nav, trial }) {
+function Home({ nav, trial, user }) {
   const [bannerIdx, setBannerIdx] = useState(0);
   const banners = [
     { title: "Encontre profissionais", sub: "De forma rápida e segura", bg: `linear-gradient(135deg, ${C.pri}, ${C.priDk})` },
@@ -200,7 +202,8 @@ function Home({ nav, trial }) {
     <div className="screen-content">
       <div style={{ padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontFamily: font.d, fontSize: 28, fontWeight: 900, color: C.dk }}>TáNaMão</div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {user && <div style={{ fontSize: 12, color: C.gL }}>👋 {user.name}</div>}
           <button className="icon-btn" onClick={() => nav("notifs")}>{I.bell(C.g)}</button>
         </div>
       </div>
@@ -219,7 +222,7 @@ function Home({ nav, trial }) {
           <div className="banner-sub">{banners[bannerIdx].sub}</div>
         </div>
         <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12 }}>
-          {banners.map((_, i) => <div key={i} className={`dot ${i === bannerIdx ? "active" : ""}`} onClick={() => setBannerIdx(i)} />)}
+          {banners.map((_, i) => <div key={i} className={`dot ${i === bannerIdx ? "active" : ""}`} onClick={() => setBannerIdx(i)} style={{ width: 7, height: 7, borderRadius: "50%", background: i === bannerIdx ? "#fff" : "rgba(255,255,255,.3)", cursor: "pointer", transition: "all .3s", ...(i === bannerIdx && { width: 22, borderRadius: 4 }) }} />)}
         </div>
       </div>
 
@@ -323,28 +326,29 @@ function PlansScreen({ nav, trial }) {
   return <div className="screen-content"><TopBar title="Planos" onBack={() => nav("home")} /><div style={{ padding: 16, textAlign: "center" }}><div style={{ fontFamily: font.d, fontSize: 20, fontWeight: 900 }}>Escolha seu plano</div><p style={{ fontSize: 13, color: C.g, marginTop: 8 }}>7 dias grátis para todos os planos</p></div></div>;
 }
 
-function Settings({ nav, trial }) {
+function Settings({ nav, trial, user, onLogout }) {
   return (
     <div className="screen-content">
       <TopBar title="Configurações" onBack={() => nav("home")} />
       <div style={{ padding: 16 }}>
         <div style={{ background: C.priLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.pri, marginBottom: 8 }}>Sua Conta</div>
-          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Email: seu@email.com</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Nome: {user?.name || "Não identificado"}</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Email: {user?.email || "Não identificado"}</div>
           <Btn v="secondary" full sz="sm">Editar Perfil</Btn>
         </div>
 
         <div style={{ background: C.accLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.acc, marginBottom: 8 }}>Seu Plano</div>
-          <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Status: Premium</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Status: {user?.badge === "premium" ? "Premium" : user?.badge === "pro" ? "Pro" : "Gratuito"}</div>
           <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Próxima cobrança: 20 de Janeiro</div>
           <Btn v="secondary" full sz="sm">Gerenciar Plano</Btn>
         </div>
 
         <div style={{ background: C.corLt, borderRadius: 12, padding: 16 }}>
-          <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.cor, marginBottom: 8 }}>Suporte</div>
-          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Tem dúvidas ou precisa de ajuda?</div>
-          <Btn v="secondary" full sz="sm">Contate o Suporte</Btn>
+          <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.cor, marginBottom: 8 }}>Segurança</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Gerenciar sua conta e dados</div>
+          <Btn v="secondary" full sz="sm" onClick={onLogout}>{I.logout(C.cor)} Fazer Logout</Btn>
         </div>
       </div>
     </div>
@@ -356,6 +360,8 @@ function Advertise({ nav }) {
 }
 
 export default function App() {
+  const [logged, setLogged] = useState(false);
+  const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("home");
   const [screenData, setScreenData] = useState(null);
   const [history, setHistory] = useState(["home"]);
@@ -376,27 +382,45 @@ export default function App() {
     scrollRef.current?.scrollTo(0, 0);
   }, [history]);
 
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setLogged(true);
+    setScreen("home");
+    setHistory(["home"]);
+  };
+
+  const handleLogout = () => {
+    setLogged(false);
+    setUser(null);
+    setScreen("home");
+    setHistory(["home"]);
+  };
+
   const tabs = [
     { id: "home", icon: I.home, label: "Início" },
     { id: "categories", icon: I.grid, label: "Categorias" },
     { id: "chatlist", icon: I.chat, label: "Chat" },
-    { id: "register", icon: I.user, label: "Perfil" }
+    { id: "register", icon: I.user, label: logged ? "Perfil" : "Cadastro" }
   ];
   const activeTab = ["home", "categories", "chatlist", "register"].includes(screen) ? screen : null;
 
   const renderScreen = () => {
+    if (!logged) {
+      return <Login onLoginSuccess={handleLoginSuccess} />;
+    }
+
     switch (screen) {
-      case "home": return <Home nav={nav} trial={trial} />;
+      case "home": return <Home nav={nav} trial={trial} user={user} />;
       case "categories": return <Categories nav={nav} />;
       case "search": return <Search nav={nav} data={screenData} />;
       case "profile": return <Profile nav={nav} data={screenData} />;
       case "chatlist": return <ChatList nav={nav} />;
       case "notifs": return <Notifs nav={nav} />;
       case "plans": return <PlansScreen nav={nav} trial={trial} />;
-      case "register": return <RegisterProfessional onBack={() => nav("home")} onSuccess={(data) => { trackEvent('Subscribe', { value: parseInt(data.plan === "VIP" ? 399 : data.plan === "Premium" ? 199 : 99), currency: 'BRL' }); nav("home"); }} nav={nav} />;
+      case "register": return <RegisterProfessional onBack={() => nav("home")} onSuccess={(data) => { trackEvent('Subscribe', { value: parseInt(data.plan === "VIP" ? 399 : data.plan === "Premium" ? 199 : 99), currency: 'BRL' }); handleLoginSuccess(data); }} nav={nav} />;
       case "advertise": return <Advertise nav={nav} />;
-      case "settings": return <Settings nav={nav} trial={trial} />;
-      default: return <Home nav={nav} trial={trial} />;
+      case "settings": return <Settings nav={nav} trial={trial} user={user} onLogout={handleLogout} />;
+      default: return <Home nav={nav} trial={trial} user={user} />;
     }
   };
 
@@ -451,7 +475,7 @@ export default function App() {
         <div ref={scrollRef} className="app-scroll">
           {renderScreen()}
         </div>
-        {activeTab && (
+        {logged && activeTab && (
           <div className="bottom-nav">
             {tabs.map(tab => {
               const active = activeTab === tab.id;
