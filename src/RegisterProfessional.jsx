@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { signUp, createProfessionalProfile, createSubscription } from "./supabaseClient";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -15,27 +16,41 @@ const PLANS = [
   { name: "VIP", price: "399", icon: "👑", feats: ["Tudo Premium +", "1º lugar buscas", "Portfólio ilimitado", "Suporte 24/7"] },
 ];
 
-function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
+function trackEvent(e, d) { 
+  try { 
+    if (window.fbq) window.fbq("track", e, d); 
+  } catch (x) {} 
+}
 
 export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [step, setStep] = useState(1);
   const [plan, setPlan] = useState("Premium");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const scrollRef = useRef(null);
 
-  const [f, setF] = useState({ name: "", email: "", pass: "", pass2: "", wa: "", city: "", cats: [], bio: "" });
+  const [f, setF] = useState({ 
+    name: "", 
+    email: "", 
+    pass: "", 
+    pass2: "", 
+    wa: "", 
+    city: "", 
+    cats: [], 
+    bio: "" 
+  });
 
   const v = () => {
     const e = {};
     if (!f.name.trim()) e.name = "Obrigatório";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Email inválido";
-    if (f.pass.length < 8) e.pass = "Min. 8 chars";
+    if (f.pass.length < 8) e.pass = "Min. 8 caracteres";
     if (f.pass !== f.pass2) e.pass2 = "Não combinam";
     if (f.wa.replace(/\D/g, "").length < 10) e.wa = "Inválido";
     if (!f.city.trim()) e.city = "Obrigatório";
     if (f.cats.length === 0) e.cats = "Min. 1";
-    if (f.bio.length < 20) e.bio = "Min. 20 chars";
+    if (f.bio.length < 20) e.bio = "Min. 20 caracteres";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -57,17 +72,25 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
   const submit = async () => {
     setLoading(true);
+    setSuccessMsg("");
     try {
-      if (!window.SupabaseAPI) {
-        throw new Error("Supabase não carregou. Recarregue a página.");
+      // ✅ PASSO 1: Criar conta com autenticação do Supabase (senhas criptografadas)
+      const { data: authData, error: signUpError } = await signUp(f.email, f.pass);
+
+      if (signUpError) {
+        throw new Error(signUpError.message || "Erro ao criar conta");
       }
 
-      window.SupabaseAPI.initSupabase();
+      if (!authData?.user?.id) {
+        throw new Error("Erro ao gerar ID do usuário");
+      }
 
-      const userData = {
+      const userId = authData.user.id;
+
+      // ✅ PASSO 2: Criar perfil profissional (SEM armazenar a senha!)
+      const profileData = {
         name: f.name,
         email: f.email,
-        password: f.pass,
         whatsapp: f.wa,
         city: f.city,
         categories: f.cats,
@@ -78,180 +101,527 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         trial_days_left: 7,
       };
 
-      const { data: profesional, error: userError } = await window.SupabaseAPI.createUser(userData);
+      const { data: professional, error: profileError } = await createProfessionalProfile(userId, profileData);
 
-      if (userError) {
-        throw new Error(userError.message || "Erro ao criar usuário");
+      if (profileError) {
+        throw new Error(profileError.message || "Erro ao criar perfil");
       }
 
+      // ✅ PASSO 3: Criar subscription/plano
       const planPrices = { "Profissional": 99, "Premium": 199, "VIP": 399 };
-      const { data: subscription, error: subError } = await window.SupabaseAPI.createSubscription({
-        professional_id: profesional.id,
+      const { data: subscription, error: subError } = await createSubscription({
+        professional_id: userId,
         plan_name: plan,
         plan_price: planPrices[plan],
         status: "active",
         trial_active: true,
         payment_method: "trial",
+        created_at: new Date().toISOString()
       });
 
       if (subError) {
         throw new Error(subError.message || "Erro ao criar plano");
       }
 
-      trackEvent("Subscribe", { value: planPrices[plan], currency: "BRL" });
+      trackEvent("Purchase", { value: planPrices[plan], currency: "BRL", plan });
+
+      setSuccessMsg("✅ Conta criada com sucesso! Redirecionando...");
       
-      if (onSuccess) {
-        onSuccess({ 
-          ...f, 
-          plan, 
-          id: profesional.id,
-          subscriptionId: subscription.id 
-        });
-      }
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess({
+            id: userId,
+            name: f.name,
+            email: f.email,
+            badge: professional.badge,
+            avatar_initials: professional.avatar_initials,
+            authUser: authData.user
+          });
+        }
+      }, 2000);
+
     } catch (err) {
-      console.error("Erro no cadastro:", err);
-      setErrors({ sub: err.message || "Erro ao criar conta. Tente novamente." });
-    } finally { 
-      setLoading(false); 
+      console.error("Erro no registro:", err);
+      setErrors({ submit: err.message || "Erro ao registrar" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div ref={scrollRef} style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", overflowY: "auto", background: C.w, paddingBottom: 80 }}>
-      <div style={{ padding: "16px" }}>
-        {step > 1 && <button onClick={() => { setStep(1); setErrors({}); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: C.gBg, color: C.dk, marginBottom: "12px" }}>← Voltar</button>}
-        
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div><div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 24, color: C.pri }}>TáNaMão</div><div style={{ fontSize: 12, color: C.gL, letterSpacing: "0.1em", textTransform: "uppercase" }}>Cadastro Pro</div></div>
-            <div style={{ fontSize: 24 }}>{'●'.repeat(step)}{'○'.repeat(3 - step)}</div>
-          </div>
-          <div style={{ display: "flex", gap: 6, margin: "12px 0 24px" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 1 ? C.pri : C.gB, ...(step >= 1 && { width: 20, borderRadius: 4 }) }}></div>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 2 ? C.pri : C.gB, ...(step >= 2 && { width: 20, borderRadius: 4 }) }}></div>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 3 ? C.pri : C.gB, ...(step >= 3 && { width: 20, borderRadius: 4 }) }}></div>
-          </div>
+    <div ref={scrollRef} style={{ maxWidth: 600, margin: "0 auto", minHeight: "100vh", background: C.w, display: "flex", flexDirection: "column", padding: "20px" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: '${font.b}'; background: ${C.w}; }
+        input, textarea, select { font-family: '${font.b}'; }
+        input:disabled, textarea:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 }}>
+        <div>
+          <div style={{ fontFamily: font.d, fontSize: 28, fontWeight: 900, color: C.pri }}>TáNaMão</div>
+          <div style={{ fontSize: 12, color: C.gL }}>Cadastro de Profissional</div>
         </div>
+        <button 
+          onClick={onBack}
+          disabled={loading}
+          style={{ 
+            background: "none", 
+            border: "none", 
+            fontSize: 24, 
+            cursor: "pointer",
+            opacity: loading ? 0.5 : 1
+          }}
+        >
+          ✕
+        </button>
+      </div>
 
-        {step === 1 && (
-          <>
-            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Crie seu perfil</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Preencha seus dados para começar a receber clientes</p>
+      {/* Progress */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 30 }}>
+        {[1, 2, 3].map((s) => (
+          <div key={s} style={{ 
+            flex: 1, 
+            height: 4, 
+            background: s <= step ? C.pri : C.gB, 
+            borderRadius: 2,
+            transition: "all 0.3s"
+          }}></div>
+        ))}
+      </div>
 
-            <div style={{ marginBottom: 16, marginTop: 20 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Nome completo *</label>
-              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.name ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, boxShadow: errors.name ? "" : "none" }} value={f.name} onChange={e => { setF({...f, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} placeholder="João Silva"/>
-              {errors.name && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.name}</div>}
-            </div>
+      {/* Success Message */}
+      {successMsg && (
+        <div style={{ 
+          background: "#D1FAE5", 
+          border: `1px solid ${C.pri}`, 
+          borderRadius: 10, 
+          padding: 12, 
+          marginBottom: 20, 
+          color: C.pri, 
+          fontSize: 13, 
+          fontWeight: 600 
+        }}>
+          {successMsg}
+        </div>
+      )}
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Email *</label>
-              <input type="email" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.email ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.email} onChange={e => { setF({...f, email: e.target.value}); if(errors.email) setErrors({...errors, email: null}); }} placeholder="seu@email.com"/>
-              {errors.email && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.email}</div>}
-            </div>
+      {/* Erro Geral */}
+      {errors.submit && (
+        <div style={{ 
+          background: C.corLt, 
+          border: `1px solid ${C.cor}`, 
+          borderRadius: 10, 
+          padding: 12, 
+          marginBottom: 20, 
+          color: C.cor, 
+          fontSize: 13, 
+          fontWeight: 600 
+        }}>
+          {errors.submit}
+        </div>
+      )}
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Senha *</label>
-              <input type="password" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.pass ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.pass} onChange={e => { setF({...f, pass: e.target.value}); if(errors.pass) setErrors({...errors, pass: null}); }} placeholder="Min. 8 caracteres"/>
-              {errors.pass && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.pass}</div>}
-            </div>
+      {/* STEP 1: Dados Básicos */}
+      {step === 1 && (
+        <div>
+          <h2 style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: C.dk, marginBottom: 20 }}>
+            Seus Dados
+          </h2>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Confirmar senha *</label>
-              <input type="password" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.pass2 ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.pass2} onChange={e => { setF({...f, pass2: e.target.value}); if(errors.pass2) setErrors({...errors, pass2: null}); }} placeholder="Repita a senha"/>
-              {errors.pass2 && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.pass2}</div>}
-            </div>
+          {/* Nome */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              Nome Completo *
+            </label>
+            <input
+              type="text"
+              value={f.name}
+              onChange={(e) => setF({ ...f, name: e.target.value })}
+              placeholder="João Silva"
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                border: `2px solid ${errors.name ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b 
+              }}
+              disabled={loading}
+            />
+            {errors.name && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.name}</span>}
+          </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>WhatsApp (com DDD) *</label>
-              <input type="tel" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.wa ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.wa} onChange={e => { setF({...f, wa: e.target.value}); if(errors.wa) setErrors({...errors, wa: null}); }} placeholder="(11) 99999-0000"/>
-              {errors.wa && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.wa}</div>}
-            </div>
+          {/* Email */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              Email *
+            </label>
+            <input
+              type="email"
+              value={f.email}
+              onChange={(e) => setF({ ...f, email: e.target.value })}
+              placeholder="joao@email.com"
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                border: `2px solid ${errors.email ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b 
+              }}
+              disabled={loading}
+            />
+            {errors.email && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.email}</span>}
+          </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
-              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.city} onChange={e => { setF({...f, city: e.target.value}); if(errors.city) setErrors({...errors, city: null}); }} placeholder="São Paulo, SP"/>
-              {errors.city && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.city}</div>}
-            </div>
+          {/* Senha */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              Senha (min. 8 caracteres) *
+            </label>
+            <input
+              type="password"
+              value={f.pass}
+              onChange={(e) => setF({ ...f, pass: e.target.value })}
+              placeholder="••••••••"
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                border: `2px solid ${errors.pass ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b 
+              }}
+              disabled={loading}
+            />
+            {errors.pass && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.pass}</span>}
+          </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias de serviço *</label>
-              {errors.cats && <div style={{ color: C.cor, fontSize: 12, marginBottom: 8 }}>{errors.cats}</div>}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginTop: 10 }}>
-                {CATS.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} style={{ padding: 12, border: `2px solid ${f.cats.includes(cat) ? C.pri : C.gB}`, borderRadius: 10, background: f.cats.includes(cat) ? C.priLt : "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s", fontFamily: font.b, color: f.cats.includes(cat) ? C.pri : C.dk }}>{cat}</button>)}
-              </div>
-              <div style={{ fontSize: 11, color: C.gL, marginTop: 4 }}>{f.cats.length}/5 selecionadas</div>
-            </div>
+          {/* Confirmar Senha */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              Confirmar Senha *
+            </label>
+            <input
+              type="password"
+              value={f.pass2}
+              onChange={(e) => setF({ ...f, pass2: e.target.value })}
+              placeholder="••••••••"
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                border: `2px solid ${errors.pass2 ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b 
+              }}
+              disabled={loading}
+            />
+            {errors.pass2 && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.pass2}</span>}
+          </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Bio (apresentação) * <span style={{ opacity: 0.8 }}>({f.bio.length}/100)</span></label>
-              <textarea style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.bio ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, resize: "vertical" }} value={f.bio} onChange={e => { setF({...f, bio: e.target.value}); if(errors.bio) setErrors({...errors, bio: null}); }} placeholder="Fale sobre sua experiência, especializações..." rows="4" maxLength="100"/>
-              {errors.bio && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.bio}</div>}
-            </div>
+          {/* WhatsApp */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              WhatsApp *
+            </label>
+            <input
+              type="tel"
+              value={f.wa}
+              onChange={(e) => setF({ ...f, wa: e.target.value })}
+              placeholder="(11) 99999-9999"
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                border: `2px solid ${errors.wa ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b 
+              }}
+              disabled={loading}
+            />
+            {errors.wa && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.wa}</span>}
+          </div>
 
-            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Escolher Plano</button>
-          </>
-        )}
+          {/* Cidade */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              Cidade *
+            </label>
+            <input
+              type="text"
+              value={f.city}
+              onChange={(e) => setF({ ...f, city: e.target.value })}
+              placeholder="São Paulo"
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                border: `2px solid ${errors.city ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b 
+              }}
+              disabled={loading}
+            />
+            {errors.city && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.city}</span>}
+          </div>
 
-        {step === 2 && (
-          <>
-            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha seu plano</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Comece com 7 dias grátis, sem cartão de crédito</p>
+          {/* Botão Próximo */}
+          <button
+            onClick={next}
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "14px",
+              background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`,
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: loading ? "wait" : "pointer",
+              fontFamily: font.d,
+              opacity: loading ? 0.6 : 1,
+            }}
+          >
+            Próximo →
+          </button>
+        </div>
+      )}
 
-            <div style={{ margin: "24px 0 16px" }}>
-              {PLANS.map(p => (
-                <div key={p.name} onClick={() => setPlan(p.name)} style={{ background: "#fff", borderRadius: 14, border: `2px solid ${plan === p.name ? C.pri : C.gB}`, borderWidth: plan === p.name ? 2.5 : 2, background: plan === p.name ? C.priLt : "#fff", padding: 18, marginBottom: 12, cursor: "pointer", transition: "all 0.2s" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 20 }}>{p.icon}</span>
-                        <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800 }}>{p.name}</div>
-                      </div>
-                      <div style={{ fontSize: 14, color: C.gL, marginTop: 2 }}>R$ {p.price}<span style={{ fontSize: 11, color: C.gL }}>/mês</span></div>
-                      {p.popular && <div style={{ display: "inline-block", background: C.accLt, color: C.acc, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 5, marginBottom: 8, marginTop: 8 }}>Mais Popular</div>}
-                    </div>
-                    <div style={{ fontSize: 24 }}>{plan === p.name ? '✓' : ''}</div>
-                  </div>
-                  {p.feats.map((feat, i) => <div key={i} style={{ fontSize: 13, color: C.dk, padding: "8px 0", display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.gB}` }}><span style={{ color: C.pri }}>✓</span> {feat}</div>)}
-                </div>
+      {/* STEP 2: Categorias & Bio */}
+      {step === 2 && (
+        <div>
+          <h2 style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: C.dk, marginBottom: 20 }}>
+            Sobre Você
+          </h2>
+
+          {/* Categorias */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 12 }}>
+              Especialidades * (selecione ao menos 1)
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {CATS.map((cat) => (
+                <label key={cat} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={f.cats.includes(cat)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setF({ ...f, cats: [...f.cats, cat] });
+                      } else {
+                        setF({ ...f, cats: f.cats.filter((c) => c !== cat) });
+                      }
+                    }}
+                    style={{ width: 18, height: 18, cursor: "pointer" }}
+                    disabled={loading}
+                  />
+                  <span style={{ fontSize: 13, color: C.dk }}>{cat}</span>
+                </label>
               ))}
             </div>
+            {errors.cats && <span style={{ fontSize: 12, color: C.cor, marginTop: 8 }}>{errors.cats}</span>}
+          </div>
 
-            <div style={{ padding: 12, background: C.gBg, borderRadius: 10, fontSize: 12, color: C.g, marginBottom: 16 }}>
-              ✅ Primeiros 7 dias grátis · ✅ Sem cartão · ✅ Cancele quando quiser
-            </div>
+          {/* Bio */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>
+              Descrição (min. 20 caracteres) *
+            </label>
+            <textarea
+              value={f.bio}
+              onChange={(e) => setF({ ...f, bio: e.target.value })}
+              placeholder="Descreva sua experiência e serviços..."
+              style={{ 
+                width: "100%", 
+                minHeight: 100,
+                padding: "12px 14px", 
+                border: `2px solid ${errors.bio ? C.cor : C.gB}`, 
+                borderRadius: 10, 
+                fontSize: 14, 
+                outline: "none",
+                fontFamily: font.b,
+                resize: "vertical"
+              }}
+              disabled={loading}
+            />
+            {errors.bio && <span style={{ fontSize: 12, color: C.cor, marginTop: 4 }}>{errors.bio}</span>}
+          </div>
 
-            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Confirmar</button>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Confirme seu cadastro</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Verifique os dados antes de concluir</p>
-
-            <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16, marginTop: 20 }}>
-              <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seus Dados</div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Nome</span><span style={{ fontWeight: 600, color: C.dk }}>{f.name}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Email</span><span style={{ fontWeight: 600, color: C.dk }}>{f.email}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>WhatsApp</span><span style={{ fontWeight: 600, color: C.dk }}>{f.wa}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Cidade</span><span style={{ fontWeight: 600, color: C.dk }}>{f.city}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span>Categorias</span><span style={{ fontWeight: 600, color: C.dk }}>{f.cats.join(", ")}</span></div>
-            </div>
-
-            <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seu Plano</div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span style={{ fontSize: 15, fontWeight: 700 }}>{plan}</span><span style={{ fontWeight: 600, color: C.dk }}>R$ {PLANS.find(p => p.name === plan).price}/mês</span></div>
-              <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
-            </div>
-
-            <button type="button" onClick={submit} disabled={loading} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: loading ? "wait" : "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", opacity: loading ? 0.6 : 1, marginBottom: 20 }}>
-              {loading ? "Criando conta..." : "🎉 Finalizar Cadastro"}
+          {/* Botões */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <button
+              onClick={() => setStep(1)}
+              disabled={loading}
+              style={{
+                flex: 1,
+                padding: "14px",
+                background: C.gBg,
+                color: C.dk,
+                border: "none",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: loading ? "wait" : "pointer",
+                fontFamily: font.d,
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              ← Voltar
             </button>
-            {errors.sub && <div style={{ color: C.cor, fontSize: 13, marginTop: 12, textAlign: "center" }}>{errors.sub}</div>}
-          </>
-        )}
-      </div>
+            <button
+              onClick={next}
+              disabled={loading}
+              style={{
+                flex: 1,
+                padding: "14px",
+                background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`,
+                color: "#fff",
+                border: "none",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: loading ? "wait" : "pointer",
+                fontFamily: font.d,
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              Próximo →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Planos */}
+      {step === 3 && (
+        <div>
+          <h2 style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: C.dk, marginBottom: 20 }}>
+            Escolha seu Plano
+          </h2>
+
+          {/* Cards de Planos */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, marginBottom: 24 }}>
+            {PLANS.map((p) => (
+              <div
+                key={p.name}
+                onClick={() => setPlan(p.name)}
+                style={{
+                  padding: 20,
+                  border: `2px solid ${plan === p.name ? C.pri : C.gB}`,
+                  borderRadius: 12,
+                  background: plan === p.name ? C.priLt : "#fff",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                  opacity: loading ? 0.5 : 1,
+                  position: "relative"
+                }}
+              >
+                {p.popular && (
+                  <div style={{ 
+                    position: "absolute", 
+                    top: -12, 
+                    left: 20, 
+                    background: C.acc, 
+                    color: "#fff", 
+                    padding: "4px 12px", 
+                    borderRadius: 20, 
+                    fontSize: 11, 
+                    fontWeight: 700 
+                  }}>
+                    MAIS POPULAR
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 24, marginBottom: 4 }}>{p.icon}</div>
+                    <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.dk }}>
+                      {p.name}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontFamily: font.d, fontSize: 20, fontWeight: 900, color: C.pri }}>
+                      R$ {p.price}
+                    </div>
+                    <div style={{ fontSize: 11, color: C.gL }}>/mês</div>
+                  </div>
+                </div>
+                <ul style={{ fontSize: 13, color: C.g, lineHeight: 1.6 }}>
+                  {p.feats.map((feat) => (
+                    <li key={feat} style={{ marginBottom: 6 }}>✓ {feat}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Termos */}
+          <div style={{ 
+            background: C.gBg, 
+            padding: 12, 
+            borderRadius: 10, 
+            fontSize: 12, 
+            color: C.g, 
+            marginBottom: 24, 
+            lineHeight: 1.5 
+          }}>
+            ✓ 7 dias de trial grátis<br/>
+            ✓ Sem cartão necessário no trial<br/>
+            ✓ Cancele quando quiser
+          </div>
+
+          {/* Botões */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <button
+              onClick={() => setStep(2)}
+              disabled={loading}
+              style={{
+                flex: 1,
+                padding: "14px",
+                background: C.gBg,
+                color: C.dk,
+                border: "none",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: loading ? "wait" : "pointer",
+                fontFamily: font.d,
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              ← Voltar
+            </button>
+            <button
+              onClick={submit}
+              disabled={loading}
+              style={{
+                flex: 1,
+                padding: "14px",
+                background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`,
+                color: "#fff",
+                border: "none",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: loading ? "wait" : "pointer",
+                fontFamily: font.d,
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              {loading ? "Criando conta..." : "Criar Conta"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
