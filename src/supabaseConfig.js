@@ -32,6 +32,17 @@ async function getUser(id) {
   return { data, error };
 }
 
+async function getUserByEmail(email) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: 'Supabase not loaded' };
+  const { data, error } = await sb
+    .from('professionals')
+    .select('*')
+    .eq('email', email)
+    .single();
+  return { data, error };
+}
+
 async function updateUser(id, updates) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -123,6 +134,7 @@ window.SupabaseAPI = {
   initSupabase,
   createUser,
   getUser,
+  getUserByEmail,
   updateUser,
   getAllProfessionals,
   sendMessage,

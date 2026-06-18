@@ -31,8 +31,8 @@ export default function Login({ onLoginSuccess }) {
 
       window.SupabaseAPI.initSupabase();
 
-      // Buscar profissional pelo email
-      const { data: professional, error: searchError } = await window.SupabaseAPI.getUser(email);
+      // Buscar profissional pelo email - CORRIGIDO
+      const { data: professional, error: searchError } = await window.SupabaseAPI.getUserByEmail(email);
 
       if (searchError || !professional) {
         throw new Error("Email ou senha incorretos");
@@ -152,7 +152,7 @@ export default function Login({ onLoginSuccess }) {
 
         {/* Botão Cadastro */}
         <button
-          onClick={() => { setMode("register"); setError(""); }}
+          onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
           style={{
             width: "100%",
             padding: "14px",
@@ -166,18 +166,18 @@ export default function Login({ onLoginSuccess }) {
             fontFamily: font.d,
           }}
         >
-          Criar Conta
+          {mode === "login" ? "Criar Conta" : "Voltar ao Login"}
         </button>
 
         {/* Info */}
         <div style={{ fontSize: 12, color: C.gL, marginTop: 16, textAlign: "center" }}>
           {mode === "login" ? (
             <>
-              Não tem conta? <button onClick={() => { setMode("register"); setError(""); }} style={{ background: "none", border: "none", color: C.pri, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>Cadastre-se</button>
+              Não tem conta? <button onClick={() => { setMode("register"); setError(""); }} style={{ background: "none", border: "none", color: C.pri, fontWeight: 700, cursor: "pointer", textDecoration: "underline", fontFamily: font.b, fontSize: 12 }}>Cadastre-se</button>
             </>
           ) : (
             <>
-              Já tem conta? <button onClick={() => { setMode("login"); setError(""); }} style={{ background: "none", border: "none", color: C.pri, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>Faça login</button>
+              Já tem conta? <button onClick={() => { setMode("login"); setError(""); }} style={{ background: "none", border: "none", color: C.pri, fontWeight: 700, cursor: "pointer", textDecoration: "underline", fontFamily: font.b, fontSize: 12 }}>Faça login</button>
             </>
           )}
         </div>
