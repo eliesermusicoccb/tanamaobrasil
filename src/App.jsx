@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
-import "./supabaseConfig";
 
 // ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM
@@ -66,7 +65,6 @@ const I = {
   back: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
   search: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
   whatsapp: (c, s) => <svg width={s} height={s} viewBox="0 0 24 24" fill={c}><path d="M17.6 6.3c-1.5-1.5-3.5-2.3-5.6-2.3-4.4 0-8 3.6-8 8 0 1.4.4 2.8 1.1 4L2 22l4.2-1.1c1.2.6 2.5 1 3.9 1h.1c4.4 0 8-3.6 8-8 0-2.1-.9-4.2-2.5-5.7zM12 20.1c-1.2 0-2.4-.3-3.5-.9l-.3-.1-2.8.7.7-2.8-.1-.3c-.6-1.1-.9-2.3-.9-3.5 0-3.6 3-6.6 6.6-6.6 1.8 0 3.5.7 4.8 2 1.2 1.2 1.9 2.9 1.9 4.7 0 3.6-3 6.6-6.7 6.6z"/></svg>,
-  star: (c) => <svg width="16" height="16" viewBox="0 0 24 24" fill={c}><polygon points="12 2 15.09 10.26 24 10.27 17.18 16.70 20.27 25 12 19.54 3.73 25 6.82 16.70 0 10.27 8.91 10.26 12 2"/></svg>,
   logout: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5m0 0l-5-5" /></svg>,
 };
 
@@ -328,7 +326,7 @@ function Settings({ nav, user, onLogout }) {
 // MAIN APP
 // ══════════════════════════════════════════════════════════════
 export default function App() {
-  const [mode, setMode] = useState("visitor"); // "visitor", "login", "logged"
+  const [mode, setMode] = useState("visitor");
   const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("home");
   const [screenData, setScreenData] = useState(null);
