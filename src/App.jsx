@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
+import "./supabaseConfig"; // Importa para inicializar window.SupabaseAPI
 
 // ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM
