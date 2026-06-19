@@ -3,6 +3,58 @@ import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
 
 // ══════════════════════════════════════════════════════════════
+// SUPABASE INIT - INLINE
+// ══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://awkabegjsamyeqdwcngt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3a2FiZWdqc2FteWVxZHdjbmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTA2MDAsImV4cCI6MjA5NzIyNjYwMH0.TKZjFZ6lmpDbOwD_wEdo5jJdqVWywLRoR3gkaSvtO7o';
+
+let supabase = null;
+
+function initSupabase() {
+  if (!supabase && window.supabase) {
+    const { createClient } = window.supabase;
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return supabase;
+}
+
+async function createUser(userData) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: 'Supabase not loaded' };
+  try {
+    const { data, error } = await sb.from('professionals').insert([userData]).select();
+    return { data: data?.[0], error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+async function getUserByEmail(email) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: 'Supabase not loaded' };
+  try {
+    const { data, error } = await sb.from('professionals').select('*').eq('email', email).single();
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+async function createSubscription(subData) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: 'Supabase not loaded' };
+  try {
+    const { data, error } = await sb.from('subscriptions').insert([subData]).select();
+    return { data: data?.[0], error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+// Expõe globalmente
+window.SupabaseAPI = { initSupabase, createUser, getUserByEmail, createSubscription };
+
+// ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM
 // ══════════════════════════════════════════════════════════════
 const C = {
@@ -20,9 +72,6 @@ function trackEvent(event, data) {
   } catch(e) {}
 }
 
-// ══════════════════════════════════════════════════════════════
-// DATA
-// ══════════════════════════════════════════════════════════════
 const CATEGORIES = [
   { icon:"🔧", name:"Encanador", count:342 },{ icon:"⚡", name:"Eletricista", count:289 },
   { icon:"🎨", name:"Pintor", count:415 },{ icon:"🏗️", name:"Pedreiro", count:523 },
@@ -55,9 +104,6 @@ const PROS = [
     whatsapp:"5541999990004", categories:["Fotografia","Eventos","Produto"]},
 ];
 
-// ══════════════════════════════════════════════════════════════
-// ICONS
-// ══════════════════════════════════════════════════════════════
 const I = {
   home: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   grid: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
@@ -68,9 +114,6 @@ const I = {
   logout: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5m0 0l-5-5" /></svg>,
 };
 
-// ══════════════════════════════════════════════════════════════
-// COMPONENTS
-// ══════════════════════════════════════════════════════════════
 function Avatar({ ini, size = 40, badge = null }) {
   const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F"];
   const colorIndex = ini.charCodeAt(0) % colors.length;
@@ -94,9 +137,6 @@ function TopBar({ title, onBack }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// VISITANTE SCREENS
-// ══════════════════════════════════════════════════════════════
 function VisitorHome({ nav, onLogin }) {
   const [bannerIdx, setBannerIdx] = useState(0);
   const banners = [
@@ -162,7 +202,7 @@ function VisitorHome({ nav, onLogin }) {
   );
 }
 
-function VisitorSearch({ nav, data }) {
+function VisitorSearch({ nav }) {
   return (
     <div className="screen-content">
       <TopBar title="Buscar" onBack={() => nav("back")} />
@@ -219,16 +259,9 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// LOGGED IN SCREENS
-// ══════════════════════════════════════════════════════════════
 function LoggedHome({ nav, user }) {
   const [bannerIdx, setBannerIdx] = useState(0);
-  const banners = [
-    { title: "Bem-vindo", sub: `Olá, ${user.name}!`, bg: `linear-gradient(135deg, ${C.pri}, ${C.priDk})` },
-    { title: "Seu Perfil", sub: "Edite suas informações", bg: `linear-gradient(135deg, ${C.acc}, #D68910)` },
-  ];
-  useEffect(() => { const t = setInterval(() => setBannerIdx(i => (i + 1) % banners.length), 4000); return () => clearInterval(t); }, []);
+  useEffect(() => { const t = setInterval(() => setBannerIdx(i => (i + 1) % 2), 4000); return () => clearInterval(t); }, []);
   
   return (
     <div className="screen-content">
@@ -238,9 +271,8 @@ function LoggedHome({ nav, user }) {
       </div>
 
       <div style={{ padding: "0 16px 20px" }}>
-        <div style={{ background: banners[bannerIdx].bg, borderRadius: 16, padding: 20 }}>
-          <div style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: "#fff" }}>{banners[bannerIdx].title}</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,.85)", marginTop: 4 }}>{banners[bannerIdx].sub}</div>
+        <div style={{ background: `linear-gradient(135deg, ${C.pri}, ${C.priDk})`, borderRadius: 16, padding: 20 }}>
+          <div style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: "#fff" }}>Bem-vindo, {user.name}!</div>
         </div>
       </div>
 
@@ -322,9 +354,6 @@ function Settings({ nav, user, onLogout }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// MAIN APP
-// ══════════════════════════════════════════════════════════════
 export default function App() {
   const [mode, setMode] = useState("visitor");
   const [user, setUser] = useState(null);
@@ -355,7 +384,7 @@ export default function App() {
     if (mode === "visitor") {
       switch (screen) {
         case "home": return <VisitorHome nav={nav} onLogin={() => setMode("login")} />;
-        case "search": return <VisitorSearch nav={nav} data={screenData} />;
+        case "search": return <VisitorSearch nav={nav} />;
         case "profile": return <VisitorProfile nav={nav} data={screenData} onNeedLogin={() => setMode("login")} />;
         default: return <VisitorHome nav={nav} onLogin={() => setMode("login")} />;
       }
