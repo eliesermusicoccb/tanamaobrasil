@@ -1,4 +1,23 @@
-// Aguarda Supabase CDN carregar e expõe a API globalmente
+// Aguarda Supabase CDN carregar
+function waitForSupabase() {
+  return new Promise((resolve) => {
+    if (window.supabase) {
+      resolve();
+      return;
+    }
+    const checkInterval = setInterval(() => {
+      if (window.supabase) {
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 100);
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      resolve();
+    }, 5000);
+  });
+}
+
 const SUPABASE_URL = 'https://awkabegjsamyeqdwcngt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3a2FiZWdqc2FteWVxZHdjbmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTA2MDAsImV4cCI6MjA5NzIyNjYwMH0.TKZjFZ6lmpDbOwD_wEdo5jJdqVWywLRoR3gkaSvtO7o';
 
@@ -13,6 +32,7 @@ function initSupabase() {
 }
 
 async function createUser(userData) {
+  await waitForSupabase();
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
@@ -24,6 +44,7 @@ async function createUser(userData) {
 }
 
 async function getUserByEmail(email) {
+  await waitForSupabase();
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
@@ -35,6 +56,7 @@ async function getUserByEmail(email) {
 }
 
 async function getUser(id) {
+  await waitForSupabase();
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
@@ -46,6 +68,7 @@ async function getUser(id) {
 }
 
 async function updateUser(id, updates) {
+  await waitForSupabase();
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
@@ -57,6 +80,7 @@ async function updateUser(id, updates) {
 }
 
 async function getAllProfessionals() {
+  await waitForSupabase();
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
@@ -68,6 +92,7 @@ async function getAllProfessionals() {
 }
 
 async function createSubscription(subData) {
+  await waitForSupabase();
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
@@ -86,5 +111,6 @@ window.SupabaseAPI = {
   getUser,
   updateUser,
   getAllProfessionals,
-  createSubscription
+  createSubscription,
+  waitForSupabase
 };
