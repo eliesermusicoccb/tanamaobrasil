@@ -342,6 +342,17 @@ function Settings({ nav, user, onLogout }) {
   );
 }
 
+function ChatScreen({ nav }) {
+  return (
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
+      <TopBar title="Chat" onBack={() => nav("home")} />
+      <div style={{ padding: 20, textAlign: "center", color: C.gL }}>
+        Nenhuma conversa ainda
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [mode, setMode] = useState("visitor");
   const [user, setUser] = useState(null);
@@ -363,6 +374,13 @@ export default function App() {
     }
     scrollRef.current?.scrollTo(0, 0);
   }, [history]);
+
+  const tabs = [
+    { id: "home", icon: "🏠", label: "Início" },
+    { id: "search", icon: "🔍", label: "Buscar" },
+    { id: "chat", icon: "💬", label: "Chat" },
+    { id: mode === "logged" ? "profile" : "home", icon: "👤", label: mode === "logged" ? "Perfil" : "Conta" },
+  ];
 
   const renderScreen = () => {
     if (mode === "login") {
@@ -387,6 +405,7 @@ export default function App() {
         case "home": return <LoggedHome nav={nav} user={user} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); setHistory(["home"]); }} />;
+        case "chat": return <ChatScreen nav={nav} />;
         default: return <LoggedHome nav={nav} user={user} />;
       }
     }
@@ -402,10 +421,26 @@ export default function App() {
         .app-shell{max-width:480px;margin:0 auto;height:100vh;height:100dvh;background:${C.w};position:relative;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.12);}
         .app-scroll{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
         .screen-content{padding-bottom:20px;min-height:100%;}
+        .navbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-top:1px solid ${C.gB};display:flex;max-width:480px;margin:0 auto;width:100%;z-index:100;}
+        .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0;background:none;border:none;cursor:pointer;font-family:${font.b};font-size:10px;font-weight:600;color:${C.gL};gap:4px;}
+        .nav-tab.active{color:${C.pri};font-weight:700;}
+        .nav-icon{font-size:20px;}
       `}</style>
       <div className="app-shell">
         <div ref={scrollRef} className="app-scroll">
           {renderScreen()}
+        </div>
+        <div className="navbar">
+          {tabs.map(tab => (
+            <button 
+              key={tab.id} 
+              onClick={() => nav(tab.id)} 
+              className={`nav-tab ${screen === tab.id ? "active" : ""}`}
+            >
+              <div className="nav-icon">{tab.icon}</div>
+              <div>{tab.label}</div>
+            </button>
+          ))}
         </div>
       </div>
     </>
