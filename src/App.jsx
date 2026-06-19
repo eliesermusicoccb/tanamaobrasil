@@ -435,8 +435,12 @@ export default function App() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    // Inicializar Stripe
-    paymentManager.initializeStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+    // Inicializar Stripe (apenas se a chave estiver configurada)
+    if (process.env.REACT_APP_STRIPE_PUBLIC_KEY) {
+      paymentManager.initializeStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+    } else {
+      console.warn("⚠️ STRIPE_PUBLIC_KEY não configurada. Pagamentos desabilitados.");
+    }
   }, []);
 
   const nav = useCallback((s, data = null) => {
