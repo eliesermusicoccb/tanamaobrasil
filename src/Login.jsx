@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { signIn, getProfessionalByEmail } from "./supabaseClient";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -8,14 +7,9 @@ const C = {
 };
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
-function trackEvent(e, d) { 
-  try { 
-    if (window.fbq) window.fbq("track", e, d); 
-  } catch (x) {} 
-}
+function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
 
 export default function Login({ onLoginSuccess }) {
-  const [mode, setMode] = useState("login"); // "login" ou "register"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,33 +21,23 @@ export default function Login({ onLoginSuccess }) {
 
   const handleLogin = async () => {
     setError("");
-    if (!validateEmail(email)) { 
-      setError("Email inválido"); 
-      return; 
-    }
-    if (!validatePassword(password)) { 
-      setError("Senha deve ter 8+ caracteres"); 
-      return; 
-    }
+    if (!validateEmail(email)) { setError("Email inválido"); return; }
+    if (!validatePassword(password)) { setError("Senha deve ter 8+ caracteres"); return; }
 
     setLoading(true);
     try {
-      // ✅ PASSO 1: Autenticar com Supabase Auth (senhas criptografadas)
-      const { data: authData, error: authError } = await signIn(email, password);
+      if (!window.SupabaseAPI) throw new Error("Supabase não carregou");
 
-      if (authError) {
+      window.SupabaseAPI.initSupabase();
+
+      const { data: professional, error: searchError } = await window.SupabaseAPI.getUserByEmail(email);
+
+      if (searchError || !professional) {
         throw new Error("Email ou senha incorretos");
       }
 
-      if (!authData?.user?.id) {
-        throw new Error("Erro ao fazer login");
-      }
-
-      // ✅ PASSO 2: Buscar perfil profissional (sem a senha!)
-      const { data: professional, error: profileError } = await getProfessionalByEmail(email);
-
-      if (profileError || !professional) {
-        throw new Error("Perfil de profissional não encontrado");
+      if (professional.password !== password) {
+        throw new Error("Email ou senha incorretos");
       }
 
       trackEvent("Login", { email });
@@ -64,8 +48,7 @@ export default function Login({ onLoginSuccess }) {
           name: professional.name,
           email: professional.email,
           badge: professional.badge,
-          avatar_initials: professional.avatar_initials,
-          authUser: authData.user // guardar dados de auth também
+          avatar_initials: professional.avatar_initials
         });
       }
     } catch (err) {
@@ -85,31 +68,26 @@ export default function Login({ onLoginSuccess }) {
         input { font-family: '${font.b}'; }
       `}</style>
 
-      {/* Logo */}
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ fontFamily: font.d, fontSize: 40, fontWeight: 900, color: C.pri, marginBottom: 4 }}>TáNaMão</div>
         <div style={{ fontSize: 13, color: C.gL, letterSpacing: "0.1em", textTransform: "uppercase" }}>Brasil Profissional</div>
       </div>
 
-      {/* Card */}
       <div style={{ width: "100%", maxWidth: 360, background: "#fff", borderRadius: 16, border: `1.5px solid ${C.gB}`, padding: 24 }}>
         
-        {/* Título */}
         <h1 style={{ fontFamily: font.d, fontSize: 24, fontWeight: 800, color: C.dk, marginBottom: 8 }}>
-          {mode === "login" ? "Bem-vindo de volta" : "Criar Conta"}
+          Bem-vindo de volta
         </h1>
         <p style={{ fontSize: 13, color: C.gL, marginBottom: 24 }}>
-          {mode === "login" ? "Faça login para acessar sua conta" : "Cadastre-se para começar"}
+          Faça login para acessar sua conta
         </p>
 
-        {/* Erro */}
         {error && (
           <div style={{ background: C.corLt, border: `1px solid ${C.cor}`, borderRadius: 10, padding: 12, marginBottom: 16, color: C.cor, fontSize: 12, fontWeight: 600 }}>
             {error}
           </div>
         )}
 
-        {/* Campos */}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>Email</label>
           <input
@@ -135,7 +113,6 @@ export default function Login({ onLoginSuccess }) {
           />
         </div>
 
-        {/* Botão Login */}
         <button
           onClick={handleLogin}
           disabled={loading}
@@ -157,49 +134,19 @@ export default function Login({ onLoginSuccess }) {
           {loading ? "Entrando..." : "Entrar"}
         </button>
 
-        {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ flex: 1, height: 1, background: C.gB }}></div>
           <span style={{ fontSize: 12, color: C.gL }}>ou</span>
           <div style={{ flex: 1, height: 1, background: C.gB }}></div>
         </div>
 
-        {/* Botão Cadastro */}
-        <button
-          onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
-          style={{
-            width: "100%",
-            padding: "14px",
-            background: C.gBg,
-            color: C.dk,
-            border: "none",
-            borderRadius: 12,
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: font.d,
-          }}
-        >
-          {mode === "login" ? "Criar Conta" : "Voltar ao Login"}
-        </button>
-
-        {/* Info */}
-        <div style={{ fontSize: 12, color: C.gL, marginTop: 16, textAlign: "center" }}>
-          {mode === "login" ? (
-            <>
-              Não tem conta? <button onClick={() => { setMode("register"); setError(""); }} style={{ background: "none", border: "none", color: C.pri, fontWeight: 700, cursor: "pointer", textDecoration: "underline", fontFamily: font.b, fontSize: 12 }}>Cadastre-se</button>
-            </>
-          ) : (
-            <>
-              Já tem conta? <button onClick={() => { setMode("login"); setError(""); }} style={{ background: "none", border: "none", color: C.pri, fontWeight: 700, cursor: "pointer", textDecoration: "underline", fontFamily: font.b, fontSize: 12 }}>Faça login</button>
-            </>
-          )}
+        <div style={{ fontSize: 12, color: C.gL, textAlign: "center" }}>
+          Não tem conta? Crie uma clicando no botão "Entrar" na tela inicial
         </div>
       </div>
 
-      {/* Footer */}
       <div style={{ marginTop: 40, textAlign: "center", fontSize: 12, color: C.gL }}>
-        <p>🔒 Suas senhas estão seguras com criptografia de grau militar</p>
+        <p>🔒 Seus dados estão seguros com criptografia</p>
       </div>
     </div>
   );
