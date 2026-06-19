@@ -388,14 +388,14 @@ export default function App() {
 
   const navItems = mode === "logged" 
     ? [
-        { id: "home", icon: "🏠", label: "Início" },
-        { id: "search", icon: "🔍", label: "Buscar" },
-        { id: "chat", icon: "💬", label: "Chat" },
-        { id: "settings", icon: "👤", label: "Conta" },
+        { id: "home", icon: "🏠", label: "Início", onClick: () => { setScreen("home"); } },
+        { id: "search", icon: "🔍", label: "Buscar", onClick: () => { setScreen("search"); } },
+        { id: "chat", icon: "💬", label: "Chat", onClick: () => { setScreen("chat"); } },
+        { id: "settings", icon: "👤", label: "Conta", onClick: () => { setScreen("settings"); } },
       ]
     : [
-        { id: "home", icon: "🏠", label: "Início" },
-        { id: "search", icon: "🔍", label: "Buscar" },
+        { id: "home", icon: "🏠", label: "Início", onClick: () => { setScreen("home"); } },
+        { id: "search", icon: "🔍", label: "Buscar", onClick: () => { setScreen("search"); } },
       ];
 
   return (
@@ -420,7 +420,7 @@ export default function App() {
           {navItems.map(item => (
             <button 
               key={item.id} 
-              onClick={() => nav(item.id)} 
+              onClick={item.onClick} 
               className={`nav-tab ${screen === item.id ? "active" : ""}`}
             >
               <div>{item.icon}</div>
