@@ -79,19 +79,21 @@ const CATEGORIES = [
 ];
 
 const PROS = [
-  { id:1, name:"Carlos Silva", role:"Eletricista", rating:4.9, reviews:127, city:"São Paulo, SP", price:"R$ 80", badge:"premium", av:"CS", on:true,
-    whatsapp:"5511999990001",
+  { id:1, name:"Carlos Silva", role:"Eletricista", rating:4.9, reviews:127, city:"São Paulo", uf:"SP", price:"R$ 80", badge:"premium", av:"CS", on:true,
+    whatsapp:"5511999990001", categories: ["Eletricista"],
     userReviews:[
       {n:"Maria S.",r:5,t:"Excelente! Pontual e muito atencioso.",d:"2 dias atrás"},
       {n:"Pedro L.",r:5,t:"Trabalho impecável, super recomendo.",d:"1 semana atrás"},
     ]},
-  { id:2, name:"Ana Oliveira", role:"Designer de Interiores", rating:4.8, reviews:89, city:"Rio de Janeiro, RJ", price:"R$ 150", badge:"pro", av:"AO", on:true,
-    whatsapp:"5521999990002",
+  { id:2, name:"Ana Oliveira", role:"Designer de Interiores", rating:4.8, reviews:89, city:"Rio de Janeiro", uf:"RJ", price:"R$ 150", badge:"pro", av:"AO", on:true,
+    whatsapp:"5521999990002", categories: ["Design"],
     userReviews:[{n:"Lucas M.",r:5,t:"Projeto incrível!",d:"3 dias atrás"}]},
-  { id:3, name:"Roberto Santos", role:"Encanador", rating:4.7, reviews:203, city:"Belo Horizonte, MG", price:"R$ 60", badge:"premium", av:"RS", on:false,
-    whatsapp:"5531999990003"},
-  { id:4, name:"Mariana Costa", role:"Fotógrafa", rating:5.0, reviews:56, city:"Curitiba, PR", price:"R$ 200", badge:"pro", av:"MC", on:true,
-    whatsapp:"5541999990004"},
+  { id:3, name:"Roberto Santos", role:"Encanador", rating:4.7, reviews:203, city:"Belo Horizonte", uf:"MG", price:"R$ 60", badge:"premium", av:"RS", on:false,
+    whatsapp:"5531999990003", categories: ["Encanador"]},
+  { id:4, name:"Mariana Costa", role:"Fotógrafa", rating:5.0, reviews:56, city:"Curitiba", uf:"PR", price:"R$ 200", badge:"pro", av:"MC", on:true,
+    whatsapp:"5541999990004", categories: ["Fotografia"]},
+  { id:5, name:"João Técnico", role:"Técnico TI", rating:4.6, reviews:45, city:"São Paulo", uf:"SP", price:"R$ 120", badge: null, av:"JT", on:true,
+    whatsapp:"5511999990005", categories: ["Técnico TI"]},
 ];
 
 function Avatar({ ini, size = 40, badge = null }) {
@@ -138,6 +140,7 @@ function VisitorHome({ nav, onLogin, onRegister }) {
       <div style={{ padding: "0 16px 16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.gBg, borderRadius: 14, padding: "10px 12px" }}>
           <input type="text" placeholder="Procurar profissional..." style={{ flex: 1, border: "none", background: "none", outline: "none", fontSize: 14, fontFamily: font.b }} />
+          <button onClick={() => nav("search")} style={{ background: "none", border: "none", cursor: "pointer", color: C.pri, fontSize: 18, padding: 0 }}>🔍</button>
         </div>
       </div>
 
@@ -164,7 +167,7 @@ function VisitorHome({ nav, onLogin, onRegister }) {
       </div>
 
       <div style={{ padding: "20px 16px 10px" }}>
-        <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais</div>
+        <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais próximos</div>
       </div>
       <div style={{ padding: "0 16px 100px", display: "flex", flexDirection: "column", gap: 8 }}>
         {PROS.slice(0, 3).map((p) => (
@@ -172,7 +175,7 @@ function VisitorHome({ nav, onLogin, onRegister }) {
             <Avatar ini={p.av} size={48} badge={p.badge} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
+              <div style={{ fontSize: 12, color: C.g }}>{p.role} • {p.city}, {p.uf}</div>
               <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
             </div>
             <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
@@ -183,21 +186,86 @@ function VisitorHome({ nav, onLogin, onRegister }) {
   );
 }
 
-function VisitorSearch({ nav }) {
+function VisitorSearch({ nav, searchFilter, setSearchFilter }) {
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterCity, setFilterCity] = useState("");
+  const [sortBy, setSortBy] = useState("rating");
+
+  const filtered = PROS.filter(p => {
+    const matchSearch = !searchFilter || p.name.toLowerCase().includes(searchFilter.toLowerCase()) || p.role.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchCat = !filterCategory || p.categories.includes(filterCategory);
+    const matchCity = !filterCity || p.city.toLowerCase().includes(filterCity.toLowerCase());
+    return matchSearch && matchCat && matchCity;
+  }).sort((a, b) => {
+    if (sortBy === "rating") return b.rating - a.rating;
+    if (sortBy === "reviews") return b.reviews - a.reviews;
+    if (sortBy === "price") return parseInt(a.price) - parseInt(b.price);
+    return 0;
+  });
+
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title="Buscar" onBack={() => nav("home")} />
+      
+      <div style={{ padding: "16px", borderBottom: `1px solid ${C.gB}` }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <input 
+            type="text" 
+            value={searchFilter} 
+            onChange={(e) => setSearchFilter(e.target.value)}
+            placeholder="Nome ou profissão..." 
+            style={{ flex: 1, padding: "10px 12px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 13, outline: "none", fontFamily: font.b }} 
+          />
+          <button style={{ background: C.pri, color: "#fff", border: "none", borderRadius: 10, width: 44, cursor: "pointer", fontSize: 18 }}>🔍</button>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto" }}>
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ padding: "8px 10px", border: `1.5px solid ${C.gB}`, borderRadius: 10, fontSize: 12, outline: "none", fontFamily: font.b }}>
+            <option value="">Todas categorias</option>
+            {CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+
+          <input 
+            type="text" 
+            value={filterCity} 
+            onChange={(e) => setFilterCity(e.target.value)}
+            placeholder="Cidade..." 
+            style={{ padding: "8px 10px", border: `1.5px solid ${C.gB}`, borderRadius: 10, fontSize: 12, outline: "none", fontFamily: font.b, minWidth: 100 }} 
+          />
+
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: "8px 10px", border: `1.5px solid ${C.gB}`, borderRadius: 10, fontSize: 12, outline: "none", fontFamily: font.b }}>
+            <option value="rating">⭐ Avaliação</option>
+            <option value="reviews">💬 Mais avaliados</option>
+            <option value="price">💰 Preço</option>
+          </select>
+        </div>
+
+        {filtered.length > 0 && <div style={{ fontSize: 11, color: C.gL }}>Encontrados: {filtered.length}</div>}
+      </div>
+
       <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {PROS.map((p) => (
-          <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
-            <Avatar ini={p.av} size={48} badge={p.badge} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
-              <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
+        {filtered.length > 0 ? (
+          filtered.map((p) => (
+            <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
+              <Avatar ini={p.av} size={48} badge={p.badge} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
+                <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
+                <div style={{ fontSize: 10, color: p.on ? C.pri : C.gL }}>
+                  {p.on ? "🟢 Online" : "🔴 Offline"}
+                </div>
+              </div>
             </div>
+          ))
+        ) : (
+          <div style={{ textAlign: "center", padding: "40px 16px", color: C.gL }}>
+            Nenhum profissional encontrado
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -212,7 +280,7 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
         <Avatar ini={p.av} size={64} badge={p.badge} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
-        <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>⭐ {p.rating} ({p.reviews} avaliações)</div>
+        <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating} ({p.reviews} avaliações)</div>
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
           💬 Chamar no WhatsApp
@@ -241,6 +309,17 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
 }
 
 function LoggedHome({ nav, user }) {
+  const [userLocation, setUserLocation] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (err) => console.log("Geolocalização negada", err)
+      );
+    }
+  }, []);
+
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
       <div style={{ padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -251,11 +330,12 @@ function LoggedHome({ nav, user }) {
       <div style={{ padding: "0 16px 20px" }}>
         <div style={{ background: `linear-gradient(135deg, ${C.pri}, ${C.priDk})`, borderRadius: 16, padding: 20 }}>
           <div style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: "#fff" }}>Bem-vindo, {user.name}!</div>
+          {userLocation && <div style={{ fontSize: 12, color: "rgba(255,255,255,.8)", marginTop: 8 }}>📍 Localização ativa</div>}
         </div>
       </div>
 
       <div style={{ padding: "16px 16px 10px" }}>
-        <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais</div>
+        <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais próximos</div>
       </div>
       <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 8 }}>
         {PROS.slice(0, 3).map((p) => (
@@ -348,6 +428,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("home");
   const [screenData, setScreenData] = useState(null);
+  const [searchFilter, setSearchFilter] = useState("");
   const scrollRef = useRef(null);
 
   const nav = useCallback((s, data = null) => {
@@ -368,7 +449,7 @@ export default function App() {
     if (mode === "visitor") {
       switch (screen) {
         case "home": return <VisitorHome nav={nav} onLogin={() => setMode("login")} onRegister={() => setMode("register")} />;
-        case "search": return <VisitorSearch nav={nav} />;
+        case "search": return <VisitorSearch nav={nav} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />;
         case "profile": return <VisitorProfile nav={nav} data={screenData} onNeedLogin={() => setMode("login")} />;
         default: return <VisitorHome nav={nav} onLogin={() => setMode("login")} onRegister={() => setMode("register")} />;
       }
@@ -377,7 +458,7 @@ export default function App() {
     if (mode === "logged") {
       switch (screen) {
         case "home": return <LoggedHome nav={nav} user={user} />;
-        case "search": return <VisitorSearch nav={nav} />;
+        case "search": return <VisitorSearch nav={nav} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "chat": return <ChatScreen nav={nav} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); }} />;
