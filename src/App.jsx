@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
+import PaymentModal from "./components/PaymentModal";
 
 // ══════════════════════════════════════════════════════════════
 // SUPABASE INIT
@@ -429,7 +430,15 @@ export default function App() {
   const [screen, setScreen] = useState("home");
   const [screenData, setScreenData] = useState(null);
   const [searchFilter, setSearchFilter] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    // Inicializar Stripe
+    if (window.PaymentManager) {
+      window.PaymentManager.initializeStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+    }
+  }, []);
 
   const nav = useCallback((s, data = null) => {
     setScreen(s);
@@ -510,6 +519,21 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      {showPaymentModal && (
+        <PaymentModal
+          planName="DESTAQUE"
+          amount={49.90}
+          description="Plano DESTAQUE - TáNaMão Brasil"
+          professionalData={user}
+          onSuccess={(result) => {
+            console.log("Pagamento bem-sucedido:", result);
+            setShowPaymentModal(false);
+          }}
+          onCancel={() => setShowPaymentModal(false)}
+          onClose={() => setShowPaymentModal(false)}
+        />
+      )}
     </>
   );
 }
