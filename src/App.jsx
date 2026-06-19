@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
 import PaymentModal from "./components/PaymentModal";
+import paymentManager from "./paymentManager";
 
 // ══════════════════════════════════════════════════════════════
 // SUPABASE INIT
@@ -435,9 +436,7 @@ export default function App() {
 
   useEffect(() => {
     // Inicializar Stripe
-    if (window.PaymentManager) {
-      window.PaymentManager.initializeStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
-    }
+    paymentManager.initializeStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
   }, []);
 
   const nav = useCallback((s, data = null) => {
