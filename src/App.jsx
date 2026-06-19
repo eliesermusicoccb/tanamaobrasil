@@ -33,8 +33,9 @@ async function getUserByEmail(email) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
-    const { data, error } = await sb.from('professionals').select('*').eq('email', email).single();
-    return { data, error };
+    const { data, error } = await sb.from('professionals').select('*').eq('email', email);
+    if (error) return { data: null, error };
+    return { data: data && data.length > 0 ? data[0] : null, error: data && data.length === 0 ? new Error('Usuário não encontrado') : null };
   } catch (err) {
     return { data: null, error: err };
   }
@@ -66,12 +67,6 @@ const C = {
 };
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
-function trackEvent(event, data) {
-  try { 
-    if(window.fbq) window.fbq('track', event, data); 
-  } catch(e) {}
-}
-
 const CATEGORIES = [
   { icon:"🔧", name:"Encanador", count:342 },{ icon:"⚡", name:"Eletricista", count:289 },
   { icon:"🎨", name:"Pintor", count:415 },{ icon:"🏗️", name:"Pedreiro", count:523 },
@@ -86,28 +81,22 @@ const CATEGORIES = [
 
 const PROS = [
   { id:1, name:"Carlos Silva", role:"Eletricista", rating:4.9, reviews:127, city:"São Paulo, SP", price:"R$ 80", badge:"premium", av:"CS", on:true,
-    desc:"Mais de 15 anos no mercado.",
-    whatsapp:"5511999990001", categories:["Eletricista","Instalações","Manutenção"],
+    whatsapp:"5511999990001",
     userReviews:[
       {n:"Maria S.",r:5,t:"Excelente! Pontual e muito atencioso.",d:"2 dias atrás"},
       {n:"Pedro L.",r:5,t:"Trabalho impecável, super recomendo.",d:"1 semana atrás"},
     ]},
   { id:2, name:"Ana Oliveira", role:"Designer de Interiores", rating:4.8, reviews:89, city:"Rio de Janeiro, RJ", price:"R$ 150", badge:"pro", av:"AO", on:true,
-    desc:"Projetos residenciais e corporativos.",
-    whatsapp:"5521999990002", categories:["Design","Interiores","Consultoria"],
+    whatsapp:"5521999990002",
     userReviews:[{n:"Lucas M.",r:5,t:"Projeto incrível!",d:"3 dias atrás"}]},
   { id:3, name:"Roberto Santos", role:"Encanador", rating:4.7, reviews:203, city:"Belo Horizonte, MG", price:"R$ 60", badge:"premium", av:"RS", on:false,
-    desc:"Especialista em instalações hidráulicas.",
-    whatsapp:"5531999990003", categories:["Encanador","Hidráulica"]},
+    whatsapp:"5531999990003"},
   { id:4, name:"Mariana Costa", role:"Fotógrafa", rating:5.0, reviews:56, city:"Curitiba, PR", price:"R$ 200", badge:"pro", av:"MC", on:true,
-    desc:"Fotografia de eventos e ensaios.",
-    whatsapp:"5541999990004", categories:["Fotografia","Eventos","Produto"]},
+    whatsapp:"5541999990004"},
 ];
 
 const I = {
   home: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  grid: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
-  user: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   back: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
   search: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
   whatsapp: (c, s) => <svg width={s} height={s} viewBox="0 0 24 24" fill={c}><path d="M17.6 6.3c-1.5-1.5-3.5-2.3-5.6-2.3-4.4 0-8 3.6-8 8 0 1.4.4 2.8 1.1 4L2 22l4.2-1.1c1.2.6 2.5 1 3.9 1h.1c4.4 0 8-3.6 8-8 0-2.1-.9-4.2-2.5-5.7zM12 20.1c-1.2 0-2.4-.3-3.5-.9l-.3-.1-2.8.7.7-2.8-.1-.3c-.6-1.1-.9-2.3-.9-3.5 0-3.6 3-6.6 6.6-6.6 1.8 0 3.5.7 4.8 2 1.2 1.2 1.9 2.9 1.9 4.7 0 3.6-3 6.6-6.7 6.6z"/></svg>,
@@ -137,12 +126,11 @@ function TopBar({ title, onBack }) {
   );
 }
 
-function VisitorHome({ nav, onLogin }) {
+function VisitorHome({ nav, onLogin, onRegister }) {
   const [bannerIdx, setBannerIdx] = useState(0);
   const banners = [
     { title: "Encontre profissionais", sub: "De forma rápida e segura", bg: `linear-gradient(135deg, ${C.pri}, ${C.priDk})` },
     { title: "Qualidade garantida", sub: "Profissionais avaliados", bg: `linear-gradient(135deg, ${C.acc}, #D68910)` },
-    { title: "Suporte 24/7", sub: "Sempre pronto para ajudar", bg: `linear-gradient(135deg, ${C.cor}, #D1441A)` },
   ];
   useEffect(() => { const t = setInterval(() => setBannerIdx(i => (i + 1) % banners.length), 4000); return () => clearInterval(t); }, []);
   
@@ -150,7 +138,10 @@ function VisitorHome({ nav, onLogin }) {
     <div className="screen-content">
       <div style={{ padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontFamily: font.d, fontSize: 28, fontWeight: 900, color: C.dk }}>TáNaMão</div>
-        <button onClick={onLogin} style={{ padding: "8px 16px", background: C.pri, color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Entrar</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onLogin} style={{ padding: "8px 12px", background: C.gBg, color: C.pri, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Entrar</button>
+          <button onClick={onRegister} style={{ padding: "8px 12px", background: C.pri, color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Cadastrar</button>
+        </div>
       </div>
 
       <div style={{ padding: "0 16px 16px" }}>
@@ -185,7 +176,7 @@ function VisitorHome({ nav, onLogin }) {
       <div style={{ padding: "20px 16px 10px" }}>
         <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais</div>
       </div>
-      <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ padding: "0 16px 100px", display: "flex", flexDirection: "column", gap: 8 }}>
         {PROS.slice(0, 3).map((p) => (
           <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
             <Avatar ini={p.av} size={48} badge={p.badge} />
@@ -206,7 +197,7 @@ function VisitorSearch({ nav }) {
   return (
     <div className="screen-content">
       <TopBar title="Buscar" onBack={() => nav("back")} />
-      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 100 }}>
         {PROS.map((p) => (
           <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
             <Avatar ini={p.av} size={48} badge={p.badge} />
@@ -225,7 +216,7 @@ function VisitorSearch({ nav }) {
 function VisitorProfile({ nav, data, onNeedLogin }) {
   const p = data || PROS[0];
   return (
-    <div className="screen-content" style={{ paddingBottom: 90 }}>
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title={p.name} onBack={() => nav("back")} />
       <div style={{ padding: "20px 16px", textAlign: "center" }}>
         <Avatar ini={p.av} size={64} badge={p.badge} />
@@ -260,11 +251,8 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
 }
 
 function LoggedHome({ nav, user }) {
-  const [bannerIdx, setBannerIdx] = useState(0);
-  useEffect(() => { const t = setInterval(() => setBannerIdx(i => (i + 1) % 2), 4000); return () => clearInterval(t); }, []);
-  
   return (
-    <div className="screen-content">
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
       <div style={{ padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontFamily: font.d, fontSize: 28, fontWeight: 900, color: C.dk }}>TáNaMão</div>
         <button onClick={() => nav("settings")} style={{ width: 38, height: 38, borderRadius: 11, border: `1.5px solid ${C.gB}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>⚙️</button>
@@ -298,7 +286,7 @@ function LoggedHome({ nav, user }) {
 function LoggedProfile({ nav, data, user }) {
   const p = data || PROS[0];
   return (
-    <div className="screen-content" style={{ paddingBottom: 90 }}>
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title={p.name} onBack={() => nav("back")} />
       <div style={{ padding: "20px 16px", textAlign: "center" }}>
         <Avatar ini={p.av} size={64} badge={p.badge} />
@@ -334,7 +322,7 @@ function LoggedProfile({ nav, data, user }) {
 
 function Settings({ nav, user, onLogout }) {
   return (
-    <div className="screen-content">
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title="Configurações" onBack={() => nav("home")} />
       <div style={{ padding: 16 }}>
         <div style={{ background: C.priLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
@@ -381,12 +369,16 @@ export default function App() {
       return <Login onLoginSuccess={(userData) => { setUser(userData); setMode("logged"); setScreen("home"); setHistory(["home"]); }} />;
     }
 
+    if (mode === "register") {
+      return <RegisterProfessional onBack={() => setMode("visitor")} onSuccess={(data) => { setUser(data); setMode("logged"); setScreen("home"); setHistory(["home"]); }} nav={nav} />;
+    }
+
     if (mode === "visitor") {
       switch (screen) {
-        case "home": return <VisitorHome nav={nav} onLogin={() => setMode("login")} />;
+        case "home": return <VisitorHome nav={nav} onLogin={() => setMode("login")} onRegister={() => setMode("register")} />;
         case "search": return <VisitorSearch nav={nav} />;
         case "profile": return <VisitorProfile nav={nav} data={screenData} onNeedLogin={() => setMode("login")} />;
-        default: return <VisitorHome nav={nav} onLogin={() => setMode("login")} />;
+        default: return <VisitorHome nav={nav} onLogin={() => setMode("login")} onRegister={() => setMode("register")} />;
       }
     }
 
@@ -395,7 +387,6 @@ export default function App() {
         case "home": return <LoggedHome nav={nav} user={user} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); setHistory(["home"]); }} />;
-        case "register": return <RegisterProfessional onBack={() => nav("home")} onSuccess={(data) => { setUser(data); nav("home"); }} nav={nav} />;
         default: return <LoggedHome nav={nav} user={user} />;
       }
     }
