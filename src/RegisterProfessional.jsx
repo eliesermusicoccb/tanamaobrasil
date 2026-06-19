@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import CIDADES_BRASIL from "../CIDADES_BRASIL_COMPLETA";
+import CIDADES_BRASIL from "./CIDADES_BRASIL_COMPLETA";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -275,7 +275,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
             <div style={{ margin: "24px 0 16px" }}>
               {PLANS.map(p => (
-                <div key={p.name} onClick={() => setPlan(p.name)} style={{ background: "#fff", borderRadius: 14, border: `2px solid ${plan === p.name ? C.pri : C.gB}`, borderWidth: plan === p.name ? 2.5 : 2, background: plan === p.name ? C.priLt : "#fff", padding: 18, marginBottom: 12, cursor: "pointer", transition: "all 0.2s" }}>
+                <div key={p.name} onClick={() => setPlan(p.name)} style={{ background: plan === p.name ? C.priLt : "#fff", borderRadius: 14, border: `2px solid ${plan === p.name ? C.pri : C.gB}`, borderWidth: plan === p.name ? 2.5 : 2, padding: 18, marginBottom: 12, cursor: "pointer", transition: "all 0.2s" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
