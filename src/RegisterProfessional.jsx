@@ -18,20 +18,13 @@ const CIDADES = [
   { nome: "Brasília", uf: "DF" },
   { nome: "Manaus", uf: "AM" },
   { nome: "Recife", uf: "PE" },
-  { nome: "Goiânia", uf: "GO" },
-  { nome: "Belém", uf: "PA" },
-  { nome: "Guarulhos", uf: "SP" },
-  { nome: "Campinas", uf: "SP" },
-  { nome: "Santos", uf: "SP" },
-  { nome: "Sorocaba", uf: "SP" },
-  { nome: "Ribeirão Preto", uf: "SP" },
-  { nome: "Piracicaba", uf: "SP" },
 ];
 
 const CATS_DEFAULT = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabeleireiro", "Técnico TI", "Mecânico", "Fotógrafo", "Diarista", "Enfermeiro", "Arquiteto", "Chef"];
 
 const PLANS = [
-  { name: "Profissional", price: "99", icon: "⭐", feats: ["Perfil com foto", "Chat ilimitado", "5 categorias", "Aparecer nas buscas"] },
+  { name: "Gratuito", price: "0", icon: "🎁", free: true, feats: ["Perfil básico", "Chat com clientes", "Até 3 categorias", "Aparecer nas buscas"] },
+  { name: "Profissional", price: "99", icon: "⭐", feats: ["Tudo Gratuito +", "Perfil com foto", "Chat ilimitado", "5 categorias"] },
   { name: "Premium", price: "199", icon: "💎", popular: true, feats: ["Tudo Profissional +", "Destaque em buscas", "Portfólio 20 fotos", "Badge Premium", "Dashboard"] },
   { name: "VIP", price: "399", icon: "👑", feats: ["Tudo Premium +", "1º lugar buscas", "Portfólio ilimitado", "Suporte 24/7"] },
 ];
@@ -39,8 +32,8 @@ const PLANS = [
 function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
 
 export default function RegisterProfessional({ onBack, onSuccess, nav }) {
-  const [step, setStep] = useState(1);
-  const [plan, setPlan] = useState("Premium");
+  const [step, setStep] = useState(1); // 1=dados, 2=plano, 3=pagamento (se pago), 4=confirmação
+  const [plan, setPlan] = useState("Gratuito");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
@@ -77,9 +70,20 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       } 
     }
     else if (step === 2) { 
-      setStep(3); 
+      const selectedPlan = PLANS.find(p => p.name === plan);
+      if (selectedPlan.free) {
+        // Plano gratuito: vai direto pra confirmação
+        setStep(4);
+      } else {
+        // Plano pago: vai pra pagamento
+        setStep(3);
+      }
       trackEvent("Lead", { plan }); 
       setTimeout(() => scrollRef.current?.scrollTo(0, 0), 100);
+    }
+    else if (step === 3) {
+      // Após pagamento (simulado), vai pra confirmação
+      setStep(4);
     }
   };
 
@@ -112,14 +116,14 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         throw new Error(userError.message || "Erro ao criar usuário");
       }
 
-      const planPrices = { "Profissional": 99, "Premium": 199, "VIP": 399 };
+      const planPrices = { "Gratuito": 0, "Profissional": 99, "Premium": 199, "VIP": 399 };
       const { data: subscription, error: subError } = await window.SupabaseAPI.createSubscription({
         professional_id: profesional.id,
         plan_name: plan,
         plan_price: planPrices[plan],
         status: "active",
-        trial_active: true,
-        payment_method: "trial",
+        trial_active: plan !== "Gratuito",
+        payment_method: plan === "Gratuito" ? "free" : "pending",
       });
 
       if (subError) {
@@ -147,24 +151,25 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   return (
     <div ref={scrollRef} style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", overflowY: "auto", background: C.w, paddingBottom: 80 }}>
       <div style={{ padding: "16px" }}>
-        {step > 1 && <button onClick={() => { setStep(1); setErrors({}); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: C.gBg, color: C.dk, marginBottom: "12px" }}>← Voltar</button>}
+        {step > 1 && <button onClick={() => { setStep(step - 1); setErrors({}); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: C.gBg, color: C.dk, marginBottom: "12px" }}>← Voltar</button>}
         
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div><div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 24, color: C.pri }}>TáNaMão</div><div style={{ fontSize: 12, color: C.gL, letterSpacing: "0.1em", textTransform: "uppercase" }}>Cadastro Pro</div></div>
-            <div style={{ fontSize: 24 }}>{'●'.repeat(step)}{'○'.repeat(3 - step)}</div>
+            <div style={{ fontSize: 24 }}>{'●'.repeat(step)}{'○'.repeat(4 - step)}</div>
           </div>
           <div style={{ display: "flex", gap: 6, margin: "12px 0 24px" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 1 ? C.pri : C.gB, ...(step >= 1 && { width: 20, borderRadius: 4 }) }}></div>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 2 ? C.pri : C.gB, ...(step >= 2 && { width: 20, borderRadius: 4 }) }}></div>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 3 ? C.pri : C.gB, ...(step >= 3 && { width: 20, borderRadius: 4 }) }}></div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: step >= 4 ? C.pri : C.gB, ...(step >= 4 && { width: 20, borderRadius: 4 }) }}></div>
           </div>
         </div>
 
         {step === 1 && (
           <>
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Crie seu perfil</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Preencha seus dados para começar a receber clientes</p>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Preencha seus dados para começar</p>
 
             <div style={{ marginBottom: 16, marginTop: 20 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Nome completo *</label>
@@ -212,7 +217,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias de serviço *</label>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias de serviço * ({f.cats.length}/5)</label>
               {errors.cats && <div style={{ color: C.cor, fontSize: 12, marginBottom: 8 }}>{errors.cats}</div>}
               
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 12 }}>
@@ -234,12 +239,11 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
                   ))}
                 </div>
               )}
-              <div style={{ fontSize: 11, color: C.gL, marginTop: 8 }}>{f.cats.length}/5 selecionadas</div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Bio (apresentação) * <span style={{ opacity: 0.8 }}>({f.bio.length}/100)</span></label>
-              <textarea style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.bio ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, resize: "vertical" }} value={f.bio} onChange={e => { setF({...f, bio: e.target.value}); if(errors.bio) setErrors({...errors, bio: null}); }} placeholder="Fale sobre sua experiência, especializações..." rows="4" maxLength="100"/>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Bio ({f.bio.length}/100)</label>
+              <textarea style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.bio ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, resize: "vertical" }} value={f.bio} onChange={e => { setF({...f, bio: e.target.value}); if(errors.bio) setErrors({...errors, bio: null}); }} placeholder="Fale sobre sua experiência..." rows="4" maxLength="100"/>
               {errors.bio && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.bio}</div>}
             </div>
 
@@ -250,7 +254,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         {step === 2 && (
           <>
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha seu plano</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Comece com 7 dias grátis, sem cartão de crédito</p>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Todas as funções disponíveis em qualquer plano!</p>
 
             <div style={{ margin: "24px 0 16px" }}>
               {PLANS.map(p => (
@@ -272,14 +276,40 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             </div>
 
             <div style={{ padding: 12, background: C.gBg, borderRadius: 10, fontSize: 12, color: C.g, marginBottom: 16 }}>
-              ✅ Primeiros 7 dias grátis · ✅ Sem cartão · ✅ Cancele quando quiser
+              ✨ Gratuito: sem prazos · Pago: 7 dias grátis · Cancele quando quiser
             </div>
 
-            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Confirmar</button>
+            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar</button>
           </>
         )}
 
         {step === 3 && (
+          <>
+            <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha o pagamento</h1>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>7 dias grátis, depois cobrado automaticamente</p>
+
+            <div style={{ margin: "24px 0 16px" }}>
+              <div style={{ background: C.priLt, borderRadius: 14, padding: 18, marginBottom: 12 }}>
+                <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.pri, marginBottom: 12 }}>Plano: {plan}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>
+                  <span>Valor mensal:</span>
+                  <span style={{ color: C.pri }}>R$ {PLANS.find(p => p.name === plan).price}</span>
+                </div>
+
+                <button style={{ width: "100%", padding: "14px", background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font.d, marginBottom: 10 }}>💳 Cartão de Crédito</button>
+                <button style={{ width: "100%", padding: "14px", background: C.gBg, color: C.dk, border: `2px solid ${C.gB}`, borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>📱 PIX</button>
+              </div>
+
+              <div style={{ fontSize: 12, color: C.gL, textAlign: "center" }}>
+                Ao continuar você concorda com nossos termos
+              </div>
+            </div>
+
+            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar</button>
+          </>
+        )}
+
+        {step === 4 && (
           <>
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Confirme seu cadastro</h1>
             <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Verifique os dados antes de concluir</p>
@@ -296,7 +326,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16 }}>
               <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seu Plano</div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span style={{ fontSize: 15, fontWeight: 700 }}>{plan}</span><span style={{ fontWeight: 600, color: C.dk }}>R$ {PLANS.find(p => p.name === plan).price}/mês</span></div>
-              <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>7 dias grátis - Após este período, será cobrado automaticamente</div>
+              <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>{plan === "Gratuito" ? "Sem cobranças" : "7 dias grátis - Após este período, será cobrado automaticamente"}</div>
             </div>
 
             <button type="button" onClick={submit} disabled={loading} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: loading ? "wait" : "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", opacity: loading ? 0.6 : 1, marginBottom: 20 }}>
