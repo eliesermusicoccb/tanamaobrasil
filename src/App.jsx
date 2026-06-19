@@ -3,7 +3,7 @@ import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
 
 // ══════════════════════════════════════════════════════════════
-// SUPABASE INIT - INLINE
+// SUPABASE INIT
 // ══════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://awkabegjsamyeqdwcngt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3a2FiZWdqc2FteWVxZHdjbmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTA2MDAsImV4cCI6MjA5NzIyNjYwMH0.TKZjFZ6lmpDbOwD_wEdo5jJdqVWywLRoR3gkaSvtO7o';
@@ -33,9 +33,9 @@ async function getUserByEmail(email) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
   try {
-    const { data, error } = await sb.from('professionals').select('*').eq('email', email);
+    const { data, error } = await sb.from('professionals').select('*').eq('email', email).limit(1);
     if (error) return { data: null, error };
-    return { data: data && data.length > 0 ? data[0] : null, error: data && data.length === 0 ? new Error('Usuário não encontrado') : null };
+    return { data: data && data.length > 0 ? data[0] : null, error: null };
   } catch (err) {
     return { data: null, error: err };
   }
@@ -52,7 +52,6 @@ async function createSubscription(subData) {
   }
 }
 
-// Expõe globalmente
 window.SupabaseAPI = { initSupabase, createUser, getUserByEmail, createSubscription };
 
 // ══════════════════════════════════════════════════════════════
@@ -95,14 +94,6 @@ const PROS = [
     whatsapp:"5541999990004"},
 ];
 
-const I = {
-  home: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  back: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
-  search: (c) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
-  whatsapp: (c, s) => <svg width={s} height={s} viewBox="0 0 24 24" fill={c}><path d="M17.6 6.3c-1.5-1.5-3.5-2.3-5.6-2.3-4.4 0-8 3.6-8 8 0 1.4.4 2.8 1.1 4L2 22l4.2-1.1c1.2.6 2.5 1 3.9 1h.1c4.4 0 8-3.6 8-8 0-2.1-.9-4.2-2.5-5.7zM12 20.1c-1.2 0-2.4-.3-3.5-.9l-.3-.1-2.8.7.7-2.8-.1-.3c-.6-1.1-.9-2.3-.9-3.5 0-3.6 3-6.6 6.6-6.6 1.8 0 3.5.7 4.8 2 1.2 1.2 1.9 2.9 1.9 4.7 0 3.6-3 6.6-6.7 6.6z"/></svg>,
-  logout: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5m0 0l-5-5" /></svg>,
-};
-
 function Avatar({ ini, size = 40, badge = null }) {
   const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F"];
   const colorIndex = ini.charCodeAt(0) % colors.length;
@@ -119,7 +110,7 @@ function Avatar({ ini, size = 40, badge = null }) {
 function TopBar({ title, onBack }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: `1px solid ${C.gB}` }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>{I.back(C.g)}</button>
+      <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>←</button>
       <h1 style={{ fontFamily: font.d, fontSize: 18, fontWeight: 800, color: C.dk }}>{title}</h1>
       <div style={{ width: 24 }}/>
     </div>
@@ -146,7 +137,6 @@ function VisitorHome({ nav, onLogin, onRegister }) {
 
       <div style={{ padding: "0 16px 16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.gBg, borderRadius: 14, padding: "10px 12px" }}>
-          {I.search(C.gL)}
           <input type="text" placeholder="Procurar profissional..." style={{ flex: 1, border: "none", background: "none", outline: "none", fontSize: 14, fontFamily: font.b }} />
         </div>
       </div>
@@ -166,7 +156,7 @@ function VisitorHome({ nav, onLogin, onRegister }) {
       </div>
       <div style={{ display: "flex", gap: 8, padding: "0 16px", overflowX: "auto" }}>
         {CATEGORIES.slice(0, 6).map((c, i) => (
-          <div key={i} onClick={() => nav("search", { cat: c.name })} style={{ minWidth: 72, background: "#fff", borderRadius: 14, border: `1.5px solid ${C.gB}`, padding: "12px 8px", textAlign: "center", cursor: "pointer", flexShrink: 0 }}>
+          <div key={i} onClick={() => nav("search")} style={{ minWidth: 72, background: "#fff", borderRadius: 14, border: `1.5px solid ${C.gB}`, padding: "12px 8px", textAlign: "center", cursor: "pointer", flexShrink: 0 }}>
             <div style={{ fontSize: 28, marginBottom: 4 }}>{c.icon}</div>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.dk }}>{c.name}</div>
           </div>
@@ -195,9 +185,9 @@ function VisitorHome({ nav, onLogin, onRegister }) {
 
 function VisitorSearch({ nav }) {
   return (
-    <div className="screen-content">
-      <TopBar title="Buscar" onBack={() => nav("back")} />
-      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 100 }}>
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
+      <TopBar title="Buscar" onBack={() => nav("home")} />
+      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
         {PROS.map((p) => (
           <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
             <Avatar ini={p.av} size={48} badge={p.badge} />
@@ -217,7 +207,7 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
   const p = data || PROS[0];
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
-      <TopBar title={p.name} onBack={() => nav("back")} />
+      <TopBar title={p.name} onBack={() => nav("home")} />
       <div style={{ padding: "20px 16px", textAlign: "center" }}>
         <Avatar ini={p.av} size={64} badge={p.badge} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
@@ -225,7 +215,7 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
         <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>⭐ {p.rating} ({p.reviews} avaliações)</div>
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
-          {I.whatsapp("#fff", 16)} Chamar no WhatsApp
+          💬 Chamar no WhatsApp
         </button>
 
         <div style={{ marginTop: 24 }}>
@@ -287,7 +277,7 @@ function LoggedProfile({ nav, data, user }) {
   const p = data || PROS[0];
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
-      <TopBar title={p.name} onBack={() => nav("back")} />
+      <TopBar title={p.name} onBack={() => nav("home")} />
       <div style={{ padding: "20px 16px", textAlign: "center" }}>
         <Avatar ini={p.av} size={64} badge={p.badge} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
@@ -295,7 +285,7 @@ function LoggedProfile({ nav, data, user }) {
         <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>⭐ {p.rating} ({p.reviews} avaliações)</div>
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
-          {I.whatsapp("#fff", 16)} Chamar no WhatsApp
+          💬 Chamar no WhatsApp
         </button>
 
         <div style={{ marginTop: 24 }}>
@@ -312,9 +302,20 @@ function LoggedProfile({ nav, data, user }) {
           ))}
         </div>
 
-        <button onClick={() => nav("review", p)} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.acc, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
+        <button onClick={() => nav("home")} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.acc, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
           ➕ Adicionar Avaliação
         </button>
+      </div>
+    </div>
+  );
+}
+
+function ChatScreen({ nav }) {
+  return (
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
+      <TopBar title="Chat" onBack={() => nav("home")} />
+      <div style={{ padding: 20, textAlign: "center", color: C.gL }}>
+        Nenhuma conversa ainda
       </div>
     </div>
   );
@@ -342,53 +343,26 @@ function Settings({ nav, user, onLogout }) {
   );
 }
 
-function ChatScreen({ nav }) {
-  return (
-    <div className="screen-content" style={{ paddingBottom: 100 }}>
-      <TopBar title="Chat" onBack={() => nav("home")} />
-      <div style={{ padding: 20, textAlign: "center", color: C.gL }}>
-        Nenhuma conversa ainda
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const [mode, setMode] = useState("visitor");
   const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("home");
   const [screenData, setScreenData] = useState(null);
-  const [history, setHistory] = useState(["home"]);
   const scrollRef = useRef(null);
 
   const nav = useCallback((s, data = null) => {
-    if (s === "back") {
-      const h = [...history];
-      h.pop();
-      setScreen(h[h.length - 1] || "home");
-      setHistory(h);
-    } else {
-      setScreen(s);
-      setScreenData(data);
-      setHistory(h => [...h, s]);
-    }
+    setScreen(s);
+    if (data) setScreenData(data);
     scrollRef.current?.scrollTo(0, 0);
-  }, [history]);
-
-  const tabs = [
-    { id: "home", icon: "🏠", label: "Início" },
-    { id: "search", icon: "🔍", label: "Buscar" },
-    { id: "chat", icon: "💬", label: "Chat" },
-    { id: mode === "logged" ? "profile" : "home", icon: "👤", label: mode === "logged" ? "Perfil" : "Conta" },
-  ];
+  }, []);
 
   const renderScreen = () => {
     if (mode === "login") {
-      return <Login onLoginSuccess={(userData) => { setUser(userData); setMode("logged"); setScreen("home"); setHistory(["home"]); }} />;
+      return <Login onLoginSuccess={(userData) => { setUser(userData); setMode("logged"); setScreen("home"); }} />;
     }
 
     if (mode === "register") {
-      return <RegisterProfessional onBack={() => setMode("visitor")} onSuccess={(data) => { setUser(data); setMode("logged"); setScreen("home"); setHistory(["home"]); }} nav={nav} />;
+      return <RegisterProfessional onBack={() => setMode("visitor")} onSuccess={(data) => { setUser(data); setMode("logged"); setScreen("home"); }} nav={nav} />;
     }
 
     if (mode === "visitor") {
@@ -403,13 +377,26 @@ export default function App() {
     if (mode === "logged") {
       switch (screen) {
         case "home": return <LoggedHome nav={nav} user={user} />;
+        case "search": return <VisitorSearch nav={nav} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
-        case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); setHistory(["home"]); }} />;
         case "chat": return <ChatScreen nav={nav} />;
+        case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); }} />;
         default: return <LoggedHome nav={nav} user={user} />;
       }
     }
   };
+
+  const navItems = mode === "logged" 
+    ? [
+        { id: "home", icon: "🏠", label: "Início" },
+        { id: "search", icon: "🔍", label: "Buscar" },
+        { id: "chat", icon: "💬", label: "Chat" },
+        { id: "settings", icon: "👤", label: "Conta" },
+      ]
+    : [
+        { id: "home", icon: "🏠", label: "Início" },
+        { id: "search", icon: "🔍", label: "Buscar" },
+      ];
 
   return (
     <>
@@ -424,21 +411,20 @@ export default function App() {
         .navbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-top:1px solid ${C.gB};display:flex;max-width:480px;margin:0 auto;width:100%;z-index:100;}
         .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0;background:none;border:none;cursor:pointer;font-family:${font.b};font-size:10px;font-weight:600;color:${C.gL};gap:4px;}
         .nav-tab.active{color:${C.pri};font-weight:700;}
-        .nav-icon{font-size:20px;}
       `}</style>
       <div className="app-shell">
         <div ref={scrollRef} className="app-scroll">
           {renderScreen()}
         </div>
         <div className="navbar">
-          {tabs.map(tab => (
+          {navItems.map(item => (
             <button 
-              key={tab.id} 
-              onClick={() => nav(tab.id)} 
-              className={`nav-tab ${screen === tab.id ? "active" : ""}`}
+              key={item.id} 
+              onClick={() => nav(item.id)} 
+              className={`nav-tab ${screen === item.id ? "active" : ""}`}
             >
-              <div className="nav-icon">{tab.icon}</div>
-              <div>{tab.label}</div>
+              <div>{item.icon}</div>
+              <div>{item.label}</div>
             </button>
           ))}
         </div>
