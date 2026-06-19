@@ -7,7 +7,28 @@ const C = {
 };
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
-const CATS = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabeleireiro", "Técnico TI", "Mecânico", "Fotógrafo", "Diarista", "Enfermeiro", "Arquiteto", "Chef"];
+const CIDADES = [
+  { nome: "São Paulo", uf: "SP" },
+  { nome: "Rio de Janeiro", uf: "RJ" },
+  { nome: "Belo Horizonte", uf: "MG" },
+  { nome: "Curitiba", uf: "PR" },
+  { nome: "Porto Alegre", uf: "RS" },
+  { nome: "Salvador", uf: "BA" },
+  { nome: "Fortaleza", uf: "CE" },
+  { nome: "Brasília", uf: "DF" },
+  { nome: "Manaus", uf: "AM" },
+  { nome: "Recife", uf: "PE" },
+  { nome: "Goiânia", uf: "GO" },
+  { nome: "Belém", uf: "PA" },
+  { nome: "Guarulhos", uf: "SP" },
+  { nome: "Campinas", uf: "SP" },
+  { nome: "Santos", uf: "SP" },
+  { nome: "Sorocaba", uf: "SP" },
+  { nome: "Ribeirão Preto", uf: "SP" },
+  { nome: "Piracicaba", uf: "SP" },
+];
+
+const CATS_DEFAULT = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabeleireiro", "Técnico TI", "Mecânico", "Fotógrafo", "Diarista", "Enfermeiro", "Arquiteto", "Chef"];
 
 const PLANS = [
   { name: "Profissional", price: "99", icon: "⭐", feats: ["Perfil com foto", "Chat ilimitado", "5 categorias", "Aparecer nas buscas"] },
@@ -24,7 +45,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
 
-  const [f, setF] = useState({ name: "", email: "", pass: "", pass2: "", wa: "", city: "", cats: [], bio: "" });
+  const [f, setF] = useState({ name: "", email: "", pass: "", pass2: "", wa: "", city: "", uf: "", cats: [], novaCat: "", bio: "" });
 
   const v = () => {
     const e = {};
@@ -34,10 +55,17 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     if (f.pass !== f.pass2) e.pass2 = "Não combinam";
     if (f.wa.replace(/\D/g, "").length < 10) e.wa = "Inválido";
     if (!f.city.trim()) e.city = "Obrigatório";
+    if (!f.uf) e.uf = "Obrigatório";
     if (f.cats.length === 0) e.cats = "Min. 1";
     if (f.bio.length < 20) e.bio = "Min. 20 chars";
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const addCategory = () => {
+    if (f.novaCat.trim() && f.cats.length < 5) {
+      setF({...f, cats: [...f.cats, f.novaCat.trim()], novaCat: ""});
+    }
   };
 
   const next = () => {
@@ -69,7 +97,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         email: f.email,
         password: f.pass,
         whatsapp: f.wa,
-        city: f.city,
+        city: `${f.city}, ${f.uf}`,
         categories: f.cats,
         bio: f.bio,
         avatar_initials: f.name.substring(0, 2).toUpperCase(),
@@ -170,17 +198,43 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
-              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.city} onChange={e => { setF({...f, city: e.target.value}); if(errors.city) setErrors({...errors, city: null}); }} placeholder="São Paulo, SP"/>
+              <select style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.city} onChange={e => { setF({...f, city: e.target.value}); if(errors.city) setErrors({...errors, city: null}); }}>
+                <option value="">Selecione uma cidade</option>
+                {CIDADES.map((c, i) => <option key={i} value={c.nome}>{c.nome}</option>)}
+              </select>
               {errors.city && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.city}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Estado (UF) *</label>
+              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.uf ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, textTransform: "uppercase" }} value={f.uf} onChange={e => { setF({...f, uf: e.target.value.toUpperCase().slice(0, 2)}); if(errors.uf) setErrors({...errors, uf: null}); }} placeholder="SP" maxLength="2"/>
+              {errors.uf && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.uf}</div>}
             </div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias de serviço *</label>
               {errors.cats && <div style={{ color: C.cor, fontSize: 12, marginBottom: 8 }}>{errors.cats}</div>}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginTop: 10 }}>
-                {CATS.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : [...f.cats, cat]}); if(errors.cats) setErrors({...errors, cats: null}); }} style={{ padding: 12, border: `2px solid ${f.cats.includes(cat) ? C.pri : C.gB}`, borderRadius: 10, background: f.cats.includes(cat) ? C.priLt : "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s", fontFamily: font.b, color: f.cats.includes(cat) ? C.pri : C.dk }}>{cat}</button>)}
+              
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 12 }}>
+                {CATS_DEFAULT.map(cat => <button key={cat} type="button" onClick={() => { setF({...f, cats: f.cats.includes(cat) ? f.cats.filter(c => c !== cat) : f.cats.length < 5 ? [...f.cats, cat] : f.cats}); if(errors.cats) setErrors({...errors, cats: null}); }} style={{ padding: 12, border: `2px solid ${f.cats.includes(cat) ? C.pri : C.gB}`, borderRadius: 10, background: f.cats.includes(cat) ? C.priLt : "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s", fontFamily: font.b, color: f.cats.includes(cat) ? C.pri : C.dk }}>{cat}</button>)}
               </div>
-              <div style={{ fontSize: 11, color: C.gL, marginTop: 4 }}>{f.cats.length}/5 selecionadas</div>
+
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <input type="text" style={{ flex: 1, padding: "10px 12px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 12, outline: "none", fontFamily: font.b }} value={f.novaCat} onChange={e => setF({...f, novaCat: e.target.value})} placeholder="Adicione outra categoria" onKeyPress={e => e.key === "Enter" && addCategory()} />
+                <button type="button" onClick={addCategory} style={{ padding: "10px 16px", background: C.pri, color: "#fff", border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>+</button>
+              </div>
+
+              {f.cats.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {f.cats.map((cat, i) => (
+                    <div key={i} style={{ background: C.priLt, color: C.pri, padding: "6px 12px", borderRadius: 20, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                      {cat}
+                      <button type="button" onClick={() => setF({...f, cats: f.cats.filter((_, idx) => idx !== i)})} style={{ background: "none", border: "none", color: C.pri, cursor: "pointer", fontSize: 16, padding: 0 }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: C.gL, marginTop: 8 }}>{f.cats.length}/5 selecionadas</div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
@@ -235,7 +289,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Nome</span><span style={{ fontWeight: 600, color: C.dk }}>{f.name}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Email</span><span style={{ fontWeight: 600, color: C.dk }}>{f.email}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>WhatsApp</span><span style={{ fontWeight: 600, color: C.dk }}>{f.wa}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Cidade</span><span style={{ fontWeight: 600, color: C.dk }}>{f.city}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Localização</span><span style={{ fontWeight: 600, color: C.dk }}>{f.city}, {f.uf}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span>Categorias</span><span style={{ fontWeight: 600, color: C.dk }}>{f.cats.join(", ")}</span></div>
             </div>
 
