@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import CIDADES_BRASIL from "../CIDADES_BRASIL_COMPLETA";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -6,19 +7,6 @@ const C = {
   dk: "#111827", dkSoft: "#1F2937", g: "#6B7280", gL: "#9CA3AF", gB: "#E5E7EB", gBg: "#F3F4F6", w: "#FFFFFF",
 };
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
-
-const CIDADES = [
-  { nome: "São Paulo", uf: "SP" },
-  { nome: "Rio de Janeiro", uf: "RJ" },
-  { nome: "Belo Horizonte", uf: "MG" },
-  { nome: "Curitiba", uf: "PR" },
-  { nome: "Porto Alegre", uf: "RS" },
-  { nome: "Salvador", uf: "BA" },
-  { nome: "Fortaleza", uf: "CE" },
-  { nome: "Brasília", uf: "DF" },
-  { nome: "Manaus", uf: "AM" },
-  { nome: "Recife", uf: "PE" },
-];
 
 const CATS_DEFAULT = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabeleireiro", "Técnico TI", "Mecânico", "Fotógrafo", "Diarista", "Enfermeiro", "Arquiteto", "Chef"];
 
@@ -50,7 +38,7 @@ const PLANS = [
     name: "DESTAQUE",
     price: "49.90",
     icon: "💎",
-    feats: ["Tudo IMPULSO +", "Topo das pesquisas", "Cidades ilimitadas", "Perfil Premium", "Até 10 fotos", "Até 3 vídeos", "Selo Ouro", "Relatórios completos", "Badge Mais Contratado"],
+    feats: ["Tudo IMPULSO +", "Topo das pesquisas", "Cidades ilimitadas", "Perfil Premium", "Logotipo da empresa", "Até 10 fotos", "Até 3 vídeos", "Selo Ouro", "Relatórios de desempenho", "Badge Mais Contratado", "Prioridade máxima na busca"],
     photoLimit: 10,
     videoLimit: 3,
     cityLimit: 999,
@@ -67,7 +55,7 @@ function getTrialDates() {
 
 export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [step, setStep] = useState(1);
-  const [plan, setPlan] = useState("IMPULSO"); // Começa com IMPULSO (trial)
+  const [plan, setPlan] = useState("IMPULSO");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
@@ -234,7 +222,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
               <select style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.city} onChange={e => { setF({...f, city: e.target.value}); if(errors.city) setErrors({...errors, city: null}); }}>
                 <option value="">Selecione uma cidade</option>
-                {CIDADES.map((c, i) => <option key={i} value={c.nome}>{c.nome}</option>)}
+                {CIDADES_BRASIL.map((c, i) => <option key={i} value={c.nome}>{c.nome} - {c.uf}</option>)}
               </select>
               {errors.city && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.city}</div>}
             </div>
