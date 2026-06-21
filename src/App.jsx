@@ -96,9 +96,20 @@ async function getProfileById(id) {
   }
 }
 
+async function updateProfile(id, fields) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: 'Supabase not loaded' };
+  try {
+    const { data, error } = await sb.from('professionals').update(fields).eq('id', id).select();
+    return { data: data && data.length > 0 ? data[0] : null, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
 window.SupabaseAPI = {
   initSupabase, createUser, getUserByEmail, createSubscription,
-  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById,
+  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile,
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -457,7 +468,7 @@ function Settings({ nav, user, onLogout }) {
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.pri, marginBottom: 8 }}>Sua Conta</div>
           <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Nome: {user?.name}</div>
           <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Email: {user?.email}</div>
-          <button style={{ width: "100%", padding: "8px", background: C.gBg, color: C.dk, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Editar Perfil</button>
+          <button onClick={() => nav("editar")} style={{ width: "100%", padding: "8px", background: C.gBg, color: C.dk, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Editar Perfil</button>
         </div>
 
         <div style={{ background: C.accLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
@@ -552,6 +563,91 @@ function PaymentStatusOverlay({ status, onClose }) {
         <h2 style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: cfg.cor, marginBottom: 10 }}>{cfg.titulo}</h2>
         <p style={{ fontSize: 14, color: C.g, marginBottom: 20, lineHeight: 1.5 }}>{cfg.msg}</p>
         <button onClick={onClose} style={{ width: "100%", padding: "12px", background: cfg.cor, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Fechar</button>
+      </div>
+    </div>
+  );
+}
+
+function EditProfile({ nav, user, onUpdated }) {
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [ok, setOk] = useState(false);
+  const [f, setF] = useState({ name: "", whatsapp: "", city: "", bio: "" });
+
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      try {
+        const { data } = await window.SupabaseAPI.getProfileById(user?.id);
+        if (ativo && data) {
+          setF({
+            name: data.name || "",
+            whatsapp: data.whatsapp || "",
+            city: data.city || "",
+            bio: data.bio || "",
+          });
+        }
+      } catch (e) {}
+      if (ativo) setCarregando(false);
+    })();
+    return () => { ativo = false; };
+  }, [user?.id]);
+
+  const salvar = async () => {
+    setErro(""); setOk(false);
+    if (!f.name.trim()) { setErro("O nome não pode ficar vazio."); return; }
+    setSalvando(true);
+    try {
+      const fields = {
+        name: f.name.trim(),
+        whatsapp: f.whatsapp.trim(),
+        city: f.city.trim(),
+        bio: f.bio.trim(),
+        avatar_initials: f.name.trim().substring(0, 2).toUpperCase(),
+      };
+      const { error } = await window.SupabaseAPI.updateProfile(user.id, fields);
+      if (error) throw error;
+      setOk(true);
+      if (onUpdated) onUpdated({ name: fields.name, avatar_initials: fields.avatar_initials });
+    } catch (e) {
+      setErro("Não foi possível salvar. Tente novamente.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const inputStyle = { width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b, marginBottom: 14 };
+  const labelStyle = { display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 };
+
+  return (
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
+      <TopBar title="Editar Perfil" onBack={() => nav("settings")} />
+      <div style={{ padding: 16 }}>
+        {carregando ? (
+          <p style={{ fontSize: 14, color: C.gL, textAlign: "center", marginTop: 20 }}>Carregando seus dados...</p>
+        ) : (
+          <>
+            {erro && <div style={{ background: C.corLt, color: C.cor, border: `1px solid ${C.cor}`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, fontWeight: 600 }}>{erro}</div>}
+            {ok && <div style={{ background: C.priLt, color: C.priDk, border: `1px solid ${C.pri}`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, fontWeight: 600 }}>Perfil atualizado com sucesso!</div>}
+
+            <label style={labelStyle}>Nome</label>
+            <input style={inputStyle} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} disabled={salvando} />
+
+            <label style={labelStyle}>WhatsApp</label>
+            <input style={inputStyle} value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="Ex: 5511999998888" disabled={salvando} />
+
+            <label style={labelStyle}>Cidade</label>
+            <input style={inputStyle} value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} disabled={salvando} />
+
+            <label style={labelStyle}>Bio</label>
+            <textarea style={{ ...inputStyle, resize: "vertical" }} rows="4" value={f.bio} onChange={(e) => setF({ ...f, bio: e.target.value })} disabled={salvando} />
+
+            <button onClick={salvar} disabled={salvando} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: salvando ? "wait" : "pointer", fontFamily: font.d, opacity: salvando ? 0.6 : 1, marginTop: 4 }}>
+              {salvando ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -674,6 +770,7 @@ export default function App() {
         case "chat": return <ChatScreen nav={nav} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { window.SupabaseAPI?.signOutUser?.(); setMode("visitor"); setUser(null); setScreen("home"); }} />;
         case "planos": return <PlanosScreen nav={nav} user={user} />;
+        case "editar": return <EditProfile nav={nav} user={user} onUpdated={(u) => setUser((prev) => ({ ...prev, ...u }))} />;
         default: return <LoggedHome nav={nav} user={user} />;
       }
     }
