@@ -14,6 +14,7 @@ export default function Login({ onLoginSuccess }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const scrollRef = useRef(null);
 
   const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -21,6 +22,7 @@ export default function Login({ onLoginSuccess }) {
 
   const handleLogin = async () => {
     setError("");
+    setInfo("");
     if (!validateEmail(email)) { setError("Email inválido"); return; }
     if (!validatePassword(password)) { setError("Senha deve ter 8+ caracteres"); return; }
 
@@ -30,30 +32,47 @@ export default function Login({ onLoginSuccess }) {
 
       window.SupabaseAPI.initSupabase();
 
-      const { data: professional, error: searchError } = await window.SupabaseAPI.getUserByEmail(email);
+      const { data: authData, error: signInError } = await window.SupabaseAPI.signInUser(email, password);
 
-      if (searchError || !professional) {
+      if (signInError || !authData?.user) {
         throw new Error("Email ou senha incorretos");
       }
 
-      if (professional.password !== password) {
-        throw new Error("Email ou senha incorretos");
-      }
+      const { data: professional } = await window.SupabaseAPI.getProfileById(authData.user.id);
 
       trackEvent("Login", { email });
-      
+
       if (onLoginSuccess) {
         onLoginSuccess({
-          id: professional.id,
-          name: professional.name,
-          email: professional.email,
-          badge: professional.badge,
-          avatar_initials: professional.avatar_initials
+          id: authData.user.id,
+          name: professional?.name || authData.user.email,
+          email: authData.user.email,
+          badge: professional?.badge,
+          avatar_initials: professional?.avatar_initials,
         });
       }
     } catch (err) {
       console.error("Erro no login:", err);
       setError(err.message || "Erro ao fazer login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgot = async () => {
+    setError("");
+    setInfo("");
+    if (!validateEmail(email)) { setError("Digite seu email no campo acima para recuperar a senha."); return; }
+    setLoading(true);
+    try {
+      if (!window.SupabaseAPI) throw new Error("Supabase não carregou");
+      window.SupabaseAPI.initSupabase();
+      const { error: resetError } = await window.SupabaseAPI.resetPassword(email);
+      if (resetError) throw resetError;
+      setInfo("Enviamos um link para o seu email. Abra-o para criar uma nova senha (verifique também a caixa de spam).");
+    } catch (err) {
+      console.error("Erro ao recuperar senha:", err);
+      setError("Não foi possível enviar o email de recuperação. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -85,6 +104,12 @@ export default function Login({ onLoginSuccess }) {
         {error && (
           <div style={{ background: C.corLt, border: `1px solid ${C.cor}`, borderRadius: 10, padding: 12, marginBottom: 16, color: C.cor, fontSize: 12, fontWeight: 600 }}>
             {error}
+          </div>
+        )}
+
+        {info && (
+          <div style={{ background: C.priLt, border: `1px solid ${C.pri}`, borderRadius: 10, padding: 12, marginBottom: 16, color: C.priDk, fontSize: 12, fontWeight: 600 }}>
+            {info}
           </div>
         )}
 
@@ -132,6 +157,26 @@ export default function Login({ onLoginSuccess }) {
           }}
         >
           {loading ? "Entrando..." : "Entrar"}
+        </button>
+
+        <button
+          onClick={handleForgot}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "10px",
+            background: "none",
+            color: C.pri,
+            border: "none",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: loading ? "wait" : "pointer",
+            fontFamily: font.b,
+            marginBottom: 12,
+            textDecoration: "underline",
+          }}
+        >
+          Esqueci minha senha
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
