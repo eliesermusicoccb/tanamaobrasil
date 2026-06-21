@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
-import PaymentModal from "./components/PaymentModal";
-import paymentManager from "./paymentManager";
+import { iniciarPagamento } from "./services/mercadopago-service";
 
 // ══════════════════════════════════════════════════════════════
 // SUPABASE INIT
@@ -415,11 +414,98 @@ function Settings({ nav, user, onLogout }) {
           <button style={{ width: "100%", padding: "8px", background: C.gBg, color: C.dk, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Editar Perfil</button>
         </div>
 
+        <div style={{ background: C.accLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.acc, marginBottom: 8 }}>Planos</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Destaque seu perfil e apareça primeiro nas buscas.</div>
+          <button onClick={() => nav("planos")} style={{ width: "100%", padding: "10px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Ver planos e assinar</button>
+        </div>
+
         <div style={{ background: C.corLt, borderRadius: 12, padding: 16 }}>
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.cor, marginBottom: 8 }}>Segurança</div>
           <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Gerenciar sua conta</div>
           <button onClick={onLogout} style={{ width: "100%", padding: "8px", background: C.gBg, color: C.cor, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Fazer Logout</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanosScreen({ nav, user }) {
+  const [loading, setLoading] = useState(null);
+  const [erro, setErro] = useState("");
+
+  const assinar = async (planoId) => {
+    try {
+      setErro("");
+      setLoading(planoId);
+      await iniciarPagamento(planoId, user);
+      // a partir daqui o navegador é redirecionado para o Mercado Pago
+    } catch (e) {
+      setErro("Não foi possível iniciar o pagamento. Tente novamente em instantes.");
+      setLoading(null);
+    }
+  };
+
+  const planos = [
+    { id: "pro", nome: "Pro", preco: "R$ 29,90", periodo: "/mês", destaque: false,
+      feats: ["Destaque nas buscas", "Selo verificado", "Chat ilimitado"] },
+    { id: "premium", nome: "Premium", preco: "R$ 69,90", periodo: "/mês", destaque: true,
+      feats: ["1º lugar nas buscas", "Banner publicitário incluso", "Suporte prioritário"] },
+  ];
+
+  return (
+    <div className="screen-content" style={{ paddingBottom: 100 }}>
+      <TopBar title="Planos" onBack={() => nav("settings")} />
+      <div style={{ padding: "16px" }}>
+        <p style={{ fontSize: 13, color: C.g, textAlign: "center", marginBottom: 16 }}>
+          Escolha um plano para impulsionar seu perfil.
+        </p>
+
+        {erro && (
+          <div style={{ background: C.corLt, color: C.cor, padding: "10px 14px", borderRadius: 10, fontSize: 13, fontWeight: 600, marginBottom: 14, textAlign: "center" }}>
+            {erro}
+          </div>
+        )}
+
+        {planos.map((p) => (
+          <div key={p.id} style={{ background: p.destaque ? C.priLt : "#fff", border: `2px solid ${p.destaque ? C.pri : C.gB}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 800, color: C.dk }}>{p.nome}</div>
+              <div><span style={{ fontSize: 22, fontWeight: 900, color: C.pri, fontFamily: font.d }}>{p.preco}</span><span style={{ fontSize: 12, color: C.gL }}>{p.periodo}</span></div>
+            </div>
+            <ul style={{ listStyle: "none", padding: 0, margin: "12px 0" }}>
+              {p.feats.map((f, i) => (
+                <li key={i} style={{ fontSize: 13, color: C.dk, padding: "5px 0" }}>✓ {f}</li>
+              ))}
+            </ul>
+            <button onClick={() => assinar(p.id)} disabled={loading === p.id} style={{ width: "100%", padding: "13px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: loading === p.id ? "wait" : "pointer", fontFamily: font.d, opacity: loading === p.id ? 0.7 : 1 }}>
+              {loading === p.id ? "Abrindo pagamento..." : "Assinar"}
+            </button>
+          </div>
+        ))}
+
+        <p style={{ fontSize: 11, color: C.gL, textAlign: "center", marginTop: 8 }}>
+          Pagamento processado com segurança pelo Mercado Pago.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PaymentStatusOverlay({ status, onClose }) {
+  const cfg = {
+    sucesso: { cor: C.pri, icone: "✓", titulo: "Pagamento aprovado!", msg: "Recebemos seu pagamento. Em instantes seu plano estará ativo." },
+    pendente: { cor: C.acc, icone: "⏳", titulo: "Pagamento pendente", msg: "Estamos aguardando a confirmação. Você será avisado assim que for aprovado." },
+    erro: { cor: C.cor, icone: "✕", titulo: "Pagamento não concluído", msg: "Não foi possível concluir o pagamento. Você pode tentar novamente quando quiser." },
+  }[status] || null;
+  if (!cfg) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "32px 24px", maxWidth: 360, width: "100%", textAlign: "center", borderTop: `4px solid ${cfg.cor}` }}>
+        <div style={{ fontSize: 48, color: cfg.cor, marginBottom: 12 }}>{cfg.icone}</div>
+        <h2 style={{ fontFamily: font.d, fontSize: 20, fontWeight: 800, color: cfg.cor, marginBottom: 10 }}>{cfg.titulo}</h2>
+        <p style={{ fontSize: 14, color: C.g, marginBottom: 20, lineHeight: 1.5 }}>{cfg.msg}</p>
+        <button onClick={onClose} style={{ width: "100%", padding: "12px", background: cfg.cor, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Fechar</button>
       </div>
     </div>
   );
@@ -431,15 +517,17 @@ export default function App() {
   const [screen, setScreen] = useState("home");
   const [screenData, setScreenData] = useState(null);
   const [searchFilter, setSearchFilter] = useState("");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    // Inicializar Stripe (apenas se a chave estiver configurada)
-    if (process.env.REACT_APP_STRIPE_PUBLIC_KEY) {
-      paymentManager.initializeStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
-    } else {
-      console.warn("⚠️ STRIPE_PUBLIC_KEY não configurada. Pagamentos desabilitados.");
+    // Ao voltar do Mercado Pago, a URL traz ?pagamento=sucesso|pendente|erro
+    const params = new URLSearchParams(window.location.search);
+    const pg = params.get("pagamento");
+    if (pg) {
+      setPaymentStatus(pg);
+      // limpa a URL para não repetir a mensagem ao recarregar
+      window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
 
@@ -474,6 +562,7 @@ export default function App() {
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "chat": return <ChatScreen nav={nav} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); }} />;
+        case "planos": return <PlanosScreen nav={nav} user={user} />;
         default: return <LoggedHome nav={nav} user={user} />;
       }
     }
@@ -523,19 +612,8 @@ export default function App() {
         </div>
       </div>
 
-      {showPaymentModal && (
-        <PaymentModal
-          planName="DESTAQUE"
-          amount={49.90}
-          description="Plano DESTAQUE - TáNaMão Brasil"
-          professionalData={user}
-          onSuccess={(result) => {
-            console.log("Pagamento bem-sucedido:", result);
-            setShowPaymentModal(false);
-          }}
-          onCancel={() => setShowPaymentModal(false)}
-          onClose={() => setShowPaymentModal(false)}
-        />
+      {paymentStatus && (
+        <PaymentStatusOverlay status={paymentStatus} onClose={() => setPaymentStatus(null)} />
       )}
     </>
   );
