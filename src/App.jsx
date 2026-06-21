@@ -53,7 +53,53 @@ async function createSubscription(subData) {
   }
 }
 
-window.SupabaseAPI = { initSupabase, createUser, getUserByEmail, createSubscription };
+// ---- Autenticação segura (Supabase Auth) ----
+async function signUpUser(email, password, metadata) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: { message: 'Supabase não carregou' } };
+  return await sb.auth.signUp({ email, password, options: { data: metadata || {} } });
+}
+
+async function signInUser(email, password) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: { message: 'Supabase não carregou' } };
+  return await sb.auth.signInWithPassword({ email, password });
+}
+
+async function signOutUser() {
+  const sb = supabase || initSupabase();
+  if (!sb) return;
+  return await sb.auth.signOut();
+}
+
+async function resetPassword(email) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { error: { message: 'Supabase não carregou' } };
+  return await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+}
+
+async function updatePassword(newPassword) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { error: { message: 'Supabase não carregou' } };
+  return await sb.auth.updateUser({ password: newPassword });
+}
+
+async function getProfileById(id) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: 'Supabase not loaded' };
+  try {
+    const { data, error } = await sb.from('professionals').select('*').eq('id', id).limit(1);
+    if (error) return { data: null, error };
+    return { data: data && data.length > 0 ? data[0] : null, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+window.SupabaseAPI = {
+  initSupabase, createUser, getUserByEmail, createSubscription,
+  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById,
+};
 
 // ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM
@@ -511,6 +557,57 @@ function PaymentStatusOverlay({ status, onClose }) {
   );
 }
 
+function NovaSenhaScreen({ onConcluido }) {
+  const [senha, setSenha] = useState("");
+  const [senha2, setSenha2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+  const [ok, setOk] = useState(false);
+
+  const salvar = async () => {
+    setErro("");
+    if (senha.length < 8) { setErro("A senha deve ter no mínimo 8 caracteres."); return; }
+    if (senha !== senha2) { setErro("As senhas não são iguais."); return; }
+    setLoading(true);
+    try {
+      const { error } = await window.SupabaseAPI.updatePassword(senha);
+      if (error) throw error;
+      setOk(true);
+      await window.SupabaseAPI.signOutUser();
+    } catch (e) {
+      setErro("Não foi possível salvar a nova senha. Abra o link do email novamente e tente de novo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: C.w, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 20 }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap'); *{margin:0;padding:0;box-sizing:border-box;}`}</style>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontFamily: font.d, fontSize: 36, fontWeight: 900, color: C.pri }}>TáNaMão</div>
+      </div>
+      <div style={{ width: "100%", maxWidth: 360, background: "#fff", borderRadius: 16, border: `1.5px solid ${C.gB}`, padding: 24 }}>
+        <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginBottom: 8 }}>Definir nova senha</h1>
+        {ok ? (
+          <>
+            <p style={{ fontSize: 14, color: C.g, marginBottom: 20 }}>Senha alterada com sucesso! Agora é só entrar com a nova senha.</p>
+            <button onClick={onConcluido} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>Ir para o login</button>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 13, color: C.gL, marginBottom: 20 }}>Digite a sua nova senha abaixo.</p>
+            {erro && <div style={{ background: C.corLt, color: C.cor, border: `1px solid ${C.cor}`, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 12, fontWeight: 600 }}>{erro}</div>}
+            <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Nova senha (mín. 8)" style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: font.b }} disabled={loading} />
+            <input type="password" value={senha2} onChange={(e) => setSenha2(e.target.value)} placeholder="Repita a nova senha" style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", marginBottom: 20, fontFamily: font.b }} disabled={loading} onKeyPress={(e) => e.key === "Enter" && salvar()} />
+            <button onClick={salvar} disabled={loading} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: loading ? "wait" : "pointer", fontFamily: font.d, opacity: loading ? 0.6 : 1 }}>{loading ? "Salvando..." : "Salvar nova senha"}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [mode, setMode] = useState("visitor");
   const [user, setUser] = useState(null);
@@ -518,6 +615,7 @@ export default function App() {
   const [screenData, setScreenData] = useState(null);
   const [searchFilter, setSearchFilter] = useState("");
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -529,6 +627,19 @@ export default function App() {
       // limpa a URL para não repetir a mensagem ao recarregar
       window.history.replaceState({}, "", window.location.pathname);
     }
+  }, []);
+
+  useEffect(() => {
+    // Detecta o retorno do link de "recuperar senha" enviado por email
+    if ((window.location.hash || "").includes("type=recovery")) {
+      setRecoveryMode(true);
+    }
+    const sb = window.SupabaseAPI?.initSupabase?.();
+    if (!sb) return;
+    const { data: sub } = sb.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
+    });
+    return () => { sub?.subscription?.unsubscribe?.(); };
   }, []);
 
   const nav = useCallback((s, data = null) => {
@@ -561,7 +672,7 @@ export default function App() {
         case "search": return <VisitorSearch nav={nav} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "chat": return <ChatScreen nav={nav} />;
-        case "settings": return <Settings nav={nav} user={user} onLogout={() => { setMode("visitor"); setUser(null); setScreen("home"); }} />;
+        case "settings": return <Settings nav={nav} user={user} onLogout={() => { window.SupabaseAPI?.signOutUser?.(); setMode("visitor"); setUser(null); setScreen("home"); }} />;
         case "planos": return <PlanosScreen nav={nav} user={user} />;
         default: return <LoggedHome nav={nav} user={user} />;
       }
@@ -579,6 +690,10 @@ export default function App() {
         { id: "home", icon: "🏠", label: "Início", onClick: () => { setScreen("home"); } },
         { id: "search", icon: "🔍", label: "Buscar", onClick: () => { setScreen("search"); } },
       ];
+
+  if (recoveryMode) {
+    return <NovaSenhaScreen onConcluido={() => { setRecoveryMode(false); window.history.replaceState({}, "", window.location.pathname); setMode("login"); }} />;
+  }
 
   return (
     <>
