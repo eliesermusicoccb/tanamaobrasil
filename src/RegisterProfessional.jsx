@@ -280,10 +280,25 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       window.SupabaseAPI.initSupabase();
 
       const selectedPlan = PLANS.find(p => p.name === plan);
+
+      // 1) Cria a conta com login seguro (a senha é criptografada pelo Supabase)
+      const { data: authData, error: authError } = await window.SupabaseAPI.signUpUser(f.email, f.pass, { name: f.name });
+
+      if (authError || !authData?.user) {
+        const msg = (authError?.message || "").toLowerCase();
+        if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+          throw new Error("Este email já está cadastrado. Tente fazer login.");
+        }
+        throw new Error(authError?.message || "Erro ao criar conta");
+      }
+
+      const userId = authData.user.id;
+
+      // 2) Cria o perfil profissional ligado a essa conta (sem senha aqui)
       const userData = {
+        id: userId,
         name: f.name,
         email: f.email,
-        password: f.pass,
         whatsapp: f.wa,
         city: `${f.city}, ${f.uf}`,
         categories: f.cats,
@@ -296,12 +311,12 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       const { data: profesional, error: userError } = await window.SupabaseAPI.createUser(userData);
 
       if (userError) {
-        throw new Error(userError.message || "Erro ao criar usuário");
+        throw new Error(userError.message || "Erro ao criar perfil");
       }
 
       const trialDates = selectedPlan.trial === true ? getTrialDates() : {};
       const subscriptionData = {
-        professional_id: profesional.id,
+        professional_id: userId,
         subscription_plan: plan,
         plan_price: selectedPlan.price,
         status: "active",
@@ -324,7 +339,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         onSuccess({ 
           ...f, 
           plan, 
-          id: profesional.id,
+          id: userId,
           subscriptionId: subscription.id,
           trial_active: selectedPlan.trial === true,
           trial_days_left: selectedPlan.trial === true ? 15 : 0,
