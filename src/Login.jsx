@@ -15,6 +15,7 @@ export default function Login({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const scrollRef = useRef(null);
 
   const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -44,11 +45,12 @@ export default function Login({ onLoginSuccess }) {
 
       if (onLoginSuccess) {
         onLoginSuccess({
+          ...(professional || {}),
           id: authData.user.id,
-          name: professional?.name || authData.user.email,
-          email: authData.user.email,
+          name: professional?.name || authData.user.user_metadata?.name || authData.user.email,
+          email: professional?.email || authData.user.email,
           badge: professional?.badge,
-          avatar_initials: professional?.avatar_initials,
+          avatar_initials: professional?.avatar_initials || (professional?.name || authData.user.email || "U").substring(0, 2).toUpperCase(),
         });
       }
     } catch (err) {
@@ -127,15 +129,39 @@ export default function Login({ onLoginSuccess }) {
 
         <div style={{ marginBottom: 24 }}>
           <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 }}>Senha</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Min. 8 caracteres"
-            style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b }}
-            disabled={loading}
-            onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min. 8 caracteres"
+              style={{ width: "100%", padding: "12px 92px 12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b }}
+              disabled={loading}
+              onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={loading}
+              style={{
+                position: "absolute",
+                right: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                border: "none",
+                background: C.gBg,
+                color: C.pri,
+                borderRadius: 8,
+                padding: "7px 10px",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: loading ? "wait" : "pointer",
+                fontFamily: font.b,
+              }}
+            >
+              {showPassword ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
         </div>
 
         <button
