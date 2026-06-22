@@ -222,4 +222,3 @@ export default function Login({ onLoginSuccess }) {
     </div>
   );
 }
-
