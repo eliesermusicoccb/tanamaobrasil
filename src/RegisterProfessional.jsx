@@ -930,6 +930,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       // dados extras do cadastro — não inserimos (insert) de novo.
       const userData = {
         name: f.name,
+        email: f.email,
         whatsapp: f.wa,
         city: `${f.city}, ${f.uf}`,
         categories: f.cats,
@@ -971,7 +972,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
           ...f, 
           plan, 
           id: userId,
-          subscriptionId: subscription.id,
+          subscriptionId: subscription?.id || null,
           trial_active: selectedPlan.trial === true,
           trial_days_left: selectedPlan.trial === true ? 15 : 0,
         });
