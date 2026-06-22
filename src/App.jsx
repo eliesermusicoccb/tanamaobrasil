@@ -121,14 +121,25 @@ async function updateProfile(id, fields) {
   if (!sb) return { data: null, error: 'Supabase not loaded' };
 
   try {
-    // Antes o app usava apenas UPDATE.
-    // UPDATE não cria uma linha nova quando ela ainda não existe.
-    // Como subscriptions.professional_id depende de professionals.id,
-    // precisamos garantir que o profissional exista antes da assinatura.
+    // A tabela professionals exige email NOT NULL.
+    // Na tela de editar perfil, o app não envia email porque o usuário não edita esse campo.
+    // Como usamos upsert, o Supabase pode tentar inserir a linha caso não encontre o perfil.
+    // Por isso buscamos o email do usuário logado e garantimos que ele vá junto.
+    const { data: authData } = await sb.auth.getUser();
+    const authEmail = authData?.user?.email || null;
+
     const profileData = {
       id,
       ...fields,
+      email: fields?.email || authEmail,
     };
+
+    if (!profileData.email) {
+      return {
+        data: null,
+        error: { message: 'Não foi possível identificar o email do usuário logado. Faça login novamente.' }
+      };
+    }
 
     const { error } = await sb
       .from('professionals')
