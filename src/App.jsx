@@ -116,6 +116,22 @@ async function getProfileById(id) {
   }
 }
 
+async function getAllProfessionals() {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: [], error: 'Supabase not loaded' };
+  try {
+    const { data, error } = await sb
+      .from('professionals')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) return { data: [], error };
+    return { data: data || [], error: null };
+  } catch (err) {
+    return { data: [], error: err };
+  }
+}
+
 async function updateProfile(id, fields) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -218,7 +234,7 @@ async function uploadProfessionalMedia(userId, kind, file) {
 }
 
 window.SupabaseAPI = {
-  initSupabase, createUser, getUserByEmail, createSubscription,
+  initSupabase, createUser, getUserByEmail, getAllProfessionals, createSubscription,
   signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile, uploadProfessionalMedia,
 };
 
@@ -263,6 +279,67 @@ const PROS = [
   { id:5, name:"João Técnico", role:"Técnico TI", rating:4.6, reviews:45, city:"São Paulo", uf:"SP", price:"R$ 120", badge: null, av:"JT", on:true,
     whatsapp:"5511999990005", categories: ["Técnico TI"]},
 ];
+
+function parseCategories(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    } catch (e) {}
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function initialsFromName(name) {
+  const parts = String(name || "Profissional").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "PR";
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase();
+}
+
+function normalizeProfessionalRecord(row) {
+  const categories = parseCategories(row?.categories);
+  const rawCity = String(row?.city || "").trim();
+  const cityParts = rawCity.split(",").map((part) => part.trim()).filter(Boolean);
+  const cityName = cityParts[0] || rawCity || "Cidade não informada";
+  const uf = String(row?.uf || cityParts[1] || "").trim();
+  const name = row?.name || "Profissional";
+  const rating = Number(row?.rating || row?.average_rating || 5);
+  const reviews = Number(row?.reviews || row?.review_count || 0);
+
+  return {
+    id: row?.id,
+    name,
+    role: categories[0] || row?.role || "Profissional",
+    rating: Number.isFinite(rating) ? rating : 5,
+    reviews: Number.isFinite(reviews) ? reviews : 0,
+    city: cityName,
+    uf,
+    price: row?.price || row?.starting_price || "Consultar",
+    badge: row?.badge || null,
+    av: row?.avatar_initials || initialsFromName(name),
+    avatar_url: row?.avatar_url || "",
+    cover_url: row?.cover_url || "",
+    gallery_photos: normalizeGalleryPhotos(row?.gallery_photos || row?.photos),
+    on: true,
+    whatsapp: String(row?.whatsapp || "").replace(/\D/g, ""),
+    categories,
+    bio: row?.bio || "",
+    attends_24h: row?.attends_24h === true,
+    userReviews: [],
+    _source: "database",
+  };
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
 function Avatar({ ini = "?", size = 40, badge = null, src = null }) {
   const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F"];
@@ -369,20 +446,64 @@ function VisitorHome({ nav, onLogin, onRegister }) {
         <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais próximos</div>
       </div>
       <div style={{ padding: "0 16px 100px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {PROS.slice(0, 3).map((p) => (
-          <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
-            <Avatar ini={p.av} size={48} badge={p.badge} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: C.g }}>{p.role} • {p.city}, {p.uf}</div>
-              {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
-              <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
-            </div>
-            <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
-          </div>
-        ))}
+        <ProfessionalsPreview nav={nav} />
       </div>
     </div>
+  );
+}
+
+
+function ProfessionalsPreview({ nav }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const { data, error } = await window.SupabaseAPI.getAllProfessionals();
+        if (!active) return;
+        if (error) {
+          console.error("Erro ao carregar prévia de profissionais:", error);
+          setItems([]);
+          return;
+        }
+        setItems((data || []).map(normalizeProfessionalRecord));
+      } catch (err) {
+        if (active) {
+          console.error("Erro ao carregar prévia de profissionais:", err);
+          setItems([]);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => { active = false; };
+  }, []);
+
+  if (loading) {
+    return <div style={{ textAlign: "center", padding: "18px 8px", color: C.gL, fontSize: 13 }}>Carregando profissionais...</div>;
+  }
+
+  const preview = items.length > 0 ? items.slice(0, 3) : PROS.slice(0, 3);
+
+  return (
+    <>
+      {preview.map((p) => (
+        <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
+          <Avatar ini={p.av} size={48} badge={p.badge} src={p.avatar_url} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
+            <div style={{ fontSize: 12, color: C.g }}>{p.role}{p.city ? ` • ${p.city}${p.uf ? `, ${p.uf}` : ""}` : ""}</div>
+            {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
+            <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
+          </div>
+          <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -390,15 +511,60 @@ function VisitorSearch({ nav, searchFilter, setSearchFilter }) {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [sortBy, setSortBy] = useState("rating");
+  const [professionalsFromDb, setProfessionalsFromDb] = useState([]);
+  const [loadingProfessionals, setLoadingProfessionals] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  const filtered = PROS.filter(p => {
-    const matchSearch = !searchFilter || p.name.toLowerCase().includes(searchFilter.toLowerCase()) || p.role.toLowerCase().includes(searchFilter.toLowerCase());
-    const matchCat = !filterCategory || p.categories.includes(filterCategory);
-    const matchCity = !filterCity || p.city.toLowerCase().includes(filterCity.toLowerCase());
+  useEffect(() => {
+    let active = true;
+
+    const loadProfessionals = async () => {
+      setLoadingProfessionals(true);
+      setLoadError("");
+
+      try {
+        const { data, error } = await window.SupabaseAPI.getAllProfessionals();
+        if (!active) return;
+
+        if (error) {
+          console.error("Erro ao carregar profissionais:", error);
+          setLoadError(error?.message || "Não foi possível carregar profissionais do banco.");
+          setProfessionalsFromDb([]);
+          return;
+        }
+
+        setProfessionalsFromDb((data || []).map(normalizeProfessionalRecord));
+      } catch (err) {
+        if (!active) return;
+        console.error("Erro ao carregar profissionais:", err);
+        setLoadError(err?.message || "Não foi possível carregar profissionais do banco.");
+        setProfessionalsFromDb([]);
+      } finally {
+        if (active) setLoadingProfessionals(false);
+      }
+    };
+
+    loadProfessionals();
+    return () => { active = false; };
+  }, []);
+
+  // Quando o banco já tem profissionais cadastrados, usamos o banco.
+  // Os profissionais fixos ficam só como fallback para ambiente de teste sem dados.
+  const baseProfessionals = professionalsFromDb.length > 0 ? professionalsFromDb : PROS;
+
+  const filtered = baseProfessionals.filter(p => {
+    const searchable = normalizeText(`${p.name} ${p.role} ${p.bio || ""} ${(p.categories || []).join(" ")}`);
+    const citySearchable = normalizeText(`${p.city || ""} ${p.uf || ""}`);
+    const categorySearchable = (p.categories || []).map(normalizeText);
+
+    const matchSearch = !searchFilter || searchable.includes(normalizeText(searchFilter));
+    const matchCat = !filterCategory || categorySearchable.includes(normalizeText(filterCategory)) || normalizeText(p.role).includes(normalizeText(filterCategory));
+    const matchCity = !filterCity || citySearchable.includes(normalizeText(filterCity));
+
     return matchSearch && matchCat && matchCity;
   }).sort((a, b) => {
-    if (sortBy === "rating") return b.rating - a.rating;
-    if (sortBy === "reviews") return b.reviews - a.reviews;
+    if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
+    if (sortBy === "reviews") return (b.reviews || 0) - (a.reviews || 0);
     if (sortBy === "price") return parseInt(a.price) - parseInt(b.price);
     return 0;
   });
@@ -440,19 +606,25 @@ function VisitorSearch({ nav, searchFilter, setSearchFilter }) {
           </select>
         </div>
 
-        {filtered.length > 0 && <div style={{ fontSize: 11, color: C.gL }}>Encontrados: {filtered.length}</div>}
+        {loadingProfessionals && <div style={{ fontSize: 11, color: C.gL }}>Carregando profissionais...</div>}
+        {!loadingProfessionals && loadError && <div style={{ fontSize: 11, color: C.cor }}>{loadError}</div>}
+        {!loadingProfessionals && !loadError && filtered.length > 0 && <div style={{ fontSize: 11, color: C.gL }}>Encontrados: {filtered.length}</div>}
       </div>
 
       <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {filtered.length > 0 ? (
+        {loadingProfessionals ? (
+          <div style={{ textAlign: "center", padding: "40px 16px", color: C.gL }}>
+            Carregando profissionais...
+          </div>
+        ) : filtered.length > 0 ? (
           filtered.map((p) => (
             <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
-              <Avatar ini={p.av} size={48} badge={p.badge} />
+              <Avatar ini={p.av} size={48} badge={p.badge} src={p.avatar_url} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
                 <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
                 {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
-                <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating}</div>
+                <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>📍 {p.city}{p.uf ? `, ${p.uf}` : ""} • ⭐ {p.rating}</div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
@@ -478,11 +650,12 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
     <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title={p.name} onBack={() => nav("home")} />
       <div style={{ padding: "20px 16px", textAlign: "center" }}>
-        <Avatar ini={p.av} size={64} badge={p.badge} />
+        <Avatar ini={p.av} size={64} badge={p.badge} src={p.avatar_url} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
         {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
         <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating} ({p.reviews} avaliações)</div>
+        {p.bio && <div style={{ marginTop: 14, padding: 12, background: C.gBg, borderRadius: 12, fontSize: 13, color: C.dk, textAlign: "left", lineHeight: 1.5 }}>{p.bio}</div>}
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
           💬 Chamar no WhatsApp
@@ -540,17 +713,7 @@ function LoggedHome({ nav, user }) {
         <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 800, color: C.dk }}>Profissionais próximos</div>
       </div>
       <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {PROS.slice(0, 3).map((p) => (
-          <div key={p.id} onClick={() => nav("profile", p)} style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1.5px solid ${C.gB}`, cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
-            <Avatar ini={p.av} size={48} badge={p.badge} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
-              {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
-              <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
-            </div>
-          </div>
-        ))}
+        <ProfessionalsPreview nav={nav} />
       </div>
     </div>
   );
@@ -562,7 +725,7 @@ function LoggedProfile({ nav, data, user }) {
     <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title={p.name} onBack={() => nav("home")} />
       <div style={{ padding: "20px 16px", textAlign: "center" }}>
-        <Avatar ini={p.av} size={64} badge={p.badge} />
+        <Avatar ini={p.av} size={64} badge={p.badge} src={p.avatar_url} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
         {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
