@@ -8,6 +8,7 @@ import { iniciarPagamento } from "./services/mercadopago-service";
 // ══════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://awkabegjsamyeqdwcngt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3a2FiZWdqc2FteWVxZHdjbmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTA2MDAsImV4cCI6MjA5NzIyNjYwMH0.TKZjFZ6lmpDbOwD_wEdo5jJdqVWywLRoR3gkaSvtO7o';
+const MEDIA_BUCKET = 'professional-media';
 
 let supabase = null;
 
@@ -111,17 +112,96 @@ async function getProfileById(id) {
 async function updateProfile(id, fields) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
+
   try {
-    const { data, error } = await sb.from('professionals').update(fields).eq('id', id).select();
-    return { data: data && data.length > 0 ? data[0] : null, error };
+    // Antes o app usava apenas UPDATE.
+    // UPDATE não cria uma linha nova quando ela ainda não existe.
+    // Como subscriptions.professional_id depende de professionals.id,
+    // precisamos garantir que o profissional exista antes da assinatura.
+    const profileData = {
+      id,
+      ...fields,
+    };
+
+    const { error } = await sb
+      .from('professionals')
+      .upsert([profileData], { onConflict: 'id' });
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    // Não usamos .select() aqui para evitar conflito com RLS de leitura.
+    return { data: profileData, error: null };
   } catch (err) {
     return { data: null, error: err };
   }
 }
 
+
+function normalizeGalleryPhotos(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch (e) {
+      return value.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function getFileExtension(file) {
+  const fromName = (file?.name || "").split(".").pop()?.toLowerCase();
+  if (fromName && fromName.length <= 5) return fromName;
+  const mime = file?.type || "";
+  if (mime.includes("png")) return "png";
+  if (mime.includes("webp")) return "webp";
+  return "jpg";
+}
+
+async function uploadProfessionalMedia(userId, kind, file) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: { message: 'Supabase não carregou' } };
+  if (!userId) return { data: null, error: { message: 'Usuário não identificado' } };
+  if (!file) return { data: null, error: { message: 'Nenhum arquivo selecionado' } };
+  if (!file.type?.startsWith('image/')) {
+    return { data: null, error: { message: 'Envie apenas arquivos de imagem' } };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { data: null, error: { message: 'Imagem muito grande. Use até 5 MB.' } };
+  }
+
+  const ext = getFileExtension(file);
+  const safeKind = String(kind || 'image').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+  const path = `${userId}/${safeKind}-${Date.now()}.${ext}`;
+
+  const { data, error } = await sb
+    .storage
+    .from(MEDIA_BUCKET)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    });
+
+  if (error) return { data: null, error };
+
+  const { data: publicData } = sb.storage.from(MEDIA_BUCKET).getPublicUrl(data.path);
+  return {
+    data: {
+      path: data.path,
+      publicUrl: publicData?.publicUrl,
+    },
+    error: null,
+  };
+}
+
 window.SupabaseAPI = {
   initSupabase, createUser, getUserByEmail, createSubscription,
-  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile,
+  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile, uploadProfessionalMedia,
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -149,7 +229,7 @@ const CATEGORIES = [
 ];
 
 const PROS = [
-  { id:1, name:"Carlos Silva", role:"Eletricista", rating:4.9, reviews:127, city:"São Paulo", uf:"SP", price:"R$ 80", badge:"premium", av:"CS", on:true,
+  { id:1, name:"Carlos Silva", role:"Eletricista", rating:4.9, reviews:127, city:"São Paulo", uf:"SP", price:"R$ 80", badge:"premium", av:"CS", on:true, attends_24h:true,
     whatsapp:"5511999990001", categories: ["Eletricista"],
     userReviews:[
       {n:"Maria S.",r:5,t:"Excelente! Pontual e muito atencioso.",d:"2 dias atrás"},
@@ -166,16 +246,47 @@ const PROS = [
     whatsapp:"5511999990005", categories: ["Técnico TI"]},
 ];
 
-function Avatar({ ini, size = 40, badge = null }) {
+function Avatar({ ini = "?", size = 40, badge = null, src = null }) {
   const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F"];
-  const colorIndex = ini.charCodeAt(0) % colors.length;
+  const safeIni = String(ini || "?").substring(0, 2).toUpperCase();
+  const colorIndex = safeIni.charCodeAt(0) % colors.length;
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
-      <div style={{ width: size, height: size, borderRadius: "50%", background: colors[colorIndex], display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: size * 0.4, fontFamily: font.d }}>
-        {ini}
-      </div>
-      {badge && <div style={{ position: "absolute", bottom: 0, right: 0, background: badge === "premium" ? C.acc : C.pri, borderRadius: "50%", width: size * 0.35, height: size * 0.35, fontSize: size * 0.2 }}>⭐</div>}
+      {src ? (
+        <img
+          src={src}
+          alt="Foto do perfil"
+          style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", display: "block", border: "2px solid #fff" }}
+        />
+      ) : (
+        <div style={{ width: size, height: size, borderRadius: "50%", background: colors[colorIndex], display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: size * 0.4, fontFamily: font.d }}>
+          {safeIni}
+        </div>
+      )}
+      {badge && <div style={{ position: "absolute", bottom: 0, right: 0, background: badge === "premium" ? C.acc : C.pri, borderRadius: "50%", width: size * 0.35, height: size * 0.35, fontSize: size * 0.2, display: "flex", alignItems: "center", justifyContent: "center" }}>⭐</div>}
     </div>
+  );
+}
+
+
+function Badge24h({ small = false }) {
+  return (
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      padding: small ? "3px 7px" : "5px 9px",
+      borderRadius: 999,
+      background: C.accLt,
+      color: "#9A6400",
+      border: `1px solid ${C.acc}`,
+      fontSize: small ? 10 : 12,
+      fontWeight: 800,
+      fontFamily: font.d,
+      whiteSpace: "nowrap",
+    }}>
+      ⚡ 24h
+    </span>
   );
 }
 
@@ -246,6 +357,7 @@ function VisitorHome({ nav, onLogin, onRegister }) {
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
               <div style={{ fontSize: 12, color: C.g }}>{p.role} • {p.city}, {p.uf}</div>
+              {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
               <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
             </div>
             <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
@@ -321,6 +433,7 @@ function VisitorSearch({ nav, searchFilter, setSearchFilter }) {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
                 <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
+                {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
                 <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating}</div>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -350,6 +463,7 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
         <Avatar ini={p.av} size={64} badge={p.badge} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
+        {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
         <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating} ({p.reviews} avaliações)</div>
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
@@ -414,6 +528,7 @@ function LoggedHome({ nav, user }) {
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
               <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
+              {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
               <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
             </div>
           </div>
@@ -432,6 +547,7 @@ function LoggedProfile({ nav, data, user }) {
         <Avatar ini={p.av} size={64} badge={p.badge} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
+        {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
         <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>⭐ {p.rating} ({p.reviews} avaliações)</div>
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
@@ -479,8 +595,9 @@ function Settings({ nav, user, onLogout }) {
         <div style={{ background: C.priLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.pri, marginBottom: 8 }}>Sua Conta</div>
           <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Nome: {user?.name}</div>
-          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Email: {user?.email}</div>
-          <button onClick={() => nav("editar")} style={{ width: "100%", padding: "8px", background: C.gBg, color: C.dk, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Editar Perfil</button>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 8 }}>Email: {user?.email}</div>
+          {user?.attends_24h && <div style={{ marginBottom: 12 }}><Badge24h small /></div>}
+          <button onClick={() => nav("editar")} style={{ width: "100%", padding: "8px", background: C.gBg, color: C.dk, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Editar perfil, fotos e mídia</button>
         </div>
 
         <div style={{ background: C.accLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
@@ -583,9 +700,19 @@ function PaymentStatusOverlay({ status, onClose }) {
 function EditProfile({ nav, user, onUpdated }) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [uploading, setUploading] = useState("");
   const [erro, setErro] = useState("");
   const [ok, setOk] = useState(false);
-  const [f, setF] = useState({ name: "", whatsapp: "", city: "", bio: "" });
+  const [f, setF] = useState({
+    name: "",
+    whatsapp: "",
+    city: "",
+    bio: "",
+    avatar_url: "",
+    cover_url: "",
+    gallery_photos: [],
+    attends_24h: false,
+  });
 
   useEffect(() => {
     let ativo = true;
@@ -598,6 +725,10 @@ function EditProfile({ nav, user, onUpdated }) {
             whatsapp: data.whatsapp || "",
             city: data.city || "",
             bio: data.bio || "",
+            avatar_url: data.avatar_url || "",
+            cover_url: data.cover_url || "",
+            gallery_photos: normalizeGalleryPhotos(data.gallery_photos || data.photos),
+            attends_24h: data.attends_24h === true,
           });
         }
       } catch (e) {}
@@ -605,6 +736,61 @@ function EditProfile({ nav, user, onUpdated }) {
     })();
     return () => { ativo = false; };
   }, [user?.id]);
+
+  const handleUpload = async (kind, file) => {
+    setErro("");
+    setOk(false);
+    if (!file) return;
+    setUploading(kind);
+    try {
+      const { data, error } = await window.SupabaseAPI.uploadProfessionalMedia(user.id, kind, file);
+      if (error) throw error;
+      if (kind === "avatar") {
+        setF((prev) => ({ ...prev, avatar_url: data.publicUrl }));
+      } else if (kind === "cover") {
+        setF((prev) => ({ ...prev, cover_url: data.publicUrl }));
+      }
+    } catch (e) {
+      setErro(e?.message || "Não foi possível enviar a imagem. Confira o bucket professional-media no Supabase.");
+    } finally {
+      setUploading("");
+    }
+  };
+
+  const handleGalleryUpload = async (files) => {
+    const selected = Array.from(files || []);
+    if (selected.length === 0) return;
+    setErro("");
+    setOk(false);
+
+    const freeSlots = Math.max(0, 10 - f.gallery_photos.length);
+    if (freeSlots === 0) {
+      setErro("Você já adicionou 10 fotos. Remova alguma para enviar outra.");
+      return;
+    }
+
+    setUploading("gallery");
+    try {
+      const uploadedUrls = [];
+      for (const file of selected.slice(0, freeSlots)) {
+        const { data, error } = await window.SupabaseAPI.uploadProfessionalMedia(user.id, "gallery", file);
+        if (error) throw error;
+        if (data?.publicUrl) uploadedUrls.push(data.publicUrl);
+      }
+      setF((prev) => ({ ...prev, gallery_photos: [...prev.gallery_photos, ...uploadedUrls] }));
+    } catch (e) {
+      setErro(e?.message || "Não foi possível enviar as fotos. Confira o bucket professional-media no Supabase.");
+    } finally {
+      setUploading("");
+    }
+  };
+
+  const removeGalleryPhoto = (index) => {
+    setF((prev) => ({
+      ...prev,
+      gallery_photos: prev.gallery_photos.filter((_, i) => i !== index),
+    }));
+  };
 
   const salvar = async () => {
     setErro(""); setOk(false);
@@ -617,13 +803,23 @@ function EditProfile({ nav, user, onUpdated }) {
         city: f.city.trim(),
         bio: f.bio.trim(),
         avatar_initials: f.name.trim().substring(0, 2).toUpperCase(),
+        avatar_url: f.avatar_url || null,
+        cover_url: f.cover_url || null,
+        gallery_photos: f.gallery_photos || [],
+        attends_24h: f.attends_24h === true,
       };
       const { error } = await window.SupabaseAPI.updateProfile(user.id, fields);
       if (error) throw error;
       setOk(true);
-      if (onUpdated) onUpdated({ name: fields.name, avatar_initials: fields.avatar_initials });
+      if (onUpdated) onUpdated({
+        name: fields.name,
+        avatar_initials: fields.avatar_initials,
+        avatar_url: fields.avatar_url,
+        cover_url: fields.cover_url,
+        attends_24h: fields.attends_24h,
+      });
     } catch (e) {
-      setErro("Não foi possível salvar. Tente novamente.");
+      setErro(e?.message || "Não foi possível salvar. Tente novamente.");
     } finally {
       setSalvando(false);
     }
@@ -631,6 +827,8 @@ function EditProfile({ nav, user, onUpdated }) {
 
   const inputStyle = { width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b, marginBottom: 14 };
   const labelStyle = { display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 6 };
+  const fileInputStyle = { width: "100%", padding: "10px", border: `2px dashed ${C.gB}`, borderRadius: 10, fontSize: 12, fontFamily: font.b, marginBottom: 12, background: C.gBg };
+  const sectionStyle = { background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 14, padding: 14, marginBottom: 14 };
 
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
@@ -643,19 +841,81 @@ function EditProfile({ nav, user, onUpdated }) {
             {erro && <div style={{ background: C.corLt, color: C.cor, border: `1px solid ${C.cor}`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, fontWeight: 600 }}>{erro}</div>}
             {ok && <div style={{ background: C.priLt, color: C.priDk, border: `1px solid ${C.pri}`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, fontWeight: 600 }}>Perfil atualizado com sucesso!</div>}
 
-            <label style={labelStyle}>Nome</label>
-            <input style={inputStyle} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} disabled={salvando} />
+            <div style={sectionStyle}>
+              <div
+                style={{
+                  height: 128,
+                  borderRadius: 14,
+                  background: f.cover_url ? `url(${f.cover_url}) center/cover` : `linear-gradient(135deg, ${C.pri}, ${C.acc})`,
+                  position: "relative",
+                  marginBottom: 44,
+                  overflow: "visible",
+                }}
+              >
+                <div style={{ position: "absolute", left: 16, bottom: -34 }}>
+                  <Avatar ini={f.name || user?.name || "?"} size={78} src={f.avatar_url} />
+                </div>
+              </div>
+              <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Fotos do perfil</div>
+              <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Adicione a foto principal e a imagem de fundo do seu perfil.</div>
 
-            <label style={labelStyle}>WhatsApp</label>
-            <input style={inputStyle} value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="Ex: 5511999998888" disabled={salvando} />
+              <label style={labelStyle}>Foto de perfil</label>
+              <input type="file" accept="image/*" style={fileInputStyle} disabled={salvando || !!uploading} onChange={(e) => handleUpload("avatar", e.target.files?.[0])} />
 
-            <label style={labelStyle}>Cidade</label>
-            <input style={inputStyle} value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} disabled={salvando} />
+              <label style={labelStyle}>Imagem de fundo</label>
+              <input type="file" accept="image/*" style={fileInputStyle} disabled={salvando || !!uploading} onChange={(e) => handleUpload("cover", e.target.files?.[0])} />
 
-            <label style={labelStyle}>Bio</label>
-            <textarea style={{ ...inputStyle, resize: "vertical" }} rows="4" value={f.bio} onChange={(e) => setF({ ...f, bio: e.target.value })} disabled={salvando} />
+              {uploading && <div style={{ fontSize: 12, color: C.pri, fontWeight: 700 }}>Enviando imagem...</div>}
+            </div>
 
-            <button onClick={salvar} disabled={salvando} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: salvando ? "wait" : "pointer", fontFamily: font.d, opacity: salvando ? 0.6 : 1, marginTop: 4 }}>
+            <div style={sectionStyle}>
+              <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Galeria de fotos</div>
+              <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Adicione fotos dos seus serviços. Limite visual desta tela: 10 fotos.</div>
+
+              <input type="file" accept="image/*" multiple style={fileInputStyle} disabled={salvando || !!uploading} onChange={(e) => handleGalleryUpload(e.target.files)} />
+
+              {f.gallery_photos.length > 0 ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                  {f.gallery_photos.map((url, i) => (
+                    <div key={`${url}-${i}`} style={{ position: "relative", borderRadius: 10, overflow: "hidden", background: C.gBg, height: 86 }}>
+                      <img src={url} alt={`Foto ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <button type="button" onClick={() => removeGalleryPhoto(i)} disabled={salvando} style={{ position: "absolute", top: 4, right: 4, width: 24, height: 24, borderRadius: "50%", border: "none", background: "rgba(0,0,0,.65)", color: "#fff", cursor: "pointer", fontWeight: 800 }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ background: C.gBg, borderRadius: 10, padding: 14, textAlign: "center", color: C.gL, fontSize: 12 }}>Nenhuma foto adicionada ainda.</div>
+              )}
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Atendimento</div>
+              <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Marque esta opção se você atende chamados a qualquer horário.</div>
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 12, border: `1.5px solid ${f.attends_24h ? C.acc : C.gB}`, borderRadius: 12, background: f.attends_24h ? C.accLt : C.gBg, cursor: salvando ? "wait" : "pointer" }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: C.dk }}>Atendo 24 horas</div>
+                  <div style={{ fontSize: 12, color: C.g, marginTop: 2 }}>Mostra o selo <strong>⚡ 24h</strong> no perfil.</div>
+                </div>
+                <input type="checkbox" checked={f.attends_24h} onChange={(e) => setF({ ...f, attends_24h: e.target.checked })} disabled={salvando} style={{ width: 22, height: 22, accentColor: C.acc }} />
+              </label>
+              {f.attends_24h && <div style={{ marginTop: 10 }}><Badge24h /></div>}
+            </div>
+
+            <div style={sectionStyle}>
+              <label style={labelStyle}>Nome</label>
+              <input style={inputStyle} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} disabled={salvando} />
+
+              <label style={labelStyle}>WhatsApp</label>
+              <input style={inputStyle} value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="Ex: 5511999998888" disabled={salvando} />
+
+              <label style={labelStyle}>Cidade</label>
+              <input style={inputStyle} value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} disabled={salvando} />
+
+              <label style={labelStyle}>Bio</label>
+              <textarea style={{ ...inputStyle, resize: "vertical" }} rows="4" value={f.bio} onChange={(e) => setF({ ...f, bio: e.target.value })} disabled={salvando} />
+            </div>
+
+            <button onClick={salvar} disabled={salvando || !!uploading} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: salvando || uploading ? "wait" : "pointer", fontFamily: font.d, opacity: salvando || uploading ? 0.6 : 1, marginTop: 4 }}>
               {salvando ? "Salvando..." : "Salvar alterações"}
             </button>
           </>
