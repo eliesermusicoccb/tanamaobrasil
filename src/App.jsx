@@ -45,9 +45,21 @@ async function getUserByEmail(email) {
 async function createSubscription(subData) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
+
   try {
-    const { data, error } = await sb.from('subscriptions').insert([subData]).select();
-    return { data: data?.[0], error };
+    // Importante: não usamos .select() aqui.
+    // O .select() força o Supabase a tentar LER a linha logo depois de INSERIR.
+    // Em tabelas com RLS, isso pode causar erro mesmo quando o INSERT foi permitido.
+    const { error } = await sb
+      .from('subscriptions')
+      .insert([subData]);
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    // Como não buscamos a linha de volta, retornamos os próprios dados enviados.
+    return { data: { ...subData, id: null }, error: null };
   } catch (err) {
     return { data: null, error: err };
   }
