@@ -111,27 +111,9 @@ async function getProfileById(id) {
 async function updateProfile(id, fields) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
-
   try {
-    // Antes o app usava apenas UPDATE.
-    // UPDATE não cria uma linha nova quando ela ainda não existe.
-    // Como subscriptions.professional_id depende de professionals.id,
-    // precisamos garantir que o profissional exista antes da assinatura.
-    const profileData = {
-      id,
-      ...fields,
-    };
-
-    const { error } = await sb
-      .from('professionals')
-      .upsert([profileData], { onConflict: 'id' });
-
-    if (error) {
-      return { data: null, error };
-    }
-
-    // Não usamos .select() aqui para evitar conflito com RLS de leitura.
-    return { data: profileData, error: null };
+    const { data, error } = await sb.from('professionals').update(fields).eq('id', id).select();
+    return { data: data && data.length > 0 ? data[0] : null, error };
   } catch (err) {
     return { data: null, error: err };
   }
