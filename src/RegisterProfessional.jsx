@@ -62,22 +62,22 @@ const CATS_DEFAULT = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabelei
 
 const PLANS = [
   {
-    name: "START",
+    name: "BÁSICO",
     price: "0",
     icon: "🚀",
     free: true,
     feats: ["Perfil público", "WhatsApp visível", "1 cidade", "Até 5 fotos", "Avaliações", "Aparecer nas buscas"],
-    restrictions: ["Menor prioridade", "Sem selo", "Sem estatísticas", "Sem vídeo"],
+    restrictions: ["Menor prioridade", "Sem badge de verificação", "Sem estatísticas", "Sem vídeo"],
     photoLimit: 5,
     videoLimit: 0,
     cityLimit: 1,
   },
   {
-    name: "IMPULSO",
+    name: "PROFISSIONAL",
     price: "19.90",
     icon: "⭐",
     popular: true,
-    feats: ["Tudo START +", "Prioridade nas buscas", "Até 3 cidades", "Até 10 fotos", "1 vídeo", "Estatísticas", "Selo Profissional Verificado"],
+    feats: ["Tudo BÁSICO +", "✓ Perfil verificado", "Prioridade nas buscas", "Até 3 cidades", "Até 10 fotos + 1 vídeo", "Estatísticas básicas (views, cliques)", "Chat mensagem direto ativo"],
     photoLimit: 10,
     videoLimit: 1,
     cityLimit: 3,
@@ -85,10 +85,10 @@ const PLANS = [
     trialDays: 15,
   },
   {
-    name: "DESTAQUE",
+    name: "ELITE",
     price: "49.90",
     icon: "💎",
-    feats: ["Tudo IMPULSO +", "Topo das pesquisas", "Cidades ilimitadas", "Perfil Premium", "Logotipo da empresa", "Até 10 fotos", "Até 3 vídeos", "Selo Ouro", "Relatórios de desempenho", "Badge Mais Contratado", "Prioridade máxima na busca"],
+    feats: ["Tudo PROFISSIONAL +", "🏆 Badge ELITE (topo das pesquisas)", "Cidades ilimitadas", "Logotipo/branding no perfil", "Até 10 fotos + 3 vídeos", "Estatísticas avançadas (conversão, origem)", "Relatório mensal por email", "Prioridade em suporte"],
     photoLimit: 10,
     videoLimit: 3,
     cityLimit: 999,
@@ -105,7 +105,7 @@ function getTrialDates() {
 
 export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [step, setStep] = useState(1);
-  const [plan, setPlan] = useState("IMPULSO");
+  const [plan, setPlan] = useState("PROFISSIONAL");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
@@ -520,19 +520,19 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
                 <span style={{ color: C.pri }}>R$ {PLANS.find(p => p.name === plan).price}/mês</span>
               </div>
               <div style={{ fontSize: 12, color: C.gL }}>
-                {plan === "START" && "Sem cobranças"}
-                {plan === "IMPULSO" && "15 dias grátis - Depois cobra automaticamente"}
-                {plan === "DESTAQUE" && "Contratação agora"}
+                {plan === "BÁSICO" && "Sem cobranças"}
+                {plan === "PROFISSIONAL" && "15 dias grátis - Depois cobra automaticamente"}
+                {plan === "ELITE" && "Contratação agora"}
               </div>
             </div>
 
-            {plan === "IMPULSO" && (
+            {plan === "PROFISSIONAL" && (
               <div style={{ padding: 12, background: C.accLt, borderRadius: 10, marginBottom: 16 }}>
                 <div style={{ fontSize: 12, color: C.acc, fontWeight: 600 }}>
                   ⏱️ Você está experimentando gratuitamente os recursos premium do TáNaMão.
                 </div>
                 <div style={{ fontSize: 11, color: C.acc, marginTop: 4 }}>
-                  Após 15 dias, retornará automaticamente para o plano START (grátis).
+                  Após 15 dias, retornará automaticamente para o plano BÁSICO (grátis).
                 </div>
               </div>
             )}
