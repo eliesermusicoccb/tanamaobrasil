@@ -1,5 +1,6 @@
 // Fonte única dos planos do TáNaMão Brasil.
-// Mantendo tudo em um arquivo só, evitamos preço diferente em telas diferentes.
+// Tudo que envolve nome, preço, benefícios e limites dos planos fica aqui.
+// Assim evitamos uma tela mostrar um preço e outra tela mostrar outro.
 
 export const PLANOS_TANAMAO = {
   gratis: {
@@ -12,70 +13,72 @@ export const PLANOS_TANAMAO = {
     recomendado: false,
     pago: false,
     badge: null,
-    descricao: "Para começar a aparecer na plataforma sem pagar nada.",
+    descricao: "Para entrar na plataforma, criar seu perfil e começar a ser encontrado.",
     cta: "Começar grátis",
     feats: [
       "Perfil público na plataforma",
       "WhatsApp visível para clientes",
-      "Aparece nas buscas",
+      "Aparece nas buscas da sua cidade",
       "Recebe avaliações de clientes",
       "Até 5 fotos no perfil",
+      "Atendimento em 1 cidade",
     ],
     restrictions: [
       "Menor prioridade nas buscas",
-      "Sem selo verificado",
-      "Sem banner de destaque",
+      "Sem selo de destaque",
+      "Sem banner na Home",
     ],
     photoLimit: 5,
     videoLimit: 0,
     cityLimit: 1,
   },
 
-  pro: {
-    id: "pro",
-    nome: "Pro",
-    tituloPagamento: "Plano Pro - TáNaMão Brasil",
-    preco: 29.90,
+  impulso: {
+    id: "impulso",
+    nome: "Impulso",
+    tituloPagamento: "Plano Impulso - TáNaMão Brasil",
+    preco: 19.90,
     periodo: "/mês",
     destaque: false,
     recomendado: true,
     pago: true,
-    badge: "pro",
-    descricao: "Destaque nas buscas, selo verificado e mais confiança para receber contatos.",
-    cta: "Assinar Pro",
+    badge: "impulso",
+    descricao: "Para quem quer sair do básico e aparecer com mais força para clientes da região.",
+    cta: "Assinar Impulso",
     feats: [
-      "Destaque nas buscas",
-      "Selo verificado no perfil",
+      "Mais prioridade nas buscas",
+      "Selo Impulso no perfil",
       "WhatsApp em evidência",
-      "Recebe avaliações de clientes",
+      "Avaliações dos clientes em destaque",
       "Até 10 fotos no perfil",
-      "Até 3 cidades de atendimento",
+      "Atendimento em até 3 cidades",
     ],
     photoLimit: 10,
     videoLimit: 1,
     cityLimit: 3,
   },
 
-  premium: {
-    id: "premium",
-    nome: "Premium",
-    tituloPagamento: "Plano Premium - TáNaMão Brasil",
-    preco: 69.90,
+  destaque: {
+    id: "destaque",
+    nome: "Destaque",
+    tituloPagamento: "Plano Destaque - TáNaMão Brasil",
+    preco: 49.90,
     periodo: "/mês",
     destaque: true,
     recomendado: false,
     pago: true,
-    badge: "premium",
-    descricao: "Mais visibilidade para profissionais que querem aparecer no topo e vender mais.",
-    cta: "Assinar Premium",
+    badge: "destaque",
+    descricao: "Para profissionais e empresas que querem máxima visibilidade e mais confiança antes do cliente chamar.",
+    cta: "Assinar Destaque",
     feats: [
       "Prioridade máxima nas buscas",
-      "Banner publicitário incluso",
-      "Selo Premium no perfil",
+      "Espaço de destaque na Home",
+      "Selo Destaque no perfil",
       "WhatsApp em evidência",
-      "Recebe avaliações de clientes",
+      "Avaliações dos clientes em destaque",
       "Suporte prioritário",
-      "Cidades de atendimento ampliadas",
+      "Atendimento em cidades ampliadas",
+      "Até 15 fotos e até 3 vídeos no perfil",
     ],
     photoLimit: 15,
     videoLimit: 3,
@@ -83,11 +86,19 @@ export const PLANOS_TANAMAO = {
   },
 };
 
+// Mantém compatibilidade com nomes antigos, caso algum cadastro antigo ainda tenha pro/premium.
+export const PLANOS_COMPATIBILIDADE = {
+  pro: PLANOS_TANAMAO.impulso,
+  premium: PLANOS_TANAMAO.destaque,
+  start: PLANOS_TANAMAO.gratis,
+};
+
 export const PLANOS_CADASTRO = Object.values(PLANOS_TANAMAO);
 export const PLANOS_PAGOS = Object.values(PLANOS_TANAMAO).filter((plano) => plano.pago);
 
 export function getPlanoById(id) {
-  return PLANOS_TANAMAO[id] || null;
+  const chave = String(id || "gratis").toLowerCase();
+  return PLANOS_TANAMAO[chave] || PLANOS_COMPATIBILIDADE[chave] || null;
 }
 
 export function formatarPrecoPlano(valor) {
