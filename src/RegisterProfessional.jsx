@@ -64,7 +64,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
   const v = () => {
     const e = {};
-    if (!f.name.trim()) e.name = "Nome obrigatório";
+    if (!f.name.trim()) e.name = "Informe o nome do profissional ou da empresa";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Email inválido (ex: seu@email.com)";
     if (f.pass.length < 8) e.pass = "Mínimo 8 caracteres";
     if (f.pass !== f.pass2) e.pass2 = "Senhas não conferem";
@@ -252,7 +252,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>📸 Suas Fotos</div>
               
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 8 }}>Foto de Perfil *</label>
+                <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 8 }}>Foto ou logo do perfil *</label>
                 {f.profilePhotoPreview && <div style={{ marginBottom: 8, textAlign: "center" }}><img src={f.profilePhotoPreview} alt="preview" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${C.pri}` }} /></div>}
                 <input type="file" accept="image/*" onChange={e => handlePhotoUpload("profile", e.target.files?.[0])} style={{ width: "100%", padding: "10px", border: `2px solid ${errors.profilePhoto ? C.cor : C.gB}`, borderRadius: 10, fontSize: 12, fontFamily: font.b }} />
                 {errors.profilePhoto && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.profilePhoto}</div>}
@@ -268,8 +268,8 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
             {/* CAMPOS */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Nome completo *</label>
-              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.name ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.name} onChange={e => { setF({...f, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} placeholder="João Silva"/>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Nome do profissional ou empresa *</label>
+              <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.name ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.name} onChange={e => { setF({...f, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} placeholder="Ex.: João Eletricista ou Elétrica Silva"/>
               {errors.name && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.name}</div>}
             </div>
 
@@ -419,7 +419,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
             <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16, marginTop: 20 }}>
               <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seus Dados</div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Nome</span><span style={{ fontWeight: 600, color: C.dk }}>{f.name}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Nome do perfil</span><span style={{ fontWeight: 600, color: C.dk }}>{f.name}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Email</span><span style={{ fontWeight: 600, color: C.dk }}>{f.email}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>WhatsApp</span><span style={{ fontWeight: 600, color: C.dk }}>{f.wa}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Localização</span><span style={{ fontWeight: 600, color: C.dk }}>{f.city}, {f.uf}</span></div>

@@ -1053,7 +1053,7 @@ function Settings({ nav, user, onLogout }) {
       <div style={{ padding: 16 }}>
         <div style={{ background: C.priLt, borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.pri, marginBottom: 8 }}>Sua Conta</div>
-          <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Nome: {user?.name}</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 4 }}>Perfil: {user?.name}</div>
           <div style={{ fontSize: 13, color: C.dk, marginBottom: 8 }}>Email: {user?.email}</div>
           {user?.attends_24h && <div style={{ marginBottom: 12 }}><Badge24h small /></div>}
           <button onClick={() => nav("editar")} style={{ width: "100%", padding: "8px", background: C.gBg, color: C.dk, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Editar perfil, fotos e mídia</button>
@@ -1369,8 +1369,8 @@ function EditProfile({ nav, user, onUpdated }) {
             </div>
 
             <div style={sectionStyle}>
-              <label style={labelStyle}>Nome</label>
-              <input style={inputStyle} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} disabled={salvando} />
+              <label style={labelStyle}>Nome do profissional ou empresa</label>
+              <input style={inputStyle} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Ex.: João Eletricista ou Elétrica Silva" disabled={salvando} />
 
               <label style={labelStyle}>WhatsApp</label>
               <input style={inputStyle} value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="Ex: 5511999998888" disabled={salvando} />
