@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import CIDADES_BRASIL from "./CIDADES_SP.js";
+import { PLANOS_CADASTRO, formatarPrecoPlano, getPlanoById } from "./config/plans.js";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -12,40 +13,7 @@ const CATS_DEFAULT = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabelei
 
 const UFS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
 
-const PLANS = [
-  {
-    name: "BÁSICO",
-    price: "0",
-    icon: "🚀",
-    free: true,
-    feats: ["Perfil público", "WhatsApp visível", "1 cidade", "Até 5 fotos", "Avaliações", "Aparecer nas buscas"],
-    restrictions: ["Menor prioridade", "Sem badge de verificação", "Sem estatísticas", "Sem vídeo"],
-    photoLimit: 5,
-    videoLimit: 0,
-    cityLimit: 1,
-  },
-  {
-    name: "PROFISSIONAL",
-    price: "19.90",
-    icon: "⭐",
-    popular: true,
-    feats: ["Tudo BÁSICO +", "✓ Perfil verificado", "Prioridade nas buscas", "Até 3 cidades", "Até 10 fotos + 1 vídeo", "Estatísticas básicas (views, cliques)", "Chat mensagem direto ativo"],
-    photoLimit: 10,
-    videoLimit: 1,
-    cityLimit: 3,
-    trial: true,
-    trialDays: 15,
-  },
-  {
-    name: "ELITE",
-    price: "49.90",
-    icon: "💎",
-    feats: ["Tudo PROFISSIONAL +", "🏆 Badge ELITE (topo das pesquisas)", "Cidades ilimitadas", "Logotipo/branding no perfil", "Até 10 fotos + 3 vídeos", "Estatísticas avançadas (conversão, origem)", "Relatório mensal por email", "Prioridade em suporte"],
-    photoLimit: 10,
-    videoLimit: 3,
-    cityLimit: 999,
-  },
-];
+const PLANS = PLANOS_CADASTRO;
 
 function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
 
@@ -57,7 +25,7 @@ function getTrialDates() {
 
 export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const [step, setStep] = useState(1);
-  const [plan, setPlan] = useState("PROFISSIONAL");
+  const [plan, setPlan] = useState("gratis");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
@@ -148,7 +116,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
       window.SupabaseAPI.initSupabase();
 
-      const selectedPlan = PLANS.find(p => p.name === plan);
+      const selectedPlan = getPlanoById(plan);
 
       if (!v()) {
         throw new Error("Preencha todos os campos obrigatórios.");
@@ -170,19 +138,15 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       let coverPhotoUrl = null;
 
       if (f.profilePhoto) {
-        const formData = new FormData();
-        formData.append("file", f.profilePhoto);
-        formData.append("folder", "profiles");
-        const photoRes = await window.SupabaseAPI.uploadProfilePhoto(userId, formData);
-        profilePhotoUrl = photoRes?.url || null;
+        const photoRes = await window.SupabaseAPI.uploadProfessionalMedia(userId, "profile", f.profilePhoto);
+        if (photoRes?.error) throw new Error(photoRes.error.message || "Erro ao enviar foto de perfil");
+        profilePhotoUrl = photoRes?.data?.publicUrl || null;
       }
 
       if (f.coverPhoto) {
-        const formData = new FormData();
-        formData.append("file", f.coverPhoto);
-        formData.append("folder", "covers");
-        const coverRes = await window.SupabaseAPI.uploadCoverPhoto(userId, formData);
-        coverPhotoUrl = coverRes?.url || null;
+        const coverRes = await window.SupabaseAPI.uploadProfessionalMedia(userId, "cover", f.coverPhoto);
+        if (coverRes?.error) throw new Error(coverRes.error.message || "Erro ao enviar foto de capa");
+        coverPhotoUrl = coverRes?.data?.publicUrl || null;
       }
 
       const userData = {
@@ -195,8 +159,10 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         avatar_initials: f.name.substring(0, 2).toUpperCase(),
         avatar_url: profilePhotoUrl,
         cover_photo_url: coverPhotoUrl,
-        trial_active: selectedPlan.trial === true,
-        trial_days_left: selectedPlan.trial === true ? 15 : 0,
+        trial_active: false,
+        trial_days_left: 0,
+        plan: selectedPlan.id,
+        badge: selectedPlan.badge,
       };
 
       const { data: profesional, error: userError } = await window.SupabaseAPI.updateProfile(userId, userData);
@@ -208,10 +174,10 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       const trialDates = selectedPlan.trial === true ? getTrialDates() : {};
       const subscriptionData = {
         professional_id: userId,
-        subscription_plan: plan,
-        plan_price: selectedPlan.price,
-        status: "active",
-        trial_active: selectedPlan.trial === true,
+        subscription_plan: selectedPlan.id,
+        plan_price: selectedPlan.preco,
+        status: selectedPlan.pago ? "pending_payment" : "active",
+        trial_active: false,
         photo_limit: selectedPlan.photoLimit,
         extra_photo_packages: 0,
         banner_active: false,
@@ -224,16 +190,16 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         throw new Error(subError.message || "Erro ao criar assinatura");
       }
 
-      trackEvent("Subscribe", { plan, value: selectedPlan.price, currency: "BRL" });
+      trackEvent("Subscribe", { plan: selectedPlan.id, value: selectedPlan.preco, currency: "BRL" });
       
       if (onSuccess) {
         onSuccess({ 
           ...f, 
-          plan, 
+          plan: selectedPlan.id, 
           id: userId,
           subscriptionId: subscription?.id || null,
-          trial_active: selectedPlan.trial === true,
-          trial_days_left: selectedPlan.trial === true ? 15 : 0,
+          trial_active: false,
+          trial_days_left: 0,
           profilePhotoUrl,
           coverPhotoUrl,
         });
@@ -402,29 +368,29 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               {errors.bio && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.bio}</div>}
             </div>
 
-            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Escolher Plano</button>
+            <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Plano</button>
           </>
         )}
 
         {step === 2 && (
           <>
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha seu plano</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>15 dias grátis no plano PROFISSIONAL (sem cartão)</p>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Comece grátis. Depois, assine um plano para aparecer mais.</p>
 
             <div style={{ margin: "24px 0 16px" }}>
               {PLANS.map(p => (
-                <div key={p.name} onClick={() => setPlan(p.name)} style={{ background: plan === p.name ? C.priLt : "#fff", borderRadius: 14, border: `2px solid ${plan === p.name ? C.pri : C.gB}`, borderWidth: plan === p.name ? 2.5 : 2, padding: 18, marginBottom: 12, cursor: "pointer", transition: "all 0.2s" }}>
+                <div key={p.id} onClick={() => setPlan(p.id)} style={{ background: plan === p.id ? C.priLt : "#fff", borderRadius: 14, border: `2px solid ${plan === p.id ? C.pri : C.gB}`, borderWidth: plan === p.id ? 2.5 : 2, padding: 18, marginBottom: 12, cursor: "pointer", transition: "all 0.2s" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 20 }}>{p.icon}</span>
-                        <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800 }}>{p.name}</div>
+                        <span style={{ fontSize: 20 }}>{p.destaque ? "💎" : p.pago ? "⭐" : "🚀"}</span>
+                        <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800 }}>{p.nome}</div>
                       </div>
-                      <div style={{ fontSize: 14, color: C.gL, marginTop: 2 }}>R$ {p.price}<span style={{ fontSize: 11, color: C.gL }}>/mês</span></div>
-                      {p.trial && <div style={{ display: "inline-block", background: C.accLt, color: C.acc, fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 5, marginTop: 8 }}>⏱️ 15 dias grátis</div>}
-                      {p.popular && <div style={{ display: "inline-block", background: C.accLt, color: C.acc, fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 5, marginLeft: 8, marginTop: 8 }}>⭐ Mais Popular</div>}
+                      <div style={{ fontSize: 14, color: C.gL, marginTop: 2 }}>{formatarPrecoPlano(p.preco)}<span style={{ fontSize: 11, color: C.gL }}>{p.periodo}</span></div>
+                      {!p.pago && <div style={{ display: "inline-block", background: C.priLt, color: C.pri, fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 5, marginTop: 8 }}>Cadastro grátis</div>}
+                      {p.recomendado && <div style={{ display: "inline-block", background: C.accLt, color: C.acc, fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 5, marginLeft: 8, marginTop: 8 }}>⭐ Recomendado</div>}
                     </div>
-                    <div style={{ fontSize: 24 }}>{plan === p.name ? '✓' : ''}</div>
+                    <div style={{ fontSize: 24 }}>{plan === p.id ? '✓' : ''}</div>
                   </div>
                   <div style={{ fontSize: 12, color: C.dk, marginBottom: 8, fontWeight: 600 }}>Recursos:</div>
                   {p.feats.map((feat, i) => <div key={i} style={{ fontSize: 12, color: C.dk, padding: "6px 0", display: "flex", alignItems: "center", gap: 6 }}><span style={{ color: C.pri }}>✓</span> {feat}</div>)}
@@ -439,7 +405,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             </div>
 
             <div style={{ padding: 14, background: C.priLt, borderRadius: 10, fontSize: 12, color: C.pri, marginBottom: 16, fontWeight: 600 }}>
-              💡 Todos têm acesso a todas as funções. A diferença é a visibilidade nas buscas!
+              💡 Para o lançamento, o mais importante é entrar na plataforma. Depois você pode assinar um plano para ganhar mais visibilidade.
             </div>
 
             <button type="button" onClick={next} style={{ padding: "15px", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: font.d, width: "100%", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", marginBottom: 20 }}>Continuar → Confirmar Cadastro</button>
@@ -469,19 +435,19 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             )}
 
             <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seu Plano: {plan}</div>
+              <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seu Plano: {getPlanoById(plan)?.nome}</div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, fontWeight: 700, marginBottom: 8 }}>
                 <span>Valor</span>
-                <span style={{ color: C.pri }}>R$ {PLANS.find(p => p.name === plan).price}/mês</span>
+                <span style={{ color: C.pri }}>{formatarPrecoPlano(getPlanoById(plan)?.preco)}{getPlanoById(plan)?.periodo}</span>
               </div>
               <div style={{ fontSize: 12, color: C.gL }}>
-                {plan === "BÁSICO" && "Sem cobranças"}
-                {plan === "PROFISSIONAL" && "15 dias grátis - Depois cobra automaticamente"}
-                {plan === "ELITE" && "Contratação agora"}
+                {plan === "gratis" && "Sem cobrança. Ideal para começar."}
+                {plan === "pro" && "Você poderá assinar o Pro depois do cadastro."}
+                {plan === "premium" && "Você poderá assinar o Premium depois do cadastro."}
               </div>
             </div>
 
-            {plan === "PROFISSIONAL" && (
+            {false && (
               <div style={{ padding: 12, background: C.accLt, borderRadius: 10, marginBottom: 16 }}>
                 <div style={{ fontSize: 12, color: C.acc, fontWeight: 600 }}>
                   ⏱️ Você está experimentando gratuitamente os recursos premium do TáNaMão.

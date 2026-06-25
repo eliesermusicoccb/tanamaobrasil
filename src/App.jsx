@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import RegisterProfessional from "./RegisterProfessional";
 import Login from "./Login";
 import { iniciarPagamento } from "./services/mercadopago-service";
+import { PLANOS_PAGOS, formatarPrecoPlano } from "./config/plans.js";
 
 // ══════════════════════════════════════════════════════════════
 // SUPABASE INIT
@@ -233,9 +234,22 @@ async function uploadProfessionalMedia(userId, kind, file) {
   };
 }
 
+async function uploadProfilePhoto(userId, formDataOrFile) {
+  const file = formDataOrFile instanceof FormData ? formDataOrFile.get("file") : formDataOrFile;
+  const result = await uploadProfessionalMedia(userId, "profile", file);
+  return { ...result, url: result?.data?.publicUrl || null };
+}
+
+async function uploadCoverPhoto(userId, formDataOrFile) {
+  const file = formDataOrFile instanceof FormData ? formDataOrFile.get("file") : formDataOrFile;
+  const result = await uploadProfessionalMedia(userId, "cover", file);
+  return { ...result, url: result?.data?.publicUrl || null };
+}
+
 window.SupabaseAPI = {
   initSupabase, createUser, getUserByEmail, getAllProfessionals, createSubscription,
-  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile, uploadProfessionalMedia,
+  signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile, uploadProfessionalMedia, uploadProfilePhoto, uploadCoverPhoto,
+  get client() { return supabase || initSupabase(); },
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -307,14 +321,14 @@ function normalizeProfessionalRecord(row) {
   const cityName = cityParts[0] || rawCity || "Cidade não informada";
   const uf = String(row?.uf || cityParts[1] || "").trim();
   const name = row?.name || "Profissional";
-  const rating = Number(row?.rating || row?.average_rating || 5);
+  const rating = Number(row?.rating || row?.average_rating || 0);
   const reviews = Number(row?.reviews || row?.review_count || 0);
 
   return {
     id: row?.id,
     name,
     role: categories[0] || row?.role || "Profissional",
-    rating: Number.isFinite(rating) ? rating : 5,
+    rating: Number.isFinite(rating) ? rating : 0,
     reviews: Number.isFinite(reviews) ? reviews : 0,
     city: cityName,
     uf,
@@ -322,7 +336,7 @@ function normalizeProfessionalRecord(row) {
     badge: row?.badge || null,
     av: row?.avatar_initials || initialsFromName(name),
     avatar_url: row?.avatar_url || "",
-    cover_url: row?.cover_url || "",
+    cover_url: row?.cover_url || row?.cover_photo_url || "",
     gallery_photos: normalizeGalleryPhotos(row?.gallery_photos || row?.photos),
     on: true,
     whatsapp: String(row?.whatsapp || "").replace(/\D/g, ""),
@@ -339,6 +353,12 @@ function normalizeText(value) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseMoneyValue(value) {
+  const raw = String(value || "").replace(/[^\d,.-]/g, "").replace(",", ".");
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
 }
 
 function Avatar({ ini = "?", size = 40, badge = null, src = null }) {
@@ -382,6 +402,49 @@ function Badge24h({ small = false }) {
     }}>
       ⚡ 24h
     </span>
+  );
+}
+
+function formatRatingValue(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n) || n <= 0) return "Novo";
+  return n.toFixed(1).replace(".", ",");
+}
+
+function RatingBadge({ rating = 0, reviews = 0, compact = false }) {
+  const hasReviews = Number(reviews || 0) > 0 && Number(rating || 0) > 0;
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: hasReviews ? C.accLt : C.gBg, color: hasReviews ? "#9A6400" : C.g, border: `1px solid ${hasReviews ? C.acc : C.gB}`, borderRadius: 999, padding: compact ? "3px 7px" : "6px 10px", fontSize: compact ? 10 : 12, fontWeight: 800, fontFamily: font.d }}>
+      <span>{hasReviews ? "⭐" : "☆"}</span>
+      <span>{hasReviews ? `${formatRatingValue(rating)} (${reviews})` : "Novo sem avaliações"}</span>
+    </div>
+  );
+}
+
+function RatingSummary({ professional }) {
+  const reviews = Number(professional?.reviews || 0);
+  const rating = Number(professional?.rating || 0);
+  const hasReviews = reviews > 0 && rating > 0;
+
+  return (
+    <div style={{ marginTop: 14, background: hasReviews ? C.accLt : C.gBg, border: `1.5px solid ${hasReviews ? C.acc : C.gB}`, borderRadius: 14, padding: 14, textAlign: "left" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div>
+          <div style={{ fontFamily: font.d, fontSize: 15, fontWeight: 900, color: hasReviews ? "#9A6400" : C.dk }}>
+            {hasReviews ? `⭐ Nota ${formatRatingValue(rating)} de 5` : "☆ Profissional novo"}
+          </div>
+          <div style={{ fontSize: 12, color: C.g, marginTop: 3 }}>
+            {hasReviews ? `${reviews} avaliação${reviews !== 1 ? "ões" : ""} de clientes` : "Ainda não recebeu avaliações de clientes."}
+          </div>
+        </div>
+        <div style={{ fontSize: 28, fontWeight: 900, color: hasReviews ? C.acc : C.gL, fontFamily: font.d }}>
+          {hasReviews ? formatRatingValue(rating) : "--"}
+        </div>
+      </div>
+      <div style={{ fontSize: 11, color: C.g, marginTop: 10, lineHeight: 1.45 }}>
+        As avaliações ajudam o cliente a escolher com mais confiança e valorizam profissionais que atendem bem.
+      </div>
+    </div>
   );
 }
 
@@ -498,7 +561,7 @@ function ProfessionalsPreview({ nav }) {
             <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
             <div style={{ fontSize: 12, color: C.g }}>{p.role}{p.city ? ` • ${p.city}${p.uf ? `, ${p.uf}` : ""}` : ""}</div>
             {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
-            <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>⭐ {p.rating} ({p.reviews})</div>
+            <div style={{ marginTop: 5 }}><RatingBadge rating={p.rating} reviews={p.reviews} compact /></div>
           </div>
           <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
         </div>
@@ -565,7 +628,7 @@ function VisitorSearch({ nav, searchFilter, setSearchFilter }) {
   }).sort((a, b) => {
     if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
     if (sortBy === "reviews") return (b.reviews || 0) - (a.reviews || 0);
-    if (sortBy === "price") return parseInt(a.price) - parseInt(b.price);
+    if (sortBy === "price") return parseMoneyValue(a.price) - parseMoneyValue(b.price);
     return 0;
   });
 
@@ -624,7 +687,8 @@ function VisitorSearch({ nav, searchFilter, setSearchFilter }) {
                 <div style={{ fontWeight: 700, color: C.dk, fontSize: 14 }}>{p.name}</div>
                 <div style={{ fontSize: 12, color: C.g }}>{p.role}</div>
                 {p.attends_24h && <div style={{ marginTop: 4 }}><Badge24h small /></div>}
-                <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>📍 {p.city}{p.uf ? `, ${p.uf}` : ""} • ⭐ {p.rating}</div>
+                <div style={{ fontSize: 11, color: C.gL, marginTop: 2 }}>📍 {p.city}{p.uf ? `, ${p.uf}` : ""}</div>
+                <div style={{ marginTop: 5 }}><RatingBadge rating={p.rating} reviews={p.reviews} compact /></div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: C.pri, fontWeight: 700, fontSize: 13 }}>{p.price}</div>
@@ -654,7 +718,8 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
         {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
-        <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>📍 {p.city}, {p.uf} • ⭐ {p.rating} ({p.reviews} avaliações)</div>
+        <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>📍 {p.city}{p.uf ? `, ${p.uf}` : ""}</div>
+        <RatingSummary professional={p} />
         {p.bio && <div style={{ marginTop: 14, padding: 12, background: C.gBg, borderRadius: 12, fontSize: 13, color: C.dk, textAlign: "left", lineHeight: 1.5 }}>{p.bio}</div>}
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
@@ -673,6 +738,11 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
               <div style={{ fontSize: 11, color: C.gL, marginTop: 4 }}>{rev.d}</div>
             </div>
           ))}
+          {(!p.userReviews || p.userReviews.length === 0) && (
+            <div style={{ background: C.gBg, borderRadius: 10, padding: 12, fontSize: 12, color: C.g, textAlign: "center" }}>
+              Ainda não há comentários escritos. As próximas avaliações aparecerão aqui.
+            </div>
+          )}
         </div>
 
         <button onClick={onNeedLogin} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.acc, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
@@ -729,7 +799,7 @@ function LoggedProfile({ nav, data, user }) {
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
         {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
-        <div style={{ fontSize: 12, color: C.gL, marginTop: 8 }}>⭐ {p.rating} ({p.reviews} avaliações)</div>
+        <RatingSummary professional={p} />
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
           💬 Chamar no WhatsApp
@@ -747,6 +817,11 @@ function LoggedProfile({ nav, data, user }) {
               <div style={{ fontSize: 11, color: C.gL, marginTop: 4 }}>{rev.d}</div>
             </div>
           ))}
+          {(!p.userReviews || p.userReviews.length === 0) && (
+            <div style={{ background: C.gBg, borderRadius: 10, padding: 12, fontSize: 12, color: C.g, textAlign: "center" }}>
+              Ainda não há comentários escritos. As próximas avaliações aparecerão aqui.
+            </div>
+          )}
         </div>
 
         <button onClick={() => nav("home")} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.acc, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
@@ -806,27 +881,23 @@ function PlanosScreen({ nav, user }) {
       setErro("");
       setLoading(planoId);
       await iniciarPagamento(planoId, user);
-      // a partir daqui o navegador é redirecionado para o Mercado Pago
     } catch (e) {
-      setErro("Não foi possível iniciar o pagamento. Tente novamente em instantes.");
+      console.error("Erro ao iniciar pagamento:", e);
+      setErro(e?.message || "Não foi possível iniciar o pagamento. Tente novamente em instantes.");
       setLoading(null);
     }
   };
-
-  const planos = [
-    { id: "pro", nome: "Pro", preco: "R$ 29,90", periodo: "/mês", destaque: false,
-      feats: ["Destaque nas buscas", "Selo verificado", "Chat ilimitado"] },
-    { id: "premium", nome: "Premium", preco: "R$ 69,90", periodo: "/mês", destaque: true,
-      feats: ["1º lugar nas buscas", "Banner publicitário incluso", "Suporte prioritário"] },
-  ];
 
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title="Planos" onBack={() => nav("settings")} />
       <div style={{ padding: "16px" }}>
-        <p style={{ fontSize: 13, color: C.g, textAlign: "center", marginBottom: 16 }}>
-          Escolha um plano para impulsionar seu perfil.
-        </p>
+        <div style={{ background: C.priLt, border: `1.5px solid ${C.pri}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+          <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 900, color: C.pri, marginBottom: 4 }}>Apareça mais para clientes da sua região</div>
+          <p style={{ fontSize: 12, color: C.dk, lineHeight: 1.45 }}>
+            O plano pago aumenta a visibilidade do seu perfil. A avaliação continua sendo dos clientes: quanto melhor o atendimento, mais confiança você passa.
+          </p>
+        </div>
 
         {erro && (
           <div style={{ background: C.corLt, color: C.cor, padding: "10px 14px", borderRadius: 10, fontSize: 13, fontWeight: 600, marginBottom: 14, textAlign: "center" }}>
@@ -834,25 +905,37 @@ function PlanosScreen({ nav, user }) {
           </div>
         )}
 
-        {planos.map((p) => (
-          <div key={p.id} style={{ background: p.destaque ? C.priLt : "#fff", border: `2px solid ${p.destaque ? C.pri : C.gB}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 800, color: C.dk }}>{p.nome}</div>
-              <div><span style={{ fontSize: 22, fontWeight: 900, color: C.pri, fontFamily: font.d }}>{p.preco}</span><span style={{ fontSize: 12, color: C.gL }}>{p.periodo}</span></div>
+        {PLANOS_PAGOS.map((p) => (
+          <div key={p.id} style={{ position: "relative", background: p.destaque ? C.priLt : "#fff", border: `2px solid ${p.destaque ? C.pri : C.gB}`, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+            {p.destaque && (
+              <div style={{ position: "absolute", top: -11, right: 14, background: C.pri, color: "#fff", borderRadius: 999, padding: "4px 10px", fontSize: 10, fontWeight: 900, fontFamily: font.d }}>MAIOR VISIBILIDADE</div>
+            )}
+            {p.recomendado && (
+              <div style={{ position: "absolute", top: -11, right: 14, background: C.acc, color: "#fff", borderRadius: 999, padding: "4px 10px", fontSize: 10, fontWeight: 900, fontFamily: font.d }}>RECOMENDADO</div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+              <div>
+                <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 900, color: C.dk }}>{p.nome}</div>
+                <div style={{ fontSize: 12, color: C.g, marginTop: 3 }}>{p.descricao}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 22, fontWeight: 900, color: C.pri, fontFamily: font.d }}>{formatarPrecoPlano(p.preco)}</span>
+                <span style={{ fontSize: 12, color: C.gL }}>{p.periodo}</span>
+              </div>
             </div>
-            <ul style={{ listStyle: "none", padding: 0, margin: "12px 0" }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: "14px 0" }}>
               {p.feats.map((f, i) => (
                 <li key={i} style={{ fontSize: 13, color: C.dk, padding: "5px 0" }}>✓ {f}</li>
               ))}
             </ul>
-            <button onClick={() => assinar(p.id)} disabled={loading === p.id} style={{ width: "100%", padding: "13px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: loading === p.id ? "wait" : "pointer", fontFamily: font.d, opacity: loading === p.id ? 0.7 : 1 }}>
-              {loading === p.id ? "Abrindo pagamento..." : "Assinar"}
+            <button onClick={() => assinar(p.id)} disabled={loading === p.id} style={{ width: "100%", padding: "13px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: loading === p.id ? "wait" : "pointer", fontFamily: font.d, opacity: loading === p.id ? 0.7 : 1 }}>
+              {loading === p.id ? "Abrindo pagamento..." : p.cta}
             </button>
           </div>
         ))}
 
-        <p style={{ fontSize: 11, color: C.gL, textAlign: "center", marginTop: 8 }}>
-          Pagamento processado com segurança pelo Mercado Pago.
+        <p style={{ fontSize: 11, color: C.gL, textAlign: "center", marginTop: 8, lineHeight: 1.4 }}>
+          Pagamento processado com segurança pelo Mercado Pago. Nunca envie token privado do Mercado Pago no app.
         </p>
       </div>
     </div>
