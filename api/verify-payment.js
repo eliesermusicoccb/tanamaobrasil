@@ -1,53 +1,52 @@
-// api/verify-payment.js - Verificar status do pagamento
+// api/verify-payment.js
+// Verifica status de pagamento no Mercado Pago sem depender de axios.
 
-import axios from 'axios';
-
-const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
-const MP_API_URL = 'https://api.mercadopago.com';
+const STATUS_MESSAGES = {
+  approved: "Pagamento confirmado! Seu plano foi ativado.",
+  rejected: "Pagamento recusado. Tente outro método de pagamento.",
+  pending: "Pagamento pendente. Você receberá uma confirmação em breve.",
+  cancelled: "Pagamento cancelado.",
+  in_process: "Pagamento em análise.",
+};
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ erro: "Método não permitido" });
+  }
+
+  const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+  if (!accessToken) {
+    return res.status(500).json({ erro: "Pagamento não configurado no servidor." });
   }
 
   try {
-    const { paymentId } = req.body;
+    const { paymentId } = req.body || {};
 
     if (!paymentId) {
-      return res.status(400).json({ error: 'paymentId obrigatório' });
+      return res.status(400).json({ erro: "paymentId obrigatório" });
     }
 
-    // Buscar detalhes do pagamento
-    const response = await axios.get(
-      `${MP_API_URL}/v1/payments/${paymentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${MP_ACCESS_TOKEN}`,
-        },
-      }
-    );
+    const resposta = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
-    const payment = response.data;
+    const payment = await resposta.json();
 
-    const statusMessages = {
-      approved: 'Pagamento confirmado! Seu plano foi ativado.',
-      rejected: 'Pagamento recusado. Tente outro método de pagamento.',
-      pending: 'Pagamento pendente. Você receberá uma confirmação em breve.',
-      cancelled: 'Pagamento foi cancelado.',
-    };
+    if (!resposta.ok) {
+      console.error("Erro ao consultar pagamento:", payment);
+      return res.status(502).json({ erro: "Erro ao consultar pagamento no Mercado Pago." });
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: payment.status,
-      message: statusMessages[payment.status] || 'Status desconhecido',
+      message: STATUS_MESSAGES[payment.status] || "Status desconhecido",
       paymentId: payment.id,
       amount: payment.transaction_amount,
       date: payment.date_created,
+      external_reference: payment.external_reference,
     });
-  } catch (error) {
-    console.error('Erro ao verificar pagamento:', error);
-    res.status(500).json({ 
-      error: 'Erro ao verificar pagamento',
-      details: error.message,
-    });
+  } catch (erro) {
+    console.error("Erro ao verificar pagamento:", erro);
+    return res.status(500).json({ erro: "Erro interno ao verificar pagamento." });
   }
 }
