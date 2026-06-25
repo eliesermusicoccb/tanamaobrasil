@@ -302,31 +302,6 @@ const Planos = ({ userId, userEmail, userName }) => {
           </div>
         ))}
       </div>
-
-      <div style={styles.bannerSection}>
-        <h2 style={styles.bannerTitle}>Banners Publicitários</h2>
-        <p style={styles.bannerSubtitle}>Potencialize sua visibilidade</p>
-
-        <div style={styles.gridBanners}>
-          {banners.map((banner) => (
-            <div key={banner.id} style={styles.bannerCard}>
-              <div style={styles.bannerPeriod}>{banner.period}</div>
-              <div style={styles.bannerDuration}>{banner.duration}</div>
-              <div style={styles.bannerPrice}>{banner.price}</div>
-              <button
-                style={{
-                  ...styles.button,
-                  ...(banner.loading ? styles.buttonLoading : {}),
-                }}
-                onClick={() => handlePayment(banner.id)}
-                disabled={banner.loading}
-              >
-                {banner.loading ? 'Processando...' : 'Contratar'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
