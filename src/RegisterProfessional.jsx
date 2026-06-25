@@ -48,7 +48,141 @@ const CIDADES_BRASIL = [
   { nome: "Avanhandava", uf: "SP" },
   { nome: "Avaré", uf: "SP" },
   { nome: "Avaí", uf: "SP" },
-  // ... resto da lista (copiar do original)
+  // RIO JANEIRO (RJ)
+  { nome: "Angra dos Reis", uf: "RJ" },
+  { nome: "Araruama", uf: "RJ" },
+  { nome: "Areal", uf: "RJ" },
+  { nome: "Armação de Búzios", uf: "RJ" },
+  { nome: "Arraial do Cabo", uf: "RJ" },
+  { nome: "Barra do Piraí", uf: "RJ" },
+  { nome: "Barra Mansa", uf: "RJ" },
+  { nome: "Belford Roxo", uf: "RJ" },
+  { nome: "Bom Jardim", uf: "RJ" },
+  { nome: "Bom Jesus do Itabapoana", uf: "RJ" },
+  { nome: "Cabo Frio", uf: "RJ" },
+  { nome: "Cachoeiras de Macacu", uf: "RJ" },
+  { nome: "Cambuci", uf: "RJ" },
+  { nome: "Campos dos Goytacazes", uf: "RJ" },
+  { nome: "Cardoso Moreira", uf: "RJ" },
+  { nome: "Carmo", uf: "RJ" },
+  { nome: "Casimiro de Abreu", uf: "RJ" },
+  { nome: "Conceição de Macabu", uf: "RJ" },
+  { nome: "Cordoeira", uf: "RJ" },
+  { nome: "Cornélio Procópio", uf: "RJ" },
+  { nome: "Cruzeiro", uf: "RJ" },
+  { nome: "Duque de Caxias", uf: "RJ" },
+  { nome: "Engenheiro Paulo de Frontin", uf: "RJ" },
+  { nome: "Entrerios", uf: "RJ" },
+  { nome: "Iguaba Grande", uf: "RJ" },
+  { nome: "Itaboraí", uf: "RJ" },
+  { nome: "Itaguaí", uf: "RJ" },
+  { nome: "Itaocara", uf: "RJ" },
+  { nome: "Itaperuna", uf: "RJ" },
+  { nome: "Itatiaia", uf: "RJ" },
+  { nome: "Japeri", uf: "RJ" },
+  { nome: "Laje do Muriaé", uf: "RJ" },
+  { nome: "Macaé", uf: "RJ" },
+  { nome: "Macuco", uf: "RJ" },
+  { nome: "Magé", uf: "RJ" },
+  { nome: "Mangaratiba", uf: "RJ" },
+  { nome: "Maricá", uf: "RJ" },
+  { nome: "Mesquita", uf: "RJ" },
+  { nome: "Miguel Pereira", uf: "RJ" },
+  { nome: "Miracema", uf: "RJ" },
+  { nome: "Moaty", uf: "RJ" },
+  { nome: "Morretes", uf: "RJ" },
+  { nome: "Muriaé", uf: "RJ" },
+  { nome: "Natividade", uf: "RJ" },
+  { nome: "Niterói", uf: "RJ" },
+  { nome: "Nova Friburgo", uf: "RJ" },
+  { nome: "Nova Iguaçu", uf: "RJ" },
+  { nome: "Paracambi", uf: "RJ" },
+  { nome: "Paraíba do Sul", uf: "RJ" },
+  { nome: "Paraty", uf: "RJ" },
+  { nome: "Paupina", uf: "RJ" },
+  { nome: "Petrópolis", uf: "RJ" },
+  { nome: "Pinheiral", uf: "RJ" },
+  { nome: "Pirai", uf: "RJ" },
+  { nome: "Piraí do Sul", uf: "RJ" },
+  { nome: "Pirapora do Bom Jesus", uf: "RJ" },
+  { nome: "Piscinão de Ramos", uf: "RJ" },
+  { nome: "Poço de Caldas", uf: "RJ" },
+  { nome: "Pomerode", uf: "RJ" },
+  { nome: "Porciúncula", uf: "RJ" },
+  { nome: "Porto Real", uf: "RJ" },
+  { nome: "Praia Grande", uf: "RJ" },
+  { nome: "Queimados", uf: "RJ" },
+  { nome: "Quissamã", uf: "RJ" },
+  { nome: "Resende", uf: "RJ" },
+  { nome: "Rio Bonito", uf: "RJ" },
+  { nome: "Rio Claro", uf: "RJ" },
+  { nome: "Rio de Janeiro", uf: "RJ" },
+  { nome: "Rio das Flores", uf: "RJ" },
+  { nome: "Rio das Ostras", uf: "RJ" },
+  { nome: "Rio do Ouro", uf: "RJ" },
+  { nome: "Rio Preto", uf: "RJ" },
+  { nome: "Rio Vermelho", uf: "RJ" },
+  { nome: "Riviera", uf: "RJ" },
+  { nome: "Rodeio", uf: "RJ" },
+  { nome: "Romaria", uf: "RJ" },
+  { nome: "Rosário do Sul", uf: "RJ" },
+  { nome: "Roseira", uf: "RJ" },
+  { nome: "Santa Cruz", uf: "RJ" },
+  { nome: "Santa Maria Madalena", uf: "RJ" },
+  { nome: "Santana do Livramento", uf: "RJ" },
+  { nome: "Sant'Ana", uf: "RJ" },
+  { nome: "Santo Antônio de Pádua", uf: "RJ" },
+  { nome: "São Borja", uf: "RJ" },
+  { nome: "São Conceição do Rio Verde", uf: "RJ" },
+  { nome: "São Domingos do Araguaia", uf: "RJ" },
+  { nome: "São Fidelis", uf: "RJ" },
+  { nome: "São Fidélis", uf: "RJ" },
+  { nome: "São Francisco do Conde", uf: "RJ" },
+  { nome: "São Francisco de Paula", uf: "RJ" },
+  { nome: "São Gabriel", uf: "RJ" },
+  { nome: "São Gonçalo", uf: "RJ" },
+  { nome: "São Gonçalo do Amarante", uf: "RJ" },
+  { nome: "São Gonçalo do Rio Preto", uf: "RJ" },
+  { nome: "São João da Barra", uf: "RJ" },
+  { nome: "São João de Meriti", uf: "RJ" },
+  { nome: "São Jerônimo", uf: "RJ" },
+  { nome: "São Joaquim", uf: "RJ" },
+  { nome: "São Joaquim da Barra", uf: "RJ" },
+  { nome: "São João do Rio Pardo", uf: "RJ" },
+  { nome: "São João do Sapucaí", uf: "RJ" },
+  { nome: "São João Evangelista", uf: "RJ" },
+  { nome: "São João Nepomuceno", uf: "RJ" },
+  { nome: "São Lourenço", uf: "RJ" },
+  { nome: "São Lourenço do Sul", uf: "RJ" },
+  { nome: "São Mateus", uf: "RJ" },
+  { nome: "São Mateus do Sul", uf: "RJ" },
+  { nome: "São Miguel Arcanjo", uf: "RJ" },
+  { nome: "São Miguel dos Campos", uf: "RJ" },
+  { nome: "São Paulo", uf: "RJ" },
+  { nome: "São Pedro", uf: "RJ" },
+  { nome: "São Pedro do Rio Grande do Sul", uf: "RJ" },
+  { nome: "São Pedro do Turvo", uf: "RJ" },
+  { nome: "São Sebastião", uf: "RJ" },
+  { nome: "São Sebastião da Grama", uf: "RJ" },
+  { nome: "São Sebastião do Alto", uf: "RJ" },
+  { nome: "São Sebastião do Paraíso", uf: "RJ" },
+  { nome: "São Vicente", uf: "RJ" },
+  { nome: "São Vicente do Sul", uf: "RJ" },
+  { nome: "Sapé", uf: "RJ" },
+  { nome: "Sapucaia", uf: "RJ" },
+  { nome: "Sapucaia do Sul", uf: "RJ" },
+  { nome: "Sapucaia", uf: "RJ" },
+  { nome: "Satuba", uf: "RJ" },
+  { nome: "Saudade", uf: "RJ" },
+  { nome: "Saudade do Iguaçu", uf: "RJ" },
+  { nome: "Saudade", uf: "RJ" },
+  { nome: "Seara", uf: "RJ" },
+  { nome: "Selvíria", uf: "RJ" },
+  { nome: "Senador Cortes", uf: "RJ" },
+  { nome: "Senador Firmino", uf: "RJ" },
+  { nome: "Senador Pompeu", uf: "RJ" },
+  { nome: "Senador Sá", uf: "RJ" },
+  { nome: "Senador Teotônio Brandão Vilela", uf: "RJ" },
 ];
 
 const C = {
@@ -59,6 +193,8 @@ const C = {
 const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
 const CATS_DEFAULT = ["Eletricista", "Encanador", "Pintor", "Pedreiro", "Cabeleireiro", "Técnico TI", "Mecânico", "Fotógrafo", "Diarista", "Enfermeiro", "Arquiteto", "Chef"];
+
+const UFS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
 
 const PLANS = [
   {
@@ -112,20 +248,20 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
   const [f, setF] = useState({ 
     name: "", email: "", pass: "", pass2: "", wa: "", city: "", uf: "", cats: [], novaCat: "", bio: "",
-    // NOVO: campos para fotos
     coverPhoto: null,
     profilePhoto: null,
     coverPhotoPreview: null,
     profilePhotoPreview: null,
   });
 
-  // NOVO: função para filtrar cidades por primeiro(s) letra(s)
+  // CORREÇÃO: Filtrar cidades apenas do UF selecionado
   const [citySearch, setCitySearch] = useState("");
-  const filteredCities = CIDADES_BRASIL.filter(c =>
-    c.nome.toLowerCase().startsWith(citySearch.toLowerCase())
-  ).slice(0, 15); // limite 15 sugestões
+  const filteredCities = f.uf 
+    ? CIDADES_BRASIL.filter(c =>
+        c.uf === f.uf && c.nome.toLowerCase().startsWith(citySearch.toLowerCase())
+      ).slice(0, 15)
+    : [];
 
-  // NOVO: funções para upload de fotos
   const handlePhotoUpload = (type, file) => {
     if (!file) return;
     
@@ -147,12 +283,10 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     if (f.pass.length < 8) e.pass = "Min. 8 chars";
     if (f.pass !== f.pass2) e.pass2 = "Não combinam";
     if (f.wa.replace(/\D/g, "").length < 10) e.wa = "Inválido";
-    if (!f.city.trim()) e.city = "Obrigatório";
     if (!f.uf) e.uf = "Obrigatório";
+    if (!f.city.trim()) e.city = "Obrigatório";
     if (f.cats.length === 0) e.cats = "Min. 1";
     if (f.bio.length < 20) e.bio = "Min. 20 chars";
-    
-    // NOVO: validação de fotos - obrigatórias no Step 1
     if (!f.profilePhoto) e.profilePhoto = "Foto de perfil obrigatória";
     if (!f.coverPhoto) e.coverPhoto = "Foto de capa obrigatória";
     
@@ -192,12 +326,10 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
       const selectedPlan = PLANS.find(p => p.name === plan);
 
-      // Validação final antes de submeter
       if (!v()) {
         throw new Error("Preencha todos os campos obrigatórios.");
       }
 
-      // 1) Cria a conta com login seguro
       const { data: authData, error: authError } = await window.SupabaseAPI.signUpUser(f.email, f.pass, { name: f.name });
 
       if (authError || !authData?.user) {
@@ -210,7 +342,6 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
       const userId = authData.user.id;
 
-      // 2) Realiza upload das fotos (NOVO)
       let profilePhotoUrl = null;
       let coverPhotoUrl = null;
 
@@ -230,7 +361,6 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         coverPhotoUrl = coverRes?.url || null;
       }
 
-      // 3) Completa o perfil profissional
       const userData = {
         name: f.name,
         email: f.email,
@@ -239,8 +369,8 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         categories: f.cats,
         bio: f.bio,
         avatar_initials: f.name.substring(0, 2).toUpperCase(),
-        avatar_url: profilePhotoUrl, // NOVO
-        cover_photo_url: coverPhotoUrl, // NOVO
+        avatar_url: profilePhotoUrl,
+        cover_photo_url: coverPhotoUrl,
         trial_active: selectedPlan.trial === true,
         trial_days_left: selectedPlan.trial === true ? 15 : 0,
       };
@@ -314,11 +444,10 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Crie seu perfil</h1>
             <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Preencha seus dados e adicione fotos</p>
 
-            {/* NOVO: SEÇÃO DE FOTOS NO INÍCIO */}
+            {/* SEÇÃO DE FOTOS */}
             <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 20, marginTop: 20 }}>
               <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>📸 Suas Fotos</div>
               
-              {/* FOTO DE PERFIL */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 8 }}>Foto de Perfil *</label>
                 {f.profilePhotoPreview && (
@@ -335,7 +464,6 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
                 {errors.profilePhoto && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.profilePhoto}</div>}
               </div>
 
-              {/* FOTO DE CAPA */}
               <div>
                 <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 8 }}>Foto de Capa *</label>
                 {f.coverPhotoPreview && (
@@ -384,36 +512,55 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               {errors.wa && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.wa}</div>}
             </div>
 
-            {/* NOVO: INPUT DE BUSCA POR CIDADE */}
+            {/* NOVO: UF ANTES DE CIDADE */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
-              <div style={{ position: "relative" }}>
-                <input 
-                  type="text"
-                  placeholder="Digite as primeiras letras da cidade..."
-                  value={citySearch}
-                  onChange={e => setCitySearch(e.target.value)}
-                  style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }}
-                />
-                {citySearch && filteredCities.length > 0 && (
-                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.w, border: `1px solid ${C.gB}`, borderTop: "none", borderRadius: "0 0 12px 12px", maxHeight: 200, overflowY: "auto", zIndex: 10 }}>
-                    {filteredCities.map((city, i) => (
-                      <div
-                        key={i}
-                        onClick={() => { setF({...f, city: city.nome, uf: city.uf}); setCitySearch(""); if(errors.city) setErrors({...errors, city: null}); }}
-                        style={{ padding: "10px 14px", borderBottom: `1px solid ${C.gB}`, cursor: "pointer", fontSize: 13, fontFamily: font.b, color: C.dk, transition: "background 0.2s" }}
-                        onMouseEnter={e => e.target.style.background = C.gBg}
-                        onMouseLeave={e => e.target.style.background = "transparent"}
-                      >
-                        {city.nome} - {city.uf}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {f.city && <div style={{ fontSize: 12, color: C.pri, marginTop: 6, fontWeight: 600 }}>✓ {f.city} - {f.uf} selecionado</div>}
-              {errors.city && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.city}</div>}
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Estado (UF) *</label>
+              <select
+                value={f.uf}
+                onChange={e => { setF({...f, uf: e.target.value, city: ""}); setCitySearch(""); if(errors.uf) setErrors({...errors, uf: null}); }}
+                style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.uf ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, fontFamily: font.b }}
+              >
+                <option value="">Selecione o estado</option>
+                {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+              </select>
+              {errors.uf && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.uf}</div>}
             </div>
+
+            {/* CIDADE COM AUTOCOMPLETE (APENAS SE UF SELECIONADO) */}
+            {f.uf && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
+                <div style={{ position: "relative" }}>
+                  <input 
+                    type="text"
+                    placeholder={`Digite as primeiras letras da cidade de ${f.uf}...`}
+                    value={f.city || citySearch}
+                    onChange={e => {
+                      setCitySearch(e.target.value);
+                      if(errors.city) setErrors({...errors, city: null});
+                    }}
+                    style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }}
+                  />
+                  {citySearch && filteredCities.length > 0 && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.w, border: `1px solid ${C.gB}`, borderTop: "none", borderRadius: "0 0 12px 12px", maxHeight: 200, overflowY: "auto", zIndex: 10 }}>
+                      {filteredCities.map((city, i) => (
+                        <div
+                          key={i}
+                          onClick={() => { setF({...f, city: city.nome}); setCitySearch(""); if(errors.city) setErrors({...errors, city: null}); }}
+                          style={{ padding: "10px 14px", borderBottom: `1px solid ${C.gB}`, cursor: "pointer", fontSize: 13, fontFamily: font.b, color: C.dk, transition: "background 0.2s" }}
+                          onMouseEnter={e => e.target.style.background = C.gBg}
+                          onMouseLeave={e => e.target.style.background = "transparent"}
+                        >
+                          {city.nome}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {f.city && <div style={{ fontSize: 12, color: C.pri, marginTop: 6, fontWeight: 600 }}>✓ {f.city} - {f.uf} selecionado</div>}
+                {errors.city && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.city}</div>}
+              </div>
+            )}
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias ({f.cats.length}/5) *</label>
@@ -453,7 +600,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         {step === 2 && (
           <>
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha seu plano</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>15 dias grátis no plano IMPULSO (sem cartão)</p>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>15 dias grátis no plano PROFISSIONAL (sem cartão)</p>
 
             <div style={{ margin: "24px 0 16px" }}>
               {PLANS.map(p => (
@@ -504,7 +651,6 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span>Categorias</span><span style={{ fontWeight: 600, color: C.dk }}>{f.cats.slice(0, 2).join(", ")}{f.cats.length > 2 ? `+${f.cats.length - 2}` : ""}</span></div>
             </div>
 
-            {/* NOVO: Preview das fotos */}
             {(f.profilePhotoPreview || f.coverPhotoPreview) && (
               <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 16 }}>
                 <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>📸 Suas Fotos</div>
