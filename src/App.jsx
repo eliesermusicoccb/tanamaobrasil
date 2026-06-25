@@ -458,6 +458,209 @@ function TopBar({ title, onBack }) {
   );
 }
 
+
+function MarketplaceHome({ nav, mode, user, onLogin, onRegister, setSearchFilter }) {
+  const [query, setQuery] = useState("");
+  const [bannerIdx, setBannerIdx] = useState(0);
+
+  const banners = [
+    {
+      title: "Encontre profissionais avaliados",
+      sub: "Busque por serviço, cidade e veja a nota antes de chamar no WhatsApp.",
+      cta: "Buscar agora",
+      bg: `linear-gradient(135deg, ${C.pri}, ${C.priDk})`,
+    },
+    {
+      title: "Profissional: apareça para clientes",
+      sub: "Cadastre seu serviço e seja encontrado por pessoas da sua região.",
+      cta: "Cadastrar grátis",
+      bg: `linear-gradient(135deg, ${C.acc}, #D68910)`,
+    },
+  ];
+
+  useEffect(() => {
+    const t = setInterval(() => setBannerIdx((i) => (i + 1) % banners.length), 4500);
+    return () => clearInterval(t);
+  }, [banners.length]);
+
+  const buscar = () => {
+    setSearchFilter(query.trim());
+    nav("search");
+  };
+
+  const buscarCategoria = (categoria) => {
+    setSearchFilter(categoria);
+    nav("search");
+  };
+
+  const atalhos = [
+    { label: "Tudo", value: "" },
+    { label: "Casa", value: "Diarista" },
+    { label: "Obras", value: "Pedreiro" },
+    { label: "Beleza", value: "Cabeleireiro" },
+    { label: "Auto", value: "Mecânico" },
+    { label: "Tecnologia", value: "Técnico TI" },
+  ];
+
+  return (
+    <div className="screen-content" style={{ background: C.gBg }}>
+      <div style={{ background: `linear-gradient(180deg, ${C.acc} 0%, ${C.acc} 72%, ${C.gBg} 72%)`, padding: "14px 16px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,.92)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "2px solid rgba(255,255,255,.7)" }}>
+            <img src="/logo-icon.svg" alt="TáNaMão Brasil" style={{ width: 30, height: 30, objectFit: "contain" }} />
+          </div>
+          <div style={{ flex: 1, background: "#fff", borderRadius: 999, padding: "11px 14px", boxShadow: "0 6px 18px rgba(17,24,39,.12)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🔎</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && buscar()}
+              placeholder="Buscar profissional ou serviço"
+              style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontFamily: font.b, fontSize: 14, color: C.dk }}
+            />
+          </div>
+          <button onClick={mode === "logged" ? () => nav("settings") : onLogin} style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: "rgba(255,255,255,.88)", fontSize: 18, cursor: "pointer", boxShadow: "0 6px 18px rgba(17,24,39,.10)" }}>
+            {mode === "logged" ? "👤" : "🔐"}
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#3B2A00", fontWeight: 700, marginBottom: 12 }}>
+          <span>📍</span>
+          <span>Profissionais perto de você</span>
+          <span style={{ fontWeight: 900 }}>›</span>
+        </div>
+
+        <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 12 }}>
+          {atalhos.map((a, i) => (
+            <button key={a.label} onClick={() => buscarCategoria(a.value)} style={{ background: "transparent", border: "none", borderBottom: i === 0 ? `3px solid ${C.dk}` : "3px solid transparent", padding: "0 0 7px", fontFamily: font.d, fontSize: 15, fontWeight: 800, color: C.dk, whiteSpace: "nowrap", cursor: "pointer" }}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "0 16px 14px" }}>
+        <div style={{ borderRadius: 18, padding: 18, background: banners[bannerIdx].bg, color: "#fff", boxShadow: "0 10px 22px rgba(17,24,39,.14)", minHeight: 138, display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", right: -24, bottom: -28, fontSize: 92, opacity: .16 }}>🤝</div>
+          <div style={{ position: "relative" }}>
+            <div style={{ fontFamily: font.d, fontSize: 21, lineHeight: 1.05, fontWeight: 900, maxWidth: 280 }}>{banners[bannerIdx].title}</div>
+            <div style={{ fontSize: 13, lineHeight: 1.35, marginTop: 8, color: "rgba(255,255,255,.9)", maxWidth: 310 }}>{banners[bannerIdx].sub}</div>
+          </div>
+          <button onClick={bannerIdx === 0 ? buscar : onRegister} style={{ alignSelf: "flex-start", marginTop: 14, border: "none", borderRadius: 999, padding: "8px 13px", background: "#fff", color: bannerIdx === 0 ? C.pri : "#9A6400", fontFamily: font.d, fontSize: 12, fontWeight: 900, cursor: "pointer" }}>
+            {banners[bannerIdx].cta}
+          </button>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 10 }}>
+          {banners.map((_, i) => <div key={i} onClick={() => setBannerIdx(i)} style={{ width: i === bannerIdx ? 22 : 7, height: 7, borderRadius: 999, background: i === bannerIdx ? C.pri : C.gB, cursor: "pointer", transition: "all .2s" }} />)}
+        </div>
+      </div>
+
+      <div style={{ padding: "0 16px 14px" }}>
+        <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${C.gB}`, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: font.d, fontSize: 14, fontWeight: 900, color: C.dk }}>Avaliações ajudam na escolha</div>
+            <div style={{ fontSize: 12, color: C.g, marginTop: 2 }}>Veja nota e comentários antes de chamar.</div>
+          </div>
+          <div style={{ background: C.accLt, color: "#9A6400", border: `1px solid ${C.acc}`, borderRadius: 999, padding: "7px 10px", fontFamily: font.d, fontWeight: 900, fontSize: 12, whiteSpace: "nowrap" }}>⭐ Nota</div>
+        </div>
+      </div>
+
+      <div style={{ padding: "0 16px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 900, color: C.dk }}>Categorias</div>
+        <button onClick={() => nav("categories")} style={{ border: "none", background: "transparent", color: C.pri, fontFamily: font.d, fontSize: 12, fontWeight: 900, cursor: "pointer" }}>Ver todas</button>
+      </div>
+      <div style={{ display: "flex", gap: 10, padding: "0 16px 16px", overflowX: "auto" }}>
+        {CATEGORIES.slice(0, 8).map((c) => (
+          <button key={c.name} onClick={() => buscarCategoria(c.name)} style={{ minWidth: 82, background: "#fff", borderRadius: 16, border: `1.5px solid ${C.gB}`, padding: "12px 8px", textAlign: "center", cursor: "pointer", flexShrink: 0 }}>
+            <div style={{ fontSize: 28, marginBottom: 5 }}>{c.icon}</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: C.dk, lineHeight: 1.15 }}>{c.name}</div>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: "0 16px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 900, color: C.dk }}>Profissionais em destaque</div>
+        <button onClick={() => nav("search")} style={{ border: "none", background: "transparent", color: C.pri, fontFamily: font.d, fontSize: 12, fontWeight: 900, cursor: "pointer" }}>Buscar</button>
+      </div>
+      <div style={{ padding: "0 16px 110px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <ProfessionalsPreview nav={nav} />
+        <div style={{ background: C.priLt, border: `1px solid ${C.pri}`, borderRadius: 14, padding: 14, textAlign: "center" }}>
+          <div style={{ fontFamily: font.d, fontSize: 15, fontWeight: 900, color: C.pri }}>Você é profissional?</div>
+          <div style={{ fontSize: 12, color: C.dk, marginTop: 4, marginBottom: 10 }}>Cadastre seu serviço e apareça para clientes da sua região.</div>
+          <button onClick={mode === "logged" ? () => nav("settings") : onRegister} style={{ border: "none", borderRadius: 999, padding: "10px 14px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>
+            {mode === "logged" ? "Ver meu perfil" : "Cadastrar grátis"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoriesScreen({ nav, setSearchFilter }) {
+  const escolher = (categoria) => {
+    setSearchFilter(categoria);
+    nav("search");
+  };
+
+  return (
+    <div className="screen-content" style={{ background: C.gBg, paddingBottom: 110 }}>
+      <TopBar title="Categorias" onBack={() => nav("home")} />
+      <div style={{ padding: 16 }}>
+        <div style={{ background: C.priLt, border: `1px solid ${C.pri}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+          <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 900, color: C.pri }}>Escolha o tipo de serviço</div>
+          <div style={{ fontSize: 12, color: C.dk, marginTop: 4 }}>Ao tocar em uma categoria, o app já abre a busca filtrada.</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {CATEGORIES.map((c) => (
+            <button key={c.name} onClick={() => escolher(c.name)} style={{ background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 16, padding: "14px 8px", minHeight: 92, cursor: "pointer" }}>
+              <div style={{ fontSize: 30, marginBottom: 7 }}>{c.icon}</div>
+              <div style={{ fontFamily: font.d, fontSize: 12, fontWeight: 900, color: C.dk, lineHeight: 1.15 }}>{c.name}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FavoritesScreen({ nav, mode, onLogin }) {
+  return (
+    <div className="screen-content" style={{ background: C.gBg, paddingBottom: 110 }}>
+      <TopBar title="Favoritos" onBack={() => nav("home")} />
+      <div style={{ padding: 16 }}>
+        <div style={{ background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 16, padding: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 42, marginBottom: 10 }}>💛</div>
+          <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 900, color: C.dk, marginBottom: 8 }}>Favoritos e já contratados</div>
+          <div style={{ fontSize: 13, color: C.g, lineHeight: 1.45, marginBottom: 14 }}>
+            Aqui vamos guardar os profissionais que o cliente favoritar ou já chamou pelo WhatsApp. Isso ajuda o cliente a contratar de novo e fortalece a confiança no app.
+          </div>
+          {mode !== "logged" ? (
+            <button onClick={onLogin} style={{ border: "none", borderRadius: 999, padding: "11px 16px", background: C.pri, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>Entrar para salvar favoritos</button>
+          ) : (
+            <button onClick={() => nav("search")} style={{ border: "none", borderRadius: 999, padding: "11px 16px", background: C.pri, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>Buscar profissionais</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginNeededScreen({ nav, title, message, onLogin }) {
+  return (
+    <div className="screen-content" style={{ background: C.gBg, paddingBottom: 110 }}>
+      <TopBar title={title} onBack={() => nav("home")} />
+      <div style={{ padding: 16 }}>
+        <div style={{ background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 16, padding: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 42, marginBottom: 10 }}>🔐</div>
+          <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 900, color: C.dk, marginBottom: 8 }}>{title}</div>
+          <div style={{ fontSize: 13, color: C.g, lineHeight: 1.45, marginBottom: 14 }}>{message}</div>
+          <button onClick={onLogin} style={{ border: "none", borderRadius: 999, padding: "11px 16px", background: C.pri, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>Entrar ou cadastrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function VisitorHome({ nav, onLogin, onRegister }) {
   const [bannerIdx, setBannerIdx] = useState(0);
   const banners = [
@@ -1356,37 +1559,46 @@ export default function App() {
 
     if (mode === "visitor") {
       switch (screen) {
-        case "home": return <VisitorHome nav={nav} onLogin={() => setMode("login")} onRegister={() => setMode("register")} />;
+        case "home": return <MarketplaceHome nav={nav} mode={mode} user={user} onLogin={() => setMode("login")} onRegister={() => setMode("register")} setSearchFilter={setSearchFilter} />;
         case "search": return <VisitorSearch nav={nav} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />;
+        case "categories": return <CategoriesScreen nav={nav} setSearchFilter={setSearchFilter} />;
+        case "favorites": return <FavoritesScreen nav={nav} mode={mode} onLogin={() => setMode("login")} />;
+        case "chat": return <LoginNeededScreen nav={nav} title="Chat" message="Entre para acompanhar conversas e contatos da plataforma." onLogin={() => setMode("login")} />;
         case "profile": return <VisitorProfile nav={nav} data={screenData} onNeedLogin={() => setMode("login")} />;
-        default: return <VisitorHome nav={nav} onLogin={() => setMode("login")} onRegister={() => setMode("register")} />;
+        default: return <MarketplaceHome nav={nav} mode={mode} user={user} onLogin={() => setMode("login")} onRegister={() => setMode("register")} setSearchFilter={setSearchFilter} />;
       }
     }
 
     if (mode === "logged") {
       switch (screen) {
-        case "home": return <LoggedHome nav={nav} user={user} />;
+        case "home": return <MarketplaceHome nav={nav} mode={mode} user={user} onLogin={() => setMode("login")} onRegister={() => setMode("register")} setSearchFilter={setSearchFilter} />;
         case "search": return <VisitorSearch nav={nav} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />;
+        case "categories": return <CategoriesScreen nav={nav} setSearchFilter={setSearchFilter} />;
+        case "favorites": return <FavoritesScreen nav={nav} mode={mode} onLogin={() => setMode("login")} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "chat": return <ChatScreen nav={nav} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { window.SupabaseAPI?.signOutUser?.(); setMode("visitor"); setUser(null); setScreen("home"); }} />;
         case "planos": return <PlanosScreen nav={nav} user={user} />;
         case "editar": return <EditProfile nav={nav} user={user} onUpdated={(u) => setUser((prev) => ({ ...prev, ...u }))} />;
-        default: return <LoggedHome nav={nav} user={user} />;
+        default: return <MarketplaceHome nav={nav} mode={mode} user={user} onLogin={() => setMode("login")} onRegister={() => setMode("register")} setSearchFilter={setSearchFilter} />;
       }
     }
   };
 
   const navItems = mode === "logged" 
     ? [
-        { id: "home", icon: "🏠", label: "Início", onClick: () => { setScreen("home"); } },
-        { id: "search", icon: "🔍", label: "Buscar", onClick: () => { setScreen("search"); } },
+        { id: "home", icon: "🏠", label: "Home", onClick: () => { setScreen("home"); } },
+        { id: "categories", icon: "▦", label: "Categorias", onClick: () => { setScreen("categories"); } },
+        { id: "favorites", icon: "💛", label: "Favoritos", onClick: () => { setScreen("favorites"); } },
         { id: "chat", icon: "💬", label: "Chat", onClick: () => { setScreen("chat"); } },
-        { id: "settings", icon: "👤", label: "Conta", onClick: () => { setScreen("settings"); } },
+        { id: "settings", icon: "👤", label: "Perfil", onClick: () => { setScreen("settings"); } },
       ]
     : [
-        { id: "home", icon: "🏠", label: "Início", onClick: () => { setScreen("home"); } },
-        { id: "search", icon: "🔍", label: "Buscar", onClick: () => { setScreen("search"); } },
+        { id: "home", icon: "🏠", label: "Home", onClick: () => { setScreen("home"); } },
+        { id: "categories", icon: "▦", label: "Categorias", onClick: () => { setScreen("categories"); } },
+        { id: "favorites", icon: "💛", label: "Favoritos", onClick: () => { setScreen("favorites"); } },
+        { id: "chat", icon: "💬", label: "Chat", onClick: () => { setScreen("chat"); } },
+        { id: "settings", icon: "👤", label: "Perfil", onClick: () => { setMode("login"); } },
       ];
 
   if (recoveryMode) {
@@ -1417,8 +1629,10 @@ export default function App() {
         .app-scroll{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
         .screen-content{padding-bottom:calc(96px + env(safe-area-inset-bottom));min-height:100%;}
         .navbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-top:1px solid ${C.gB};display:flex;max-width:480px;margin:0 auto;width:100%;z-index:100;}
-        .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0;background:none;border:none;cursor:pointer;font-family:${font.b};font-size:10px;font-weight:600;color:${C.gL};gap:4px;}
-        .nav-tab.active{color:${C.pri};font-weight:700;}
+        .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:none;border:none;cursor:pointer;font-family:${font.b};font-size:10px;font-weight:700;color:${C.gL};gap:4px;min-width:0;}
+        .nav-tab>div:first-child{font-size:18px;line-height:1;}
+        .nav-tab>div:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:76px;}
+        .nav-tab.active{color:${C.pri};font-weight:900;}
       `}</style>
       <div className="app-shell">
         <div ref={scrollRef} className="app-scroll">
