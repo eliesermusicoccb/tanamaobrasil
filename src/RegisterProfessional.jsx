@@ -1,189 +1,5 @@
 import { useState, useRef } from "react";
-
-// LISTA COMPLETA DE CIDADES BRASILEIRAS
-const CIDADES_BRASIL = [
-  // SÃO PAULO (SP)
-  { nome: "Adamantina", uf: "SP" },
-  { nome: "Adolfo", uf: "SP" },
-  { nome: "Aguaí", uf: "SP" },
-  { nome: "Agudos", uf: "SP" },
-  { nome: "Alambari", uf: "SP" },
-  { nome: "Alfredo Marcondes", uf: "SP" },
-  { nome: "Altair", uf: "SP" },
-  { nome: "Altinópolis", uf: "SP" },
-  { nome: "Alto Alegre", uf: "SP" },
-  { nome: "Alumínio", uf: "SP" },
-  { nome: "Alvinlândia", uf: "SP" },
-  { nome: "Americana", uf: "SP" },
-  { nome: "Amparo", uf: "SP" },
-  { nome: "Américo Brasiliense", uf: "SP" },
-  { nome: "Américo de Campos", uf: "SP" },
-  { nome: "Analândia", uf: "SP" },
-  { nome: "Andradina", uf: "SP" },
-  { nome: "Angatuba", uf: "SP" },
-  { nome: "Anhembi", uf: "SP" },
-  { nome: "Anhumas", uf: "SP" },
-  { nome: "Aparecida", uf: "SP" },
-  { nome: "Aparecida d'Oeste", uf: "SP" },
-  { nome: "Apiaí", uf: "SP" },
-  { nome: "Aramina", uf: "SP" },
-  { nome: "Arandu", uf: "SP" },
-  { nome: "Arapeí", uf: "SP" },
-  { nome: "Araraquara", uf: "SP" },
-  { nome: "Araras", uf: "SP" },
-  { nome: "Araçariguama", uf: "SP" },
-  { nome: "Araçatuba", uf: "SP" },
-  { nome: "Araçoiaba da Serra", uf: "SP" },
-  { nome: "Arco-Íris", uf: "SP" },
-  { nome: "Arealva", uf: "SP" },
-  { nome: "Areias", uf: "SP" },
-  { nome: "Areiópolis", uf: "SP" },
-  { nome: "Ariranha", uf: "SP" },
-  { nome: "Artur Nogueira", uf: "SP" },
-  { nome: "Arujá", uf: "SP" },
-  { nome: "Aspásia", uf: "SP" },
-  { nome: "Assis", uf: "SP" },
-  { nome: "Atibaia", uf: "SP" },
-  { nome: "Auriflama", uf: "SP" },
-  { nome: "Avanhandava", uf: "SP" },
-  { nome: "Avaré", uf: "SP" },
-  { nome: "Avaí", uf: "SP" },
-  // RIO JANEIRO (RJ)
-  { nome: "Angra dos Reis", uf: "RJ" },
-  { nome: "Araruama", uf: "RJ" },
-  { nome: "Areal", uf: "RJ" },
-  { nome: "Armação de Búzios", uf: "RJ" },
-  { nome: "Arraial do Cabo", uf: "RJ" },
-  { nome: "Barra do Piraí", uf: "RJ" },
-  { nome: "Barra Mansa", uf: "RJ" },
-  { nome: "Belford Roxo", uf: "RJ" },
-  { nome: "Bom Jardim", uf: "RJ" },
-  { nome: "Bom Jesus do Itabapoana", uf: "RJ" },
-  { nome: "Cabo Frio", uf: "RJ" },
-  { nome: "Cachoeiras de Macacu", uf: "RJ" },
-  { nome: "Cambuci", uf: "RJ" },
-  { nome: "Campos dos Goytacazes", uf: "RJ" },
-  { nome: "Cardoso Moreira", uf: "RJ" },
-  { nome: "Carmo", uf: "RJ" },
-  { nome: "Casimiro de Abreu", uf: "RJ" },
-  { nome: "Conceição de Macabu", uf: "RJ" },
-  { nome: "Cordoeira", uf: "RJ" },
-  { nome: "Cornélio Procópio", uf: "RJ" },
-  { nome: "Cruzeiro", uf: "RJ" },
-  { nome: "Duque de Caxias", uf: "RJ" },
-  { nome: "Engenheiro Paulo de Frontin", uf: "RJ" },
-  { nome: "Entrerios", uf: "RJ" },
-  { nome: "Iguaba Grande", uf: "RJ" },
-  { nome: "Itaboraí", uf: "RJ" },
-  { nome: "Itaguaí", uf: "RJ" },
-  { nome: "Itaocara", uf: "RJ" },
-  { nome: "Itaperuna", uf: "RJ" },
-  { nome: "Itatiaia", uf: "RJ" },
-  { nome: "Japeri", uf: "RJ" },
-  { nome: "Laje do Muriaé", uf: "RJ" },
-  { nome: "Macaé", uf: "RJ" },
-  { nome: "Macuco", uf: "RJ" },
-  { nome: "Magé", uf: "RJ" },
-  { nome: "Mangaratiba", uf: "RJ" },
-  { nome: "Maricá", uf: "RJ" },
-  { nome: "Mesquita", uf: "RJ" },
-  { nome: "Miguel Pereira", uf: "RJ" },
-  { nome: "Miracema", uf: "RJ" },
-  { nome: "Moaty", uf: "RJ" },
-  { nome: "Morretes", uf: "RJ" },
-  { nome: "Muriaé", uf: "RJ" },
-  { nome: "Natividade", uf: "RJ" },
-  { nome: "Niterói", uf: "RJ" },
-  { nome: "Nova Friburgo", uf: "RJ" },
-  { nome: "Nova Iguaçu", uf: "RJ" },
-  { nome: "Paracambi", uf: "RJ" },
-  { nome: "Paraíba do Sul", uf: "RJ" },
-  { nome: "Paraty", uf: "RJ" },
-  { nome: "Paupina", uf: "RJ" },
-  { nome: "Petrópolis", uf: "RJ" },
-  { nome: "Pinheiral", uf: "RJ" },
-  { nome: "Pirai", uf: "RJ" },
-  { nome: "Piraí do Sul", uf: "RJ" },
-  { nome: "Pirapora do Bom Jesus", uf: "RJ" },
-  { nome: "Piscinão de Ramos", uf: "RJ" },
-  { nome: "Poço de Caldas", uf: "RJ" },
-  { nome: "Pomerode", uf: "RJ" },
-  { nome: "Porciúncula", uf: "RJ" },
-  { nome: "Porto Real", uf: "RJ" },
-  { nome: "Praia Grande", uf: "RJ" },
-  { nome: "Queimados", uf: "RJ" },
-  { nome: "Quissamã", uf: "RJ" },
-  { nome: "Resende", uf: "RJ" },
-  { nome: "Rio Bonito", uf: "RJ" },
-  { nome: "Rio Claro", uf: "RJ" },
-  { nome: "Rio de Janeiro", uf: "RJ" },
-  { nome: "Rio das Flores", uf: "RJ" },
-  { nome: "Rio das Ostras", uf: "RJ" },
-  { nome: "Rio do Ouro", uf: "RJ" },
-  { nome: "Rio Preto", uf: "RJ" },
-  { nome: "Rio Vermelho", uf: "RJ" },
-  { nome: "Riviera", uf: "RJ" },
-  { nome: "Rodeio", uf: "RJ" },
-  { nome: "Romaria", uf: "RJ" },
-  { nome: "Rosário do Sul", uf: "RJ" },
-  { nome: "Roseira", uf: "RJ" },
-  { nome: "Santa Cruz", uf: "RJ" },
-  { nome: "Santa Maria Madalena", uf: "RJ" },
-  { nome: "Santana do Livramento", uf: "RJ" },
-  { nome: "Sant'Ana", uf: "RJ" },
-  { nome: "Santo Antônio de Pádua", uf: "RJ" },
-  { nome: "São Borja", uf: "RJ" },
-  { nome: "São Conceição do Rio Verde", uf: "RJ" },
-  { nome: "São Domingos do Araguaia", uf: "RJ" },
-  { nome: "São Fidelis", uf: "RJ" },
-  { nome: "São Fidélis", uf: "RJ" },
-  { nome: "São Francisco do Conde", uf: "RJ" },
-  { nome: "São Francisco de Paula", uf: "RJ" },
-  { nome: "São Gabriel", uf: "RJ" },
-  { nome: "São Gonçalo", uf: "RJ" },
-  { nome: "São Gonçalo do Amarante", uf: "RJ" },
-  { nome: "São Gonçalo do Rio Preto", uf: "RJ" },
-  { nome: "São João da Barra", uf: "RJ" },
-  { nome: "São João de Meriti", uf: "RJ" },
-  { nome: "São Jerônimo", uf: "RJ" },
-  { nome: "São Joaquim", uf: "RJ" },
-  { nome: "São Joaquim da Barra", uf: "RJ" },
-  { nome: "São João do Rio Pardo", uf: "RJ" },
-  { nome: "São João do Sapucaí", uf: "RJ" },
-  { nome: "São João Evangelista", uf: "RJ" },
-  { nome: "São João Nepomuceno", uf: "RJ" },
-  { nome: "São Lourenço", uf: "RJ" },
-  { nome: "São Lourenço do Sul", uf: "RJ" },
-  { nome: "São Mateus", uf: "RJ" },
-  { nome: "São Mateus do Sul", uf: "RJ" },
-  { nome: "São Miguel Arcanjo", uf: "RJ" },
-  { nome: "São Miguel dos Campos", uf: "RJ" },
-  { nome: "São Paulo", uf: "RJ" },
-  { nome: "São Pedro", uf: "RJ" },
-  { nome: "São Pedro do Rio Grande do Sul", uf: "RJ" },
-  { nome: "São Pedro do Turvo", uf: "RJ" },
-  { nome: "São Sebastião", uf: "RJ" },
-  { nome: "São Sebastião da Grama", uf: "RJ" },
-  { nome: "São Sebastião do Alto", uf: "RJ" },
-  { nome: "São Sebastião do Paraíso", uf: "RJ" },
-  { nome: "São Vicente", uf: "RJ" },
-  { nome: "São Vicente do Sul", uf: "RJ" },
-  { nome: "Sapé", uf: "RJ" },
-  { nome: "Sapucaia", uf: "RJ" },
-  { nome: "Sapucaia do Sul", uf: "RJ" },
-  { nome: "Sapucaia", uf: "RJ" },
-  { nome: "Satuba", uf: "RJ" },
-  { nome: "Saudade", uf: "RJ" },
-  { nome: "Saudade do Iguaçu", uf: "RJ" },
-  { nome: "Saudade", uf: "RJ" },
-  { nome: "Seara", uf: "RJ" },
-  { nome: "Selvíria", uf: "RJ" },
-  { nome: "Senador Cortes", uf: "RJ" },
-  { nome: "Senador Firmino", uf: "RJ" },
-  { nome: "Senador Pompeu", uf: "RJ" },
-  { nome: "Senador Sá", uf: "RJ" },
-  { nome: "Senador Teotônio Brandão Vilela", uf: "RJ" },
-];
+import CIDADES_BRASIL from "./CIDADES_SP.js";
 
 const C = {
   pri: "#0C8C5E", priDk: "#07634A", priLt: "#E6F5EF", priGlow: "#0C8C5E22",
@@ -254,7 +70,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     profilePhotoPreview: null,
   });
 
-  // Autocomplete de cidades
+  // Autocomplete de cidades (lista local)
   const [citySearch, setCitySearch] = useState("");
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   
@@ -294,7 +110,6 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     
     setErrors(e);
     
-    // Se houver erro, mostrar alert com o primeiro erro
     if (Object.keys(e).length > 0) {
       const primeiroErro = Object.values(e)[0];
       alert(`⚠️ ${primeiroErro}`);
@@ -427,12 +242,11 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       console.error("Erro no cadastro:", err);
       let mensagemErro = err.message || "Erro ao criar conta. Tente novamente.";
       
-      // Melhorar mensagens de erro
       if (mensagemErro.includes("already")) {
         mensagemErro = "Este email já está cadastrado. Tente fazer login.";
-      } else if (mensagemErro.includes("invalid") || mensagemErro.includes("Invalid")) {
+      } else if (mensagemErro.includes("invalid")) {
         mensagemErro = "Dados inválidos. Verifique todos os campos.";
-      } else if (mensagemErro.includes("network") || mensagemErro.includes("Network")) {
+      } else if (mensagemErro.includes("network")) {
         mensagemErro = "Erro de conexão. Verifique sua internet e tente novamente.";
       } else if (mensagemErro.includes("SupabaseAPI")) {
         mensagemErro = "Sistema de autenticação não carregou. Recarregue a página.";
@@ -467,44 +281,26 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Crie seu perfil</h1>
             <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Preencha seus dados e adicione fotos</p>
 
-            {/* SEÇÃO DE FOTOS */}
+            {/* FOTOS */}
             <div style={{ background: C.priLt, borderRadius: 14, padding: 16, marginBottom: 20, marginTop: 20 }}>
               <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>📸 Suas Fotos</div>
               
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 8 }}>Foto de Perfil *</label>
-                {f.profilePhotoPreview && (
-                  <div style={{ marginBottom: 8, textAlign: "center" }}>
-                    <img src={f.profilePhotoPreview} alt="preview" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${C.pri}` }} />
-                  </div>
-                )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={e => handlePhotoUpload("profile", e.target.files?.[0])}
-                  style={{ width: "100%", padding: "10px", border: `2px solid ${errors.profilePhoto ? C.cor : C.gB}`, borderRadius: 10, fontSize: 12, fontFamily: font.b }}
-                />
+                {f.profilePhotoPreview && <div style={{ marginBottom: 8, textAlign: "center" }}><img src={f.profilePhotoPreview} alt="preview" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${C.pri}` }} /></div>}
+                <input type="file" accept="image/*" onChange={e => handlePhotoUpload("profile", e.target.files?.[0])} style={{ width: "100%", padding: "10px", border: `2px solid ${errors.profilePhoto ? C.cor : C.gB}`, borderRadius: 10, fontSize: 12, fontFamily: font.b }} />
                 {errors.profilePhoto && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.profilePhoto}</div>}
               </div>
 
               <div>
                 <label style={{ display: "block", fontWeight: 600, fontSize: 13, color: C.dk, marginBottom: 8 }}>Foto de Capa *</label>
-                {f.coverPhotoPreview && (
-                  <div style={{ marginBottom: 8, textAlign: "center" }}>
-                    <img src={f.coverPhotoPreview} alt="cover preview" style={{ width: "100%", height: 100, borderRadius: 10, objectFit: "cover", border: `2px solid ${C.pri}` }} />
-                  </div>
-                )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={e => handlePhotoUpload("cover", e.target.files?.[0])}
-                  style={{ width: "100%", padding: "10px", border: `2px solid ${errors.coverPhoto ? C.cor : C.gB}`, borderRadius: 10, fontSize: 12, fontFamily: font.b }}
-                />
+                {f.coverPhotoPreview && <div style={{ marginBottom: 8, textAlign: "center" }}><img src={f.coverPhotoPreview} alt="cover preview" style={{ width: "100%", height: 100, borderRadius: 10, objectFit: "cover", border: `2px solid ${C.pri}` }} /></div>}
+                <input type="file" accept="image/*" onChange={e => handlePhotoUpload("cover", e.target.files?.[0])} style={{ width: "100%", padding: "10px", border: `2px solid ${errors.coverPhoto ? C.cor : C.gB}`, borderRadius: 10, fontSize: 12, fontFamily: font.b }} />
                 {errors.coverPhoto && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.coverPhoto}</div>}
               </div>
             </div>
 
-            {/* CAMPOS DE TEXTO */}
+            {/* CAMPOS */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Nome completo *</label>
               <input type="text" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.name ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.name} onChange={e => { setF({...f, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} placeholder="João Silva"/>
@@ -535,63 +331,27 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               {errors.wa && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.wa}</div>}
             </div>
 
-            {/* NOVO: UF ANTES DE CIDADE */}
+            {/* UF */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Estado (UF) *</label>
-              <select
-                value={f.uf}
-                onChange={e => { setF({...f, uf: e.target.value, city: ""}); setCitySearch(""); if(errors.uf) setErrors({...errors, uf: null}); }}
-                style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.uf ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, fontFamily: font.b }}
-              >
+              <select value={f.uf} onChange={e => { setF({...f, uf: e.target.value, city: ""}); setCitySearch(""); if(errors.uf) setErrors({...errors, uf: null}); }} style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.uf ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, fontFamily: font.b }}>
                 <option value="">Selecione o estado</option>
                 {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
               </select>
               {errors.uf && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.uf}</div>}
             </div>
 
-            {/* CIDADE COM AUTOCOMPLETE (APENAS SE UF SELECIONADO) */}
+            {/* CIDADE */}
             {f.uf && (
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Cidade *</label>
                 <div style={{ position: "relative" }}>
-                  <input 
-                    type="text"
-                    placeholder={`Digite o nome da cidade de ${f.uf}...`}
-                    value={citySearch}
-                    onChange={e => {
-                      setCitySearch(e.target.value);
-                      setShowCityDropdown(true);
-                      if(errors.city) setErrors({...errors, city: null});
-                    }}
-                    onFocus={() => setShowCityDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowCityDropdown(false), 200)}
-                    style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }}
-                  />
+                  <input type="text" placeholder={`Digite o nome da cidade de ${f.uf}...`} value={citySearch} onChange={e => { setCitySearch(e.target.value); setShowCityDropdown(true); if(errors.city) setErrors({...errors, city: null}); }} onFocus={() => setShowCityDropdown(true)} onBlur={() => setTimeout(() => setShowCityDropdown(false), 200)} style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} />
                   
                   {showCityDropdown && filteredCities.length > 0 && (
                     <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.w, border: `2px solid ${C.gB}`, borderTop: "none", borderRadius: "0 0 12px 12px", maxHeight: 250, overflowY: "auto", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
                       {filteredCities.map((city, i) => (
-                        <div
-                          key={i}
-                          onClick={() => { 
-                            setF({...f, city: city.nome}); 
-                            setCitySearch("");
-                            setShowCityDropdown(false);
-                            if(errors.city) setErrors({...errors, city: null}); 
-                          }}
-                          style={{ 
-                            padding: "12px 14px", 
-                            borderBottom: `1px solid ${C.gB}`, 
-                            cursor: "pointer", 
-                            fontSize: 14, 
-                            fontFamily: font.b, 
-                            color: C.dk,
-                            background: "transparent",
-                            transition: "all 0.15s"
-                          }}
-                          onMouseEnter={e => { e.target.style.background = C.priLt; e.target.style.color = C.pri; }}
-                          onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = C.dk; }}
-                        >
+                        <div key={i} onClick={() => { setF({...f, city: city.nome}); setCitySearch(""); setShowCityDropdown(false); if(errors.city) setErrors({...errors, city: null}); }} style={{ padding: "12px 14px", borderBottom: `1px solid ${C.gB}`, cursor: "pointer", fontSize: 14, fontFamily: font.b, color: C.dk, background: "transparent", transition: "all 0.15s" }} onMouseEnter={e => { e.target.style.background = C.priLt; e.target.style.color = C.pri; }} onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = C.dk; }}>
                           {city.nome}
                         </div>
                       ))}
@@ -609,6 +369,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               </div>
             )}
 
+            {/* CATEGORIAS */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Categorias ({f.cats.length}/5) *</label>
               {errors.cats && <div style={{ color: C.cor, fontSize: 12, marginBottom: 8 }}>{errors.cats}</div>}
@@ -634,6 +395,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               )}
             </div>
 
+            {/* BIO */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Bio ({f.bio.length}/100) *</label>
               <textarea style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.bio ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b, resize: "vertical" }} value={f.bio} onChange={e => { setF({...f, bio: e.target.value}); if(errors.bio) setErrors({...errors, bio: null}); }} placeholder="Fale sobre sua experiência..." rows="4" maxLength="100"/>
