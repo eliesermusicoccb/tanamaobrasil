@@ -889,7 +889,7 @@ function PlanosScreen({ nav, user }) {
   };
 
   return (
-    <div className="screen-content" style={{ paddingBottom: 100 }}>
+    <div className="screen-content" style={{ paddingBottom: 36 }}>
       <TopBar title="Planos" onBack={() => nav("settings")} />
       <div style={{ padding: "16px" }}>
         <div style={{ background: C.priLt, border: `1.5px solid ${C.pri}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
@@ -1401,6 +1401,11 @@ export default function App() {
     );
   }
 
+  // Em telas de decisão importante, como planos e edição de perfil,
+  // escondemos o menu inferior. Isso evita que ele cubra botões e deixa
+  // o usuário focado na ação principal da tela.
+  const mostrarRodape = !["planos", "editar"].includes(screen);
+
   return (
     <>
       <style>{`
@@ -1410,7 +1415,7 @@ export default function App() {
         body{font-family:'DM Sans',sans-serif;background:#000;}
         .app-shell{max-width:480px;margin:0 auto;height:100vh;height:100dvh;background:${C.w};position:relative;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.12);}
         .app-scroll{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-        .screen-content{padding-bottom:20px;min-height:100%;}
+        .screen-content{padding-bottom:calc(96px + env(safe-area-inset-bottom));min-height:100%;}
         .navbar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-top:1px solid ${C.gB};display:flex;max-width:480px;margin:0 auto;width:100%;z-index:100;}
         .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0;background:none;border:none;cursor:pointer;font-family:${font.b};font-size:10px;font-weight:600;color:${C.gL};gap:4px;}
         .nav-tab.active{color:${C.pri};font-weight:700;}
@@ -1419,18 +1424,20 @@ export default function App() {
         <div ref={scrollRef} className="app-scroll">
           {renderScreen()}
         </div>
-        <div className="navbar">
-          {navItems.map(item => (
-            <button 
-              key={item.id} 
-              onClick={item.onClick} 
-              className={`nav-tab ${screen === item.id ? "active" : ""}`}
-            >
-              <div>{item.icon}</div>
-              <div>{item.label}</div>
-            </button>
-          ))}
-        </div>
+        {mostrarRodape && (
+          <div className="navbar">
+            {navItems.map(item => (
+              <button 
+                key={item.id} 
+                onClick={item.onClick} 
+                className={`nav-tab ${screen === item.id ? "active" : ""}`}
+              >
+                <div>{item.icon}</div>
+                <div>{item.label}</div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {paymentStatus && (
