@@ -54,10 +54,10 @@ export function TrialBanner({ subscription, onUpgrade }) {
         <span style={{ fontSize: 20 }}>⏱️</span>
         <div>
           <div style={{ fontWeight: 700, fontSize: 13 }}>
-            {isLastDay ? "Último dia do seu teste!" : "Testando plano IMPULSO"}
+            {isLastDay ? "Último dia do seu teste!" : "Testando plano Impulso"}
           </div>
           <div style={{ fontSize: 11, opacity: 0.9 }}>
-            Você está experimentando gratuitamente os recursos premium do TáNaMão.
+            Você está experimentando recursos de maior visibilidade no TáNaMão.
           </div>
         </div>
       </div>
@@ -104,7 +104,8 @@ export function PhotoLimitWarning({ subscription, photoCount, onUpgrade }) {
   if (!subscription) return null;
 
   // Calcular limite
-  const baseLimit = { START: 5, IMPULSO: 10, DESTAQUE: 10 }[subscription.subscription_plan] || 5;
+  const planKey = String(subscription.subscription_plan || "gratis").toLowerCase();
+  const baseLimit = { gratis: 5, start: 5, impulso: 10, pro: 10, destaque: 15, premium: 15 }[planKey] || 5;
   const totalLimit = baseLimit + (subscription.extra_photo_packages || 0) * 10;
 
   if (photoCount <= totalLimit) return null;
@@ -157,12 +158,15 @@ export function SubscriptionStatus({ subscription }) {
   if (!subscription) return null;
 
   const planConfig = {
-    START: { name: "START", icon: "🚀", color: C.gL },
-    IMPULSO: { name: "IMPULSO", icon: "⭐", color: C.acc },
-    DESTAQUE: { name: "DESTAQUE", icon: "💎", color: C.pri }
+    gratis: { name: "Grátis", icon: "🚀", color: C.gL },
+    start: { name: "Grátis", icon: "🚀", color: C.gL },
+    impulso: { name: "Impulso", icon: "⭐", color: C.acc },
+    pro: { name: "Impulso", icon: "⭐", color: C.acc },
+    destaque: { name: "Destaque", icon: "💎", color: C.pri },
+    premium: { name: "Destaque", icon: "💎", color: C.pri }
   };
 
-  const config = planConfig[subscription.subscription_plan] || planConfig.START;
+  const config = planConfig[String(subscription.subscription_plan || "gratis").toLowerCase()] || planConfig.gratis;
 
   return (
     <div style={{
@@ -194,7 +198,7 @@ export function SubscriptionStatus({ subscription }) {
             fontSize: 10,
             fontWeight: 700
           }}>
-            TRIAL
+            TESTE
           </span>
         )}
       </div>
