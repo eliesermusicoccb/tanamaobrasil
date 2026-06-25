@@ -232,7 +232,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div><div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 24, color: C.pri }}>TáNaMão</div><div style={{ fontSize: 12, color: C.gL, letterSpacing: "0.1em", textTransform: "uppercase" }}>Cadastro Pro</div></div>
+            <div><div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 24, color: C.pri }}>TáNaMão</div><div style={{ fontSize: 12, color: C.gL, letterSpacing: "0.1em", textTransform: "uppercase" }}>Cadastro Profissional</div></div>
             <div style={{ fontSize: 24 }}>{'●'.repeat(step)}{'○'.repeat(3 - step)}</div>
           </div>
           <div style={{ display: "flex", gap: 6, margin: "12px 0 24px" }}>
@@ -375,7 +375,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         {step === 2 && (
           <>
             <h1 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk }}>Escolha seu plano</h1>
-            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Comece grátis. Depois, assine um plano para aparecer mais.</p>
+            <p style={{ fontSize: 13, color: C.gL, marginTop: 4 }}>Comece grátis. Depois, assine Impulso ou Destaque para aparecer mais.</p>
 
             <div style={{ margin: "24px 0 16px" }}>
               {PLANS.map(p => (
@@ -442,8 +442,8 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               </div>
               <div style={{ fontSize: 12, color: C.gL }}>
                 {plan === "gratis" && "Sem cobrança. Ideal para começar."}
-                {plan === "pro" && "Você poderá assinar o Pro depois do cadastro."}
-                {plan === "premium" && "Você poderá assinar o Premium depois do cadastro."}
+                {plan === "impulso" && "Você poderá assinar o Impulso depois do cadastro."}
+                {plan === "destaque" && "Você poderá assinar o Destaque depois do cadastro."}
               </div>
             </div>
 
