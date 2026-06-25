@@ -1096,9 +1096,9 @@ function PlanosScreen({ nav, user }) {
       <TopBar title="Planos" onBack={() => nav("settings")} />
       <div style={{ padding: "16px" }}>
         <div style={{ background: C.priLt, border: `1.5px solid ${C.pri}`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
-          <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 900, color: C.pri, marginBottom: 4 }}>Apareça mais para clientes da sua região</div>
+          <div style={{ fontFamily: font.d, fontSize: 17, fontWeight: 900, color: C.pri, marginBottom: 4 }}>Planos para profissionais</div>
           <p style={{ fontSize: 12, color: C.dk, lineHeight: 1.45 }}>
-            O plano pago aumenta a visibilidade do seu perfil. A avaliação continua sendo dos clientes: quanto melhor o atendimento, mais confiança você passa.
+            O cadastro continua grátis. Os planos pagos servem para dar mais visibilidade ao seu perfil. A nota e as avaliações continuam vindo dos clientes, porque confiança precisa ser real.
           </p>
         </div>
 
