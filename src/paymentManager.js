@@ -7,7 +7,7 @@
 const PAYMENT_CONFIG = {
   PLANOS: {
     IMPULSO: {
-      name: "IMPULSO",
+      name: "Impulso",
       price: 19.90,
       currency: "BRL",
       priceId: "price_impulso_monthly", // Substituir pelo ID real do Stripe
@@ -16,7 +16,7 @@ const PAYMENT_CONFIG = {
       trialDays: 15
     },
     DESTAQUE: {
-      name: "DESTAQUE",
+      name: "Destaque",
       price: 49.90,
       currency: "BRL",
       priceId: "price_destaque_monthly", // Substituir pelo ID real do Stripe
