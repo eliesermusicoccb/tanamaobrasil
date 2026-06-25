@@ -103,7 +103,81 @@ async function createSubscription(subData) {
   }
 }
 
+// ============================================
+// NOVOS MÉTODOS: UPLOAD DE FOTOS
+// ============================================
+
+async function uploadProfilePhoto(userId, formData) {
+  await waitForSupabase();
+  const sb = supabase || initSupabase();
+  if (!sb) return null;
+  
+  try {
+    const file = formData.get("file");
+    if (!file) throw new Error("Arquivo não fornecido");
+
+    const fileName = `${userId}/${Date.now()}-profile.jpg`;
+    
+    const { data, error } = await sb.storage
+      .from("profiles")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Erro upload perfil:", error);
+      return null;
+    }
+
+    const { data: publicUrlData } = sb.storage
+      .from("profiles")
+      .getPublicUrl(data.path);
+
+    return { url: publicUrlData.publicUrl };
+  } catch (err) {
+    console.error("Erro ao fazer upload da foto de perfil:", err);
+    return null;
+  }
+}
+
+async function uploadCoverPhoto(userId, formData) {
+  await waitForSupabase();
+  const sb = supabase || initSupabase();
+  if (!sb) return null;
+  
+  try {
+    const file = formData.get("file");
+    if (!file) throw new Error("Arquivo não fornecido");
+
+    const fileName = `${userId}/${Date.now()}-cover.jpg`;
+    
+    const { data, error } = await sb.storage
+      .from("covers")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Erro upload capa:", error);
+      return null;
+    }
+
+    const { data: publicUrlData } = sb.storage
+      .from("covers")
+      .getPublicUrl(data.path);
+
+    return { url: publicUrlData.publicUrl };
+  } catch (err) {
+    console.error("Erro ao fazer upload da foto de capa:", err);
+    return null;
+  }
+}
+
+// ============================================
 // Expõe API globalmente
+// ============================================
 window.SupabaseAPI = {
   initSupabase,
   createUser,
@@ -112,5 +186,26 @@ window.SupabaseAPI = {
   updateUser,
   getAllProfessionals,
   createSubscription,
-  waitForSupabase
+  waitForSupabase,
+  uploadProfilePhoto,
+  uploadCoverPhoto,
+  client: supabase,
+  signUpUser: async (email, password, userData) => {
+    await waitForSupabase();
+    const sb = supabase || initSupabase();
+    if (!sb) return { data: null, error: 'Supabase not loaded' };
+    try {
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData
+        }
+      });
+      return { data, error };
+    } catch (err) {
+      return { data: null, error: err };
+    }
+  },
+  updateProfile: updateUser,
 };
