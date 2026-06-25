@@ -1,49 +1,47 @@
 // src/services/mercadopago-service.js
-// Inicia o pagamento: pede ao servidor (função no Vercel) para criar a
-// preferência no Mercado Pago e redireciona o usuário para o checkout oficial.
-// O segredo (Access Token) NUNCA fica aqui no frontend — fica só no servidor.
+// Inicia o pagamento pedindo ao servidor para criar o checkout no Mercado Pago.
+// Regra importante: o preço NÃO é confiado ao navegador. O servidor valida o plano.
 
-const PLANOS = {
-  pro: {
-    titulo: "Plano Pro - TáNaMão Brasil",
-    preco: 29.90,
-    descricao: "Destaque nas buscas, selo verificado e chat ilimitado por 30 dias",
-  },
-  premium: {
-    titulo: "Plano Premium - TáNaMão Brasil",
-    preco: 69.90,
-    descricao: "1º lugar nas buscas, banner incluso e suporte prioritário por 30 dias",
-  },
-};
+import { getPlanoById } from "../config/plans.js";
 
 export async function iniciarPagamento(plano, profissional) {
-  const config = PLANOS[plano];
-  if (!config) throw new Error("Plano inválido");
+  const config = getPlanoById(plano);
+
+  if (!config || !config.pago) {
+    throw new Error("Plano inválido para pagamento.");
+  }
+
+  if (!profissional?.id || !profissional?.email) {
+    throw new Error("Usuário não identificado. Entre novamente na sua conta e tente assinar de novo.");
+  }
 
   const resposta = await fetch("/api/criar-preferencia", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       plano,
-      titulo: config.titulo,
-      preco: config.preco,
-      descricao: config.descricao,
-      profissionalId: profissional?.id || "",
-      email: profissional?.email || "",
-      nome: profissional?.name || "",
+      profissionalId: profissional.id,
+      email: profissional.email,
+      nome: profissional.name || profissional.email,
       origem: window.location.origin,
     }),
   });
 
+  let dados = null;
+
+  try {
+    dados = await resposta.json();
+  } catch (erro) {
+    throw new Error("A API de pagamento não retornou uma resposta válida.");
+  }
+
   if (!resposta.ok) {
-    throw new Error("Não foi possível iniciar o pagamento.");
+    throw new Error(dados?.erro || "Não foi possível iniciar o pagamento.");
   }
 
-  const dados = await resposta.json();
-  if (!dados.init_point) {
-    throw new Error("Resposta inválida do servidor de pagamento.");
+  if (!dados?.init_point) {
+    throw new Error("O Mercado Pago não retornou o link de checkout.");
   }
 
-  // Leva o usuário para a tela de pagamento do Mercado Pago
   window.location.href = dados.init_point;
 }
