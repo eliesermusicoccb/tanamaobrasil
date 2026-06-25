@@ -254,11 +254,13 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     profilePhotoPreview: null,
   });
 
-  // CORREÇÃO: Filtrar cidades apenas do UF selecionado
+  // Autocomplete de cidades
   const [citySearch, setCitySearch] = useState("");
-  const filteredCities = f.uf 
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  
+  const filteredCities = f.uf && citySearch.trim() 
     ? CIDADES_BRASIL.filter(c =>
-        c.uf === f.uf && c.nome.toLowerCase().startsWith(citySearch.toLowerCase())
+        c.uf === f.uf && c.nome.toLowerCase().includes(citySearch.toLowerCase())
       ).slice(0, 15)
     : [];
 
@@ -278,19 +280,26 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
 
   const v = () => {
     const e = {};
-    if (!f.name.trim()) e.name = "Obrigatório";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Email inválido";
-    if (f.pass.length < 8) e.pass = "Min. 8 chars";
-    if (f.pass !== f.pass2) e.pass2 = "Não combinam";
-    if (f.wa.replace(/\D/g, "").length < 10) e.wa = "Inválido";
-    if (!f.uf) e.uf = "Obrigatório";
-    if (!f.city.trim()) e.city = "Obrigatório";
-    if (f.cats.length === 0) e.cats = "Min. 1";
-    if (f.bio.length < 20) e.bio = "Min. 20 chars";
+    if (!f.name.trim()) e.name = "Nome obrigatório";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Email inválido (ex: seu@email.com)";
+    if (f.pass.length < 8) e.pass = "Mínimo 8 caracteres";
+    if (f.pass !== f.pass2) e.pass2 = "Senhas não conferem";
+    if (f.wa.replace(/\D/g, "").length < 10) e.wa = "WhatsApp inválido (ex: 11999990000)";
+    if (!f.uf) e.uf = "Selecione um estado";
+    if (!f.city.trim()) e.city = "Selecione uma cidade";
+    if (f.cats.length === 0) e.cats = "Escolha pelo menos 1 categoria";
+    if (f.bio.length < 20) e.bio = "Bio muito curta (mínimo 20 caracteres)";
     if (!f.profilePhoto) e.profilePhoto = "Foto de perfil obrigatória";
     if (!f.coverPhoto) e.coverPhoto = "Foto de capa obrigatória";
     
     setErrors(e);
+    
+    // Se houver erro, mostrar alert com o primeiro erro
+    if (Object.keys(e).length > 0) {
+      const primeiroErro = Object.values(e)[0];
+      alert(`⚠️ ${primeiroErro}`);
+    }
+    
     return Object.keys(e).length === 0;
   };
 
@@ -416,7 +425,21 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
       }
     } catch (err) {
       console.error("Erro no cadastro:", err);
-      setErrors({ sub: err.message || "Erro ao criar conta. Tente novamente." });
+      let mensagemErro = err.message || "Erro ao criar conta. Tente novamente.";
+      
+      // Melhorar mensagens de erro
+      if (mensagemErro.includes("already")) {
+        mensagemErro = "Este email já está cadastrado. Tente fazer login.";
+      } else if (mensagemErro.includes("invalid") || mensagemErro.includes("Invalid")) {
+        mensagemErro = "Dados inválidos. Verifique todos os campos.";
+      } else if (mensagemErro.includes("network") || mensagemErro.includes("Network")) {
+        mensagemErro = "Erro de conexão. Verifique sua internet e tente novamente.";
+      } else if (mensagemErro.includes("SupabaseAPI")) {
+        mensagemErro = "Sistema de autenticação não carregou. Recarregue a página.";
+      }
+      
+      setErrors({ sub: mensagemErro });
+      alert(`⚠️ Erro: ${mensagemErro}`);
     } finally { 
       setLoading(false); 
     }
@@ -533,27 +556,51 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
                 <div style={{ position: "relative" }}>
                   <input 
                     type="text"
-                    placeholder={`Digite as primeiras letras da cidade de ${f.uf}...`}
-                    value={f.city || citySearch}
+                    placeholder={`Digite o nome da cidade de ${f.uf}...`}
+                    value={citySearch}
                     onChange={e => {
                       setCitySearch(e.target.value);
+                      setShowCityDropdown(true);
                       if(errors.city) setErrors({...errors, city: null});
                     }}
+                    onFocus={() => setShowCityDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCityDropdown(false), 200)}
                     style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.city ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }}
                   />
-                  {citySearch && filteredCities.length > 0 && (
-                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.w, border: `1px solid ${C.gB}`, borderTop: "none", borderRadius: "0 0 12px 12px", maxHeight: 200, overflowY: "auto", zIndex: 10 }}>
+                  
+                  {showCityDropdown && filteredCities.length > 0 && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.w, border: `2px solid ${C.gB}`, borderTop: "none", borderRadius: "0 0 12px 12px", maxHeight: 250, overflowY: "auto", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
                       {filteredCities.map((city, i) => (
                         <div
                           key={i}
-                          onClick={() => { setF({...f, city: city.nome}); setCitySearch(""); if(errors.city) setErrors({...errors, city: null}); }}
-                          style={{ padding: "10px 14px", borderBottom: `1px solid ${C.gB}`, cursor: "pointer", fontSize: 13, fontFamily: font.b, color: C.dk, transition: "background 0.2s" }}
-                          onMouseEnter={e => e.target.style.background = C.gBg}
-                          onMouseLeave={e => e.target.style.background = "transparent"}
+                          onClick={() => { 
+                            setF({...f, city: city.nome}); 
+                            setCitySearch("");
+                            setShowCityDropdown(false);
+                            if(errors.city) setErrors({...errors, city: null}); 
+                          }}
+                          style={{ 
+                            padding: "12px 14px", 
+                            borderBottom: `1px solid ${C.gB}`, 
+                            cursor: "pointer", 
+                            fontSize: 14, 
+                            fontFamily: font.b, 
+                            color: C.dk,
+                            background: "transparent",
+                            transition: "all 0.15s"
+                          }}
+                          onMouseEnter={e => { e.target.style.background = C.priLt; e.target.style.color = C.pri; }}
+                          onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = C.dk; }}
                         >
                           {city.nome}
                         </div>
                       ))}
+                    </div>
+                  )}
+                  
+                  {showCityDropdown && citySearch.trim() && filteredCities.length === 0 && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: C.w, border: `2px solid ${C.cor}`, borderTop: "none", borderRadius: "0 0 12px 12px", padding: "12px 14px", zIndex: 100, fontSize: 13, color: C.cor, fontFamily: font.b, textAlign: "center" }}>
+                      Nenhuma cidade encontrada
                     </div>
                   )}
                 </div>
