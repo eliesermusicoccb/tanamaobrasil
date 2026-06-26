@@ -4,12 +4,14 @@ import Login from "./Login";
 import { iniciarPagamento } from "./services/mercadopago-service";
 import { PLANOS_PAGOS, formatarPrecoPlano } from "./config/plans.js";
 
-const APP_SHARE_URL = "https://tanamaobrasil-wine.vercel.app/";
+const APP_SHARE_URL = "https://tanamaobrasilprofissionais.vercel.app/";
 const APP_SHARE_MESSAGE = `TáNaMão Brasil
 
-Profissional, empresa ou loja: cadastre seu serviço gratuitamente e apareça para clientes da sua região.
+Estou te convidando para conhecer o TáNaMão Brasil.
 
-O cliente encontra seu perfil, vê avaliações e chama você direto no WhatsApp.
+Profissional, empresa ou loja: cadastre seu serviço gratuitamente, apareça para clientes da sua região e seja chamado direto no WhatsApp.
+
+O cliente encontra seu perfil, vê avaliações e entra em contato com você.
 
 Cadastre-se grátis: ${APP_SHARE_URL}`;
 
