@@ -9,7 +9,7 @@ const font = { d: "'Outfit', sans-serif", b: "'DM Sans', sans-serif" };
 
 function trackEvent(e, d) { try { if (window.fbq) window.fbq("track", e, d); } catch (x) {} }
 
-export default function Login({ onLoginSuccess }) {
+export default function Login({ onLoginSuccess, onRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -211,8 +211,32 @@ export default function Login({ onLoginSuccess }) {
           <div style={{ flex: 1, height: 1, background: C.gB }}></div>
         </div>
 
-        <div style={{ fontSize: 12, color: C.gL, textAlign: "center" }}>
-          Não tem conta? Crie uma clicando no botão "Entrar" na tela inicial
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 12, color: C.gL, marginBottom: 10 }}>
+            Ainda não tem cadastro?
+          </p>
+          <button
+            type="button"
+            onClick={onRegister}
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "13px",
+              background: C.priLt,
+              color: C.priDk,
+              border: `1.5px solid ${C.pri}`,
+              borderRadius: 12,
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: loading ? "wait" : "pointer",
+              fontFamily: font.d,
+            }}
+          >
+            Criar cadastro gratuito
+          </button>
+          <p style={{ fontSize: 11, color: C.gL, marginTop: 10, lineHeight: 1.4 }}>
+            Para profissionais, empresas e lojas que querem aparecer no TáNaMão Brasil.
+          </p>
         </div>
       </div>
 
