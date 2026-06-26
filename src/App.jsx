@@ -1070,7 +1070,43 @@ function LoggedHome({ nav, user }) {
 }
 
 function LoggedProfile({ nav, data, user }) {
-  const p = data || PROS[0];
+  const baseProfile = data || (user ? normalizeProfessionalRecord(user) : PROS[0]);
+  const [profile, setProfile] = useState(baseProfile);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+    const id = data?.id || user?.id;
+    if (!id || !window.SupabaseAPI) return;
+
+    setLoadingProfile(true);
+    (async () => {
+      try {
+        const { data: fresh } = await window.SupabaseAPI.getProfileById(id);
+        if (ativo && fresh) {
+          const normalized = normalizeProfessionalRecord(fresh);
+          const { data: reviewsData } = await window.SupabaseAPI.getReviewsByProfessionalId(id);
+          normalized.userReviews = (reviewsData || []).map((rev) => ({
+            n: rev.client_name || "Cliente TáNaMão",
+            r: Number(rev.rating || 0),
+            t: rev.comment || "Avaliação registrada",
+            d: rev.created_at ? new Date(rev.created_at).toLocaleDateString("pt-BR") : "Recente",
+          }));
+          setProfile(normalized);
+        }
+      } catch (e) {
+        console.warn("Não foi possível atualizar o perfil completo", e);
+      } finally {
+        if (ativo) setLoadingProfile(false);
+      }
+    })();
+
+    return () => { ativo = false; };
+  }, [data?.id, user?.id]);
+
+  const p = profile || baseProfile;
+  const gallery = normalizeGalleryPhotos(p.gallery_photos || p.photos);
+
   return (
     <div className="screen-content" style={{ paddingBottom: 100 }}>
       <TopBar title={p.name} onBack={() => nav("home")} />
@@ -1078,8 +1114,38 @@ function LoggedProfile({ nav, data, user }) {
         <Avatar ini={p.av} size={64} badge={p.badge} src={p.avatar_url} />
         <h2 style={{ fontFamily: font.d, fontSize: 22, fontWeight: 800, color: C.dk, marginTop: 12 }}>{p.name}</h2>
         <div style={{ fontSize: 13, color: C.g, marginTop: 3 }}>{p.role}</div>
+        {loadingProfile && <div style={{ fontSize: 11, color: C.gL, marginTop: 6 }}>Carregando perfil completo...</div>}
         {p.attends_24h && <div style={{ marginTop: 8 }}><Badge24h /></div>}
         <RatingSummary professional={p} />
+
+        {p.bio && (
+          <div style={{ marginTop: 16, background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 14, padding: 14, textAlign: "left", color: C.dk, fontSize: 13, lineHeight: 1.45 }}>
+            {p.bio}
+          </div>
+        )}
+
+        {gallery.length > 0 && (
+          <div style={{ marginTop: 22, textAlign: "left" }}>
+            <h3 style={{ fontFamily: font.d, fontSize: 16, fontWeight: 900, color: C.dk, marginBottom: 10 }}>Fotos dos serviços</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+              {gallery.slice(0, 9).map((url, i) => (
+                <img
+                  key={`${url}-${i}`}
+                  src={url}
+                  alt={`Foto do serviço ${i + 1}`}
+                  style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 12, border: `1px solid ${C.gB}`, background: C.gBg }}
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {gallery.length === 0 && (
+          <div style={{ marginTop: 18, background: C.gBg, borderRadius: 12, padding: 12, fontSize: 12, color: C.g }}>
+            Este perfil ainda não adicionou fotos dos serviços.
+          </div>
+        )}
 
         <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
           💬 Chamar no WhatsApp
@@ -1091,7 +1157,7 @@ function LoggedProfile({ nav, data, user }) {
             <div key={i} style={{ background: C.gBg, borderRadius: 10, padding: 12, marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <div style={{ fontWeight: 700, color: C.dk }}>{rev.n}</div>
-                <div>{"⭐".repeat(rev.r)}</div>
+                <div>{"⭐".repeat(Math.max(0, Math.min(5, Number(rev.r || 0))))}</div>
               </div>
               <div style={{ fontSize: 13, color: C.dk }}>{rev.t}</div>
               <div style={{ fontSize: 11, color: C.gL, marginTop: 4 }}>{rev.d}</div>
@@ -1266,7 +1332,8 @@ function Settings({ nav, user, onLogout }) {
 
         <div style={{ background: C.corLt, borderRadius: 12, padding: 16 }}>
           <div style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.cor, marginBottom: 8 }}>Segurança</div>
-          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Gerenciar sua conta</div>
+          <div style={{ fontSize: 13, color: C.dk, marginBottom: 12 }}>Gerenciar sua conta e senha</div>
+          <button onClick={() => nav("nova-senha")} style={{ width: "100%", padding: "10px", background: "#fff", color: C.dk, border: `1.5px solid ${C.gB}`, borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: font.d, marginBottom: 10 }}>Alterar senha</button>
           <button onClick={onLogout} style={{ width: "100%", padding: "8px", background: C.gBg, color: C.cor, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: font.b }}>Fazer Logout</button>
         </div>
       </div>
@@ -1855,6 +1922,7 @@ export default function App() {
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { window.SupabaseAPI?.signOutUser?.(); setMode("visitor"); setUser(null); setScreen("home"); }} />;
         case "planos": return <PlanosScreen nav={nav} user={user} />;
         case "editar": return <EditProfile nav={nav} user={user} onUpdated={(u) => setUser((prev) => ({ ...prev, ...u }))} />;
+        case "nova-senha": return <NovaSenhaScreen onConcluido={() => { setMode("login"); setUser(null); setScreen("home"); }} />;
         default: return <MarketplaceHome nav={nav} mode={mode} user={user} onLogin={() => setMode("login")} onRegister={() => setMode("register")} setSearchFilter={setSearchFilter} />;
       }
     }
