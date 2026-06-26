@@ -31,7 +31,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
   const scrollRef = useRef(null);
 
   const [f, setF] = useState({ 
-    name: "", email: "", pass: "", pass2: "", wa: "", city: "", uf: "", cats: [], novaCat: "", bio: "",
+    name: "", email: "", pass: "", pass2: "", wa: "", phone: "", city: "", uf: "", cats: [], novaCat: "", bio: "",
     coverPhoto: null,
     profilePhoto: null,
     coverPhotoPreview: null,
@@ -68,7 +68,11 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Email inválido (ex: seu@email.com)";
     if (f.pass.length < 8) e.pass = "Mínimo 8 caracteres";
     if (f.pass !== f.pass2) e.pass2 = "Senhas não conferem";
-    if (f.wa.replace(/\D/g, "").length < 10) e.wa = "WhatsApp inválido (ex: 11999990000)";
+    const waDigits = f.wa.replace(/\D/g, "");
+    const phoneDigits = f.phone.replace(/\D/g, "");
+    if (waDigits.length > 0 && waDigits.length < 10) e.wa = "WhatsApp inválido (ex: 11999990000)";
+    if (phoneDigits.length > 0 && phoneDigits.length < 10) e.phone = "Telefone inválido (ex: 1133334444)";
+    if (waDigits.length === 0 && phoneDigits.length === 0) e.wa = "Informe pelo menos WhatsApp ou telefone";
     if (!f.uf) e.uf = "Selecione um estado";
     if (!f.city.trim()) e.city = "Selecione uma cidade";
     if (f.cats.length === 0) e.cats = "Escolha pelo menos 1 categoria";
@@ -153,6 +157,7 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
         name: f.name,
         email: f.email,
         whatsapp: f.wa,
+        phone: f.phone,
         city: `${f.city}, ${f.uf}`,
         categories: f.cats,
         bio: f.bio,
@@ -292,9 +297,16 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>WhatsApp (com DDD) *</label>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>WhatsApp (com DDD)</label>
               <input type="tel" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.wa ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.wa} onChange={e => { setF({...f, wa: e.target.value}); if(errors.wa) setErrors({...errors, wa: null}); }} placeholder="(11) 99999-0000"/>
               {errors.wa && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.wa}</div>}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, fontSize: 14, color: C.dk, marginBottom: 8 }}>Telefone opcional</label>
+              <input type="tel" style={{ width: "100%", padding: "13px 14px", border: `2px solid ${errors.phone ? C.cor : C.gB}`, borderRadius: 12, fontSize: 14, outline: "none", fontFamily: font.b }} value={f.phone} onChange={e => { setF({...f, phone: e.target.value}); if(errors.phone) setErrors({...errors, phone: null}); }} placeholder="(11) 3333-4444"/>
+              {errors.phone && <div style={{ color: C.cor, fontSize: 12, marginTop: 4 }}>{errors.phone}</div>}
+              <div style={{ fontSize: 12, color: C.gL, marginTop: 6 }}>Informe WhatsApp ou telefone. O telefone ajuda quem prefere receber ligação.</div>
             </div>
 
             {/* UF */}
@@ -421,7 +433,8 @@ export default function RegisterProfessional({ onBack, onSuccess, nav }) {
               <div style={{ fontWeight: 700, color: C.pri, marginBottom: 12, fontSize: 14 }}>Seus Dados</div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Nome do perfil</span><span style={{ fontWeight: 600, color: C.dk }}>{f.name}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Email</span><span style={{ fontWeight: 600, color: C.dk }}>{f.email}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>WhatsApp</span><span style={{ fontWeight: 600, color: C.dk }}>{f.wa}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>WhatsApp</span><span style={{ fontWeight: 600, color: C.dk }}>{f.wa || "Não informado"}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Telefone</span><span style={{ fontWeight: 600, color: C.dk }}>{f.phone || "Não informado"}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: `1px solid ${C.gB}` }}><span>Localização</span><span style={{ fontWeight: 600, color: C.dk }}>{f.city}, {f.uf}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span>Categorias</span><span style={{ fontWeight: 600, color: C.dk }}>{f.cats.slice(0, 2).join(", ")}{f.cats.length > 2 ? `+${f.cats.length - 2}` : ""}</span></div>
             </div>

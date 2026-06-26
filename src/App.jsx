@@ -9,15 +9,40 @@ const APP_SHARE_MESSAGE = `TáNaMão Brasil
 
 Estou te convidando para conhecer o TáNaMão Brasil.
 
-Profissional, empresa ou loja: cadastre seu serviço gratuitamente, apareça para clientes da sua região e seja chamado direto no WhatsApp.
+Profissional, empresa ou loja: cadastre seu serviço gratuitamente, apareça para clientes da sua região e seja chamado direto no WhatsApp ou telefone.
 
-O cliente encontra seu perfil, vê avaliações e entra em contato com você.
+O cliente encontra seu perfil, vê avaliações e entra em contato pelo WhatsApp ou telefone.
 
 Cadastre-se grátis: ${APP_SHARE_URL}`;
 
 function compartilharNoWhatsApp() {
   const texto = encodeURIComponent(APP_SHARE_MESSAGE);
   window.open(`https://wa.me/?text=${texto}`, "_blank", "noopener,noreferrer");
+}
+
+function getProfessionalShareUrl(professional) {
+  if (!professional?.id) return APP_SHARE_URL;
+  return `${APP_SHARE_URL}?perfil=${encodeURIComponent(professional.id)}`;
+}
+
+async function compartilharPerfilProfissional(professional) {
+  const url = getProfessionalShareUrl(professional);
+  const texto = `Veja o perfil de ${professional?.name || "um profissional"} no TáNaMão Brasil.\n\nConfira avaliações, fotos e entre em contato pelo WhatsApp ou telefone: ${url}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `Perfil no TáNaMão Brasil`,
+        text: `Veja o perfil de ${professional?.name || "um profissional"} no TáNaMão Brasil.`,
+        url,
+      });
+      return;
+    } catch (e) {
+      // Se o usuário cancelar o compartilhamento, usamos o WhatsApp como plano B.
+    }
+  }
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener,noreferrer");
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -235,6 +260,19 @@ async function updateProfile(id, fields) {
       .upsert([profileData], { onConflict: 'id' });
 
     if (error) {
+      const msg = String(error?.message || "");
+      if (msg.includes("instagram_url") || msg.includes("facebook_url") || msg.includes("linkedin_url") || msg.includes("contact_email")) {
+        const fallbackData = { ...profileData };
+        delete fallbackData.instagram_url;
+        delete fallbackData.facebook_url;
+        delete fallbackData.linkedin_url;
+        delete fallbackData.contact_email;
+        const { error: fallbackError } = await sb
+          .from('professionals')
+          .upsert([fallbackData], { onConflict: 'id' });
+        if (fallbackError) return { data: null, error: fallbackError };
+        return { data: fallbackData, error: { message: 'Perfil salvo, mas as colunas de redes sociais ainda não existem no Supabase. Rode o SQL do checkpoint 013 para salvar Instagram, Facebook, LinkedIn e e-mail público.' } };
+      }
       return { data: null, error };
     }
 
@@ -412,8 +450,13 @@ function normalizeProfessionalRecord(row) {
     gallery_photos: normalizeGalleryPhotos(row?.gallery_photos || row?.photos),
     on: true,
     whatsapp: String(row?.whatsapp || "").replace(/\D/g, ""),
+    phone: String(row?.phone || row?.telefone || row?.contact_phone || "").replace(/\D/g, ""),
     categories,
     bio: row?.bio || "",
+    instagram_url: row?.instagram_url || row?.instagram || "",
+    facebook_url: row?.facebook_url || row?.facebook || "",
+    linkedin_url: row?.linkedin_url || row?.linkedin || "",
+    contact_email: row?.contact_email || row?.public_email || row?.email || "",
     attends_24h: row?.attends_24h === true,
     userReviews: [],
     _source: "database",
@@ -591,8 +634,10 @@ function MarketplaceHome({ nav, mode, user, onLogin, onRegister, setSearchFilter
               style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontFamily: font.b, fontSize: 14, color: C.dk }}
             />
           </div>
-          <button onClick={mode === "logged" ? () => nav("settings") : onLogin} style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: "rgba(255,255,255,.88)", fontSize: 18, cursor: "pointer", boxShadow: "0 6px 18px rgba(17,24,39,.10)" }}>
-            {mode === "logged" ? "👤" : "🔐"}
+          <button onClick={mode === "logged" ? () => nav("settings") : onLogin} style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: "rgba(255,255,255,.88)", fontSize: 18, cursor: "pointer", boxShadow: "0 6px 18px rgba(17,24,39,.10)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 0 }}>
+            {mode === "logged" ? (
+              <Avatar ini={user?.avatar_initials || user?.name || "?"} size={38} src={user?.avatar_url} badge={user?.badge} />
+            ) : "🔐"}
           </button>
         </div>
 
@@ -1002,9 +1047,13 @@ function VisitorProfile({ nav, data, onNeedLogin }) {
         <RatingSummary professional={p} />
         {p.bio && <div style={{ marginTop: 14, padding: 12, background: C.gBg, borderRadius: 12, fontSize: 13, color: C.dk, textAlign: "left", lineHeight: 1.5 }}>{p.bio}</div>}
 
-        <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
-          💬 Chamar no WhatsApp
+        <ContactButtons professional={p} />
+
+        <button onClick={() => compartilharPerfilProfissional(p)} style={{ width: "100%", padding: "12px", marginTop: 10, background: "#fff", color: C.pri, border: `1.5px solid ${C.pri}`, borderRadius: 12, fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: font.d }}>
+          🔗 Compartilhar perfil
         </button>
+
+        <SocialButtons professional={p} />
 
         <div style={{ marginTop: 24 }}>
           <h3 style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.dk, marginBottom: 12 }}>Avaliações ({p.userReviews?.length || 0})</h3>
@@ -1065,6 +1114,63 @@ function LoggedHome({ nav, user }) {
       <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 8 }}>
         <ProfessionalsPreview nav={nav} />
       </div>
+    </div>
+  );
+}
+
+
+function ContactButtons({ professional }) {
+  const p = professional || {};
+  const whatsapp = String(p.whatsapp || "").replace(/\D/g, "");
+  const phone = String(p.phone || "").replace(/\D/g, "");
+  const msg = encodeURIComponent(`Olá ${p.name || "profissional"}! Vi seu perfil no TáNaMão Brasil.`);
+
+  if (!whatsapp && !phone) {
+    return (
+      <div style={{ marginTop: 16, background: C.gBg, borderRadius: 12, padding: 12, fontSize: 12, color: C.g, textAlign: "center" }}>
+        Este perfil ainda não informou WhatsApp ou telefone de contato.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: whatsapp && phone ? "1fr 1fr" : "1fr", gap: 10 }}>
+      {whatsapp && (
+        <button onClick={() => window.open(`https://wa.me/${whatsapp}?text=${msg}`, "_blank", "noopener,noreferrer")} style={{ width: "100%", padding: "14px 10px", background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: font.d }}>
+          💬 WhatsApp
+        </button>
+      )}
+      {phone && (
+        <button onClick={() => { window.location.href = `tel:${phone}`; }} style={{ width: "100%", padding: "14px 10px", background: "#fff", color: C.pri, border: `1.5px solid ${C.pri}`, borderRadius: 12, fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: font.d }}>
+          📞 Telefone
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SocialButtons({ professional }) {
+  const links = [
+    professional?.instagram_url ? { label: "Instagram", icon: "📸", href: professional.instagram_url } : null,
+    professional?.facebook_url ? { label: "Facebook", icon: "f", href: professional.facebook_url } : null,
+    professional?.linkedin_url ? { label: "LinkedIn", icon: "in", href: professional.linkedin_url } : null,
+    professional?.contact_email ? { label: "E-mail", icon: "✉️", href: `mailto:${professional.contact_email}` } : null,
+  ].filter(Boolean);
+
+  if (links.length === 0) return null;
+
+  const normalizarUrl = (href) => {
+    if (href.startsWith("mailto:")) return href;
+    return href.startsWith("http://") || href.startsWith("https://") ? href : `https://${href}`;
+  };
+
+  return (
+    <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+      {links.map((link) => (
+        <button key={link.label} onClick={() => window.open(normalizarUrl(link.href), "_blank", "noopener,noreferrer")} style={{ border: `1.5px solid ${C.gB}`, background: "#fff", borderRadius: 12, padding: "10px 8px", fontFamily: font.d, fontWeight: 900, color: C.dk, cursor: "pointer", fontSize: 12 }}>
+          <span style={{ marginRight: 6 }}>{link.icon}</span>{link.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1147,9 +1253,13 @@ function LoggedProfile({ nav, data, user }) {
           </div>
         )}
 
-        <button onClick={() => { const msg = encodeURIComponent(`Olá ${p.name}! Vi seu perfil no TáNaMão Brasil.`); window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank"); }} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.pri, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
-          💬 Chamar no WhatsApp
+        <ContactButtons professional={p} />
+
+        <button onClick={() => compartilharPerfilProfissional(p)} style={{ width: "100%", padding: "12px", marginTop: 10, background: "#fff", color: C.pri, border: `1.5px solid ${C.pri}`, borderRadius: 12, fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: font.d }}>
+          🔗 Compartilhar perfil
         </button>
+
+        <SocialButtons professional={p} />
 
         <div style={{ marginTop: 24 }}>
           <h3 style={{ fontFamily: font.d, fontSize: 16, fontWeight: 800, color: C.dk, marginBottom: 12 }}>Avaliações ({p.userReviews?.length || 0})</h3>
@@ -1302,10 +1412,17 @@ function ReviewScreen({ nav, data, user }) {
 
 function ChatScreen({ nav }) {
   return (
-    <div className="screen-content" style={{ paddingBottom: 100 }}>
-      <TopBar title="Chat" onBack={() => nav("home")} />
-      <div style={{ padding: 20, textAlign: "center", color: C.gL }}>
-        Nenhuma conversa ainda
+    <div className="screen-content" style={{ paddingBottom: 100, background: C.gBg }}>
+      <TopBar title="Contato" onBack={() => nav("home")} />
+      <div style={{ padding: 16 }}>
+        <div style={{ background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 16, padding: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 42, marginBottom: 10 }}>💬</div>
+          <div style={{ fontFamily: font.d, fontSize: 18, fontWeight: 900, color: C.dk, marginBottom: 8 }}>Contato pelo WhatsApp</div>
+          <div style={{ fontSize: 13, color: C.g, lineHeight: 1.45, marginBottom: 14 }}>
+            Para o lançamento, vamos manter a conversa pelo WhatsApp. É mais simples, passa confiança e evita criar um chat interno que ainda precisaria de suporte e moderação.
+          </div>
+          <button onClick={() => nav("search")} style={{ border: "none", borderRadius: 999, padding: "11px 16px", background: C.pri, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>Buscar profissionais</button>
+        </div>
       </div>
     </div>
   );
@@ -1439,11 +1556,16 @@ function EditProfile({ nav, user, onUpdated }) {
   const [f, setF] = useState({
     name: "",
     whatsapp: "",
+    phone: "",
     city: "",
     bio: "",
     avatar_url: "",
     cover_url: "",
     gallery_photos: [],
+    instagram_url: "",
+    facebook_url: "",
+    linkedin_url: "",
+    contact_email: "",
     attends_24h: false,
     categories: [],
     novaCat: "",
@@ -1458,11 +1580,16 @@ function EditProfile({ nav, user, onUpdated }) {
           setF({
             name: data.name || "",
             whatsapp: data.whatsapp || "",
+            phone: data.phone || data.telefone || data.contact_phone || "",
             city: data.city || "",
             bio: data.bio || "",
             avatar_url: data.avatar_url || "",
             cover_url: data.cover_url || "",
             gallery_photos: normalizeGalleryPhotos(data.gallery_photos || data.photos),
+            instagram_url: data.instagram_url || "",
+            facebook_url: data.facebook_url || "",
+            linkedin_url: data.linkedin_url || "",
+            contact_email: data.contact_email || data.email || "",
             attends_24h: data.attends_24h === true,
             categories: parseCategories(data.categories),
             novaCat: "",
@@ -1557,12 +1684,17 @@ function EditProfile({ nav, user, onUpdated }) {
       const fields = {
         name: f.name.trim(),
         whatsapp: f.whatsapp.trim(),
+        phone: f.phone.trim(),
         city: f.city.trim(),
         bio: f.bio.trim(),
         avatar_initials: f.name.trim().substring(0, 2).toUpperCase(),
         avatar_url: f.avatar_url || null,
         cover_url: f.cover_url || null,
         gallery_photos: f.gallery_photos || [],
+        instagram_url: f.instagram_url.trim() || null,
+        facebook_url: f.facebook_url.trim() || null,
+        linkedin_url: f.linkedin_url.trim() || null,
+        contact_email: f.contact_email.trim() || null,
         attends_24h: f.attends_24h === true,
         categories: f.categories || [],
       };
@@ -1571,9 +1703,15 @@ function EditProfile({ nav, user, onUpdated }) {
       setOk(true);
       if (onUpdated) onUpdated({
         name: fields.name,
+        whatsapp: fields.whatsapp,
+        phone: fields.phone,
         avatar_initials: fields.avatar_initials,
         avatar_url: fields.avatar_url,
         cover_url: fields.cover_url,
+        instagram_url: fields.instagram_url,
+        facebook_url: fields.facebook_url,
+        linkedin_url: fields.linkedin_url,
+        contact_email: fields.contact_email,
         attends_24h: fields.attends_24h,
         categories: fields.categories,
       });
@@ -1673,6 +1811,23 @@ function EditProfile({ nav, user, onUpdated }) {
             </div>
 
             <div style={sectionStyle}>
+              <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Redes sociais e contato público</div>
+              <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Recurso pensado para planos pagos. Preencha para mostrar botões no seu perfil.</div>
+
+              <label style={labelStyle}>Instagram</label>
+              <input style={inputStyle} value={f.instagram_url} onChange={(e) => setF({ ...f, instagram_url: e.target.value })} placeholder="Ex.: https://instagram.com/seuperfil" disabled={salvando} />
+
+              <label style={labelStyle}>Facebook</label>
+              <input style={inputStyle} value={f.facebook_url} onChange={(e) => setF({ ...f, facebook_url: e.target.value })} placeholder="Ex.: https://facebook.com/suapagina" disabled={salvando} />
+
+              <label style={labelStyle}>LinkedIn</label>
+              <input style={inputStyle} value={f.linkedin_url} onChange={(e) => setF({ ...f, linkedin_url: e.target.value })} placeholder="Ex.: https://linkedin.com/in/seuperfil" disabled={salvando} />
+
+              <label style={labelStyle}>E-mail público</label>
+              <input style={inputStyle} value={f.contact_email} onChange={(e) => setF({ ...f, contact_email: e.target.value })} placeholder="Ex.: contato@suaempresa.com" disabled={salvando} />
+            </div>
+
+            <div style={sectionStyle}>
               <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Atendimento</div>
               <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Marque esta opção se você atende chamados a qualquer horário.</div>
               <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 12, border: `1.5px solid ${f.attends_24h ? C.acc : C.gB}`, borderRadius: 12, background: f.attends_24h ? C.accLt : C.gBg, cursor: salvando ? "wait" : "pointer" }}>
@@ -1690,7 +1845,11 @@ function EditProfile({ nav, user, onUpdated }) {
               <input style={inputStyle} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Ex.: João Eletricista ou Elétrica Silva" disabled={salvando} />
 
               <label style={labelStyle}>WhatsApp</label>
-              <input style={inputStyle} value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="Ex: 5511999998888" disabled={salvando} />
+              <input style={inputStyle} value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="Ex.: 5511999998888" disabled={salvando} />
+
+              <label style={labelStyle}>Telefone opcional</label>
+              <input style={inputStyle} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="Ex.: 1133334444 ou 11988887777" disabled={salvando} />
+              <div style={{ fontSize: 11, color: C.gL, marginTop: -10, marginBottom: 12 }}>Use se preferir ligação ou se não tiver WhatsApp.</div>
 
               <label style={labelStyle}>Cidade</label>
               <input style={inputStyle} value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} disabled={salvando} />
@@ -1782,9 +1941,11 @@ function NovaSenhaScreen({ onConcluido }) {
 export default function App() {
   const [mode, setMode] = useState("visitor");
   const [user, setUser] = useState(null);
-  const [screen, setScreen] = useState("home");
-  const [screenData, setScreenData] = useState(null);
-  const [searchFilter, setSearchFilter] = useState("");
+  const [screen, setScreen] = useState(() => localStorage.getItem("tanamao_screen") || "home");
+  const [screenData, setScreenData] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("tanamao_screenData") || "null"); } catch { return null; }
+  });
+  const [searchFilter, setSearchFilter] = useState(() => localStorage.getItem("tanamao_searchFilter") || "");
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -1799,6 +1960,33 @@ export default function App() {
       // limpa a URL para não repetir a mensagem ao recarregar
       window.history.replaceState({}, "", window.location.pathname);
     }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tanamao_screen", screen || "home");
+    localStorage.setItem("tanamao_searchFilter", searchFilter || "");
+    try { localStorage.setItem("tanamao_screenData", JSON.stringify(screenData || null)); } catch {}
+  }, [screen, screenData, searchFilter]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const perfilId = params.get("perfil");
+    if (!perfilId || !window.SupabaseAPI) return;
+
+    let ativo = true;
+    (async () => {
+      try {
+        const { data: perfil } = await window.SupabaseAPI.getProfileById(perfilId);
+        if (ativo && perfil) {
+          setScreenData(normalizeProfessionalRecord(perfil));
+          setScreen("profile");
+        }
+      } catch (e) {
+        console.warn("Não foi possível abrir o perfil compartilhado", e);
+      }
+    })();
+
+    return () => { ativo = false; };
   }, []);
 
   useEffect(() => {
@@ -1859,6 +2047,9 @@ export default function App() {
             setUser(null);
             setMode("visitor");
             setScreen("home");
+            setScreenData(null);
+            localStorage.removeItem("tanamao_screenData");
+            localStorage.setItem("tanamao_screen", "home");
           }
         });
 
@@ -1880,7 +2071,7 @@ export default function App() {
 
   const nav = useCallback((s, data = null) => {
     setScreen(s);
-    if (data) setScreenData(data);
+    setScreenData(data);
     scrollRef.current?.scrollTo(0, 0);
   }, []);
 
@@ -1904,7 +2095,6 @@ export default function App() {
         case "search": return <VisitorSearch nav={nav} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />;
         case "categories": return <CategoriesScreen nav={nav} setSearchFilter={setSearchFilter} />;
         case "favorites": return <FavoritesScreen nav={nav} mode={mode} onLogin={() => setMode("login")} />;
-        case "chat": return <LoginNeededScreen nav={nav} title="Chat" message="Entre para acompanhar conversas e contatos da plataforma." onLogin={() => setMode("login")} />;
         case "profile": return <VisitorProfile nav={nav} data={screenData} onNeedLogin={() => setMode("login")} />;
         default: return <MarketplaceHome nav={nav} mode={mode} user={user} onLogin={() => setMode("login")} onRegister={() => setMode("register")} setSearchFilter={setSearchFilter} />;
       }
@@ -1918,7 +2108,6 @@ export default function App() {
         case "favorites": return <FavoritesScreen nav={nav} mode={mode} onLogin={() => setMode("login")} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
         case "avaliar": return <ReviewScreen nav={nav} data={screenData} user={user} />;
-        case "chat": return <ChatScreen nav={nav} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { window.SupabaseAPI?.signOutUser?.(); setMode("visitor"); setUser(null); setScreen("home"); }} />;
         case "planos": return <PlanosScreen nav={nav} user={user} />;
         case "editar": return <EditProfile nav={nav} user={user} onUpdated={(u) => setUser((prev) => ({ ...prev, ...u }))} />;
@@ -1933,14 +2122,12 @@ export default function App() {
         { id: "home", icon: "🏠", label: "Home", onClick: () => { setScreen("home"); } },
         { id: "categories", icon: "▦", label: "Categorias", onClick: () => { setScreen("categories"); } },
         { id: "favorites", icon: "💛", label: "Favoritos", onClick: () => { setScreen("favorites"); } },
-        { id: "chat", icon: "💬", label: "Chat", onClick: () => { setScreen("chat"); } },
         { id: "settings", icon: "👤", label: "Perfil", onClick: () => { setScreen("settings"); } },
       ]
     : [
         { id: "home", icon: "🏠", label: "Home", onClick: () => { setScreen("home"); } },
         { id: "categories", icon: "▦", label: "Categorias", onClick: () => { setScreen("categories"); } },
         { id: "favorites", icon: "💛", label: "Favoritos", onClick: () => { setScreen("favorites"); } },
-        { id: "chat", icon: "💬", label: "Chat", onClick: () => { setScreen("chat"); } },
         { id: "settings", icon: "👤", label: "Perfil", onClick: () => { setMode("login"); } },
       ];
 
