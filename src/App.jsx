@@ -4,6 +4,20 @@ import Login from "./Login";
 import { iniciarPagamento } from "./services/mercadopago-service";
 import { PLANOS_PAGOS, formatarPrecoPlano } from "./config/plans.js";
 
+const APP_SHARE_URL = "https://tanamaobrasil-wine.vercel.app/";
+const APP_SHARE_MESSAGE = `TáNaMão Brasil
+
+Profissional, empresa ou loja: cadastre seu serviço gratuitamente e apareça para clientes da sua região.
+
+O cliente encontra seu perfil, vê avaliações e chama você direto no WhatsApp.
+
+Cadastre-se grátis: ${APP_SHARE_URL}`;
+
+function compartilharNoWhatsApp() {
+  const texto = encodeURIComponent(APP_SHARE_MESSAGE);
+  window.open(`https://wa.me/?text=${texto}`, "_blank", "noopener,noreferrer");
+}
+
 // ══════════════════════════════════════════════════════════════
 // SUPABASE INIT
 // ══════════════════════════════════════════════════════════════
@@ -587,9 +601,14 @@ function MarketplaceHome({ nav, mode, user, onLogin, onRegister, setSearchFilter
         <div style={{ background: C.priLt, border: `1px solid ${C.pri}`, borderRadius: 14, padding: 14, textAlign: "center" }}>
           <div style={{ fontFamily: font.d, fontSize: 15, fontWeight: 900, color: C.pri }}>Você é profissional?</div>
           <div style={{ fontSize: 12, color: C.dk, marginTop: 4, marginBottom: 10 }}>Cadastre seu serviço e apareça para clientes da sua região.</div>
-          <button onClick={mode === "logged" ? () => nav("settings") : onRegister} style={{ border: "none", borderRadius: 999, padding: "10px 14px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>
-            {mode === "logged" ? "Ver meu perfil" : "Cadastrar grátis"}
-          </button>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            <button onClick={mode === "logged" ? () => nav("settings") : onRegister} style={{ border: "none", borderRadius: 999, padding: "10px 14px", background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>
+              {mode === "logged" ? "Ver meu perfil" : "Cadastrar grátis"}
+            </button>
+            <button onClick={compartilharNoWhatsApp} style={{ border: `1.5px solid ${C.pri}`, borderRadius: 999, padding: "10px 14px", background: "#fff", color: C.pri, fontFamily: font.d, fontWeight: 900, cursor: "pointer" }}>
+              Compartilhar no WhatsApp
+            </button>
+          </div>
         </div>
       </div>
     </div>
