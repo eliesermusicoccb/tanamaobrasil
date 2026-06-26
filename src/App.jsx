@@ -149,6 +149,62 @@ async function getAllProfessionals() {
   }
 }
 
+async function getReviewsByProfessionalId(professionalId) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: [], error: { message: 'Supabase não carregou' } };
+  if (!professionalId) return { data: [], error: { message: 'Profissional não identificado' } };
+
+  try {
+    const { data, error } = await sb
+      .from('reviews')
+      .select('*')
+      .eq('professional_id', professionalId)
+      .order('created_at', { ascending: false });
+
+    if (error) return { data: [], error };
+    return { data: data || [], error: null };
+  } catch (err) {
+    return { data: [], error: err };
+  }
+}
+
+async function createReview(reviewData) {
+  const sb = supabase || initSupabase();
+  if (!sb) return { data: null, error: { message: 'Supabase não carregou' } };
+  if (!reviewData?.professional_id) return { data: null, error: { message: 'Profissional não identificado' } };
+
+  try {
+    const payload = {
+      professional_id: reviewData.professional_id,
+      client_name: reviewData.client_name || 'Cliente TáNaMão',
+      client_whatsapp: reviewData.client_whatsapp || null,
+      rating: Number(reviewData.rating),
+      comment: reviewData.comment || '',
+    };
+
+    const { data, error } = await sb
+      .from('reviews')
+      .insert([payload])
+      .select();
+
+    if (error) return { data: null, error };
+
+    const { data: reviewsData } = await getReviewsByProfessionalId(reviewData.professional_id);
+    if (reviewsData && reviewsData.length > 0) {
+      const total = reviewsData.length;
+      const avg = reviewsData.reduce((sum, item) => sum + Number(item.rating || 0), 0) / total;
+      await sb
+        .from('professionals')
+        .update({ rating: Math.round(avg * 10) / 10, reviews: total })
+        .eq('id', reviewData.professional_id);
+    }
+
+    return { data: data?.[0] || payload, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
 async function updateProfile(id, fields) {
   const sb = supabase || initSupabase();
   if (!sb) return { data: null, error: 'Supabase not loaded' };
@@ -263,7 +319,7 @@ async function uploadCoverPhoto(userId, formDataOrFile) {
 }
 
 window.SupabaseAPI = {
-  initSupabase, createUser, getUserByEmail, getAllProfessionals, createSubscription,
+  initSupabase, createUser, getUserByEmail, getAllProfessionals, getReviewsByProfessionalId, createReview, createSubscription,
   signUpUser, signInUser, signOutUser, resetPassword, updatePassword, getProfileById, updateProfile, uploadProfessionalMedia, uploadProfilePhoto, uploadCoverPhoto,
   get client() { return supabase || initSupabase(); },
 };
@@ -1048,9 +1104,131 @@ function LoggedProfile({ nav, data, user }) {
           )}
         </div>
 
-        <button onClick={() => nav("home")} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.acc, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
+        <button onClick={() => nav("avaliar", p)} style={{ width: "100%", padding: "14px", marginTop: 16, background: C.acc, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font.d }}>
           ➕ Adicionar Avaliação
         </button>
+      </div>
+    </div>
+  );
+}
+
+
+function ReviewScreen({ nav, data, user }) {
+  const professional = data || PROS[0];
+  const [rating, setRating] = useState(5);
+  const [clientName, setClientName] = useState(user?.name || "");
+  const [clientWhatsapp, setClientWhatsapp] = useState("");
+  const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+  const [ok, setOk] = useState(false);
+
+  const addEditCategory = () => {
+    const value = f.novaCat.trim();
+    if (!value) return;
+    const exists = f.categories.some((cat) => normalizeText(cat) === normalizeText(value));
+    if (exists) {
+      setF((prev) => ({ ...prev, novaCat: "" }));
+      return;
+    }
+    if (f.categories.length >= 5) {
+      setErro("Você pode usar até 5 categorias no perfil.");
+      return;
+    }
+    setF((prev) => ({ ...prev, categories: [...prev.categories, value], novaCat: "" }));
+  };
+
+  const removeEditCategory = (category) => {
+    setF((prev) => ({ ...prev, categories: prev.categories.filter((cat) => cat !== category) }));
+  };
+
+  const salvar = async () => {
+    setErro("");
+    setOk(false);
+
+    if (!professional?.id) {
+      setErro("Não foi possível identificar o profissional avaliado.");
+      return;
+    }
+    if (!clientName.trim()) {
+      setErro("Informe seu nome para a avaliação ficar mais confiável.");
+      return;
+    }
+    if (!comment.trim() || comment.trim().length < 8) {
+      setErro("Escreva um comentário curto contando como foi sua experiência.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await window.SupabaseAPI.createReview({
+        professional_id: professional.id,
+        client_name: clientName.trim(),
+        client_whatsapp: clientWhatsapp.trim(),
+        rating,
+        comment: comment.trim(),
+      });
+
+      if (error) throw error;
+      setOk(true);
+      setTimeout(() => nav("profile", professional), 900);
+    } catch (e) {
+      const msg = String(e?.message || "");
+      if (msg.includes("relation") || msg.includes("reviews")) {
+        setErro("A tabela de avaliações ainda não está pronta no Supabase. Execute o SQL do checkpoint e tente novamente.");
+      } else if (msg.includes("permission") || msg.includes("policy") || msg.includes("RLS")) {
+        setErro("O Supabase bloqueou a gravação da avaliação. Revise a política RLS da tabela reviews.");
+      } else {
+        setErro(msg || "Não foi possível salvar a avaliação agora.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="screen-content" style={{ paddingBottom: 40 }}>
+      <TopBar title="Avaliar profissional" onBack={() => nav("profile", professional)} />
+      <div style={{ padding: 16 }}>
+        <div style={{ background: C.priLt, border: `1.5px solid ${C.pri}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+          <div style={{ fontFamily: font.d, fontWeight: 900, color: C.pri, fontSize: 16 }}>Sua avaliação ajuda outros clientes</div>
+          <div style={{ fontSize: 12, color: C.dk, marginTop: 4, lineHeight: 1.45 }}>
+            Avalie com sinceridade. A nota ajuda a valorizar bons profissionais e aumenta a confiança dentro do TáNaMão Brasil.
+          </div>
+        </div>
+
+        <div style={{ background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 14, padding: 14, marginBottom: 14, display: "flex", gap: 12, alignItems: "center" }}>
+          <Avatar ini={professional.av} size={48} badge={professional.badge} src={professional.avatar_url} />
+          <div>
+            <div style={{ fontFamily: font.d, fontWeight: 900, color: C.dk }}>{professional.name}</div>
+            <div style={{ fontSize: 12, color: C.g }}>{professional.role}</div>
+          </div>
+        </div>
+
+        {erro && <div style={{ background: C.corLt, color: C.cor, border: `1px solid ${C.cor}`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, fontWeight: 700 }}>{erro}</div>}
+        {ok && <div style={{ background: C.priLt, color: C.priDk, border: `1px solid ${C.pri}`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, fontWeight: 700 }}>Avaliação enviada com sucesso!</div>}
+
+        <div style={{ background: "#fff", border: `1.5px solid ${C.gB}`, borderRadius: 14, padding: 14 }}>
+          <label style={{ display: "block", fontWeight: 800, color: C.dk, marginBottom: 8 }}>Sua nota</label>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} type="button" onClick={() => setRating(n)} disabled={loading} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: `1.5px solid ${rating >= n ? C.acc : C.gB}`, background: rating >= n ? C.accLt : C.gBg, color: rating >= n ? C.acc : C.gL, fontSize: 22, cursor: loading ? "wait" : "pointer" }}>★</button>
+            ))}
+          </div>
+
+          <label style={{ display: "block", fontWeight: 700, fontSize: 13, color: C.dk, marginBottom: 6 }}>Seu nome</label>
+          <input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Ex.: Maria Silva" disabled={loading} style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b, marginBottom: 12 }} />
+
+          <label style={{ display: "block", fontWeight: 700, fontSize: 13, color: C.dk, marginBottom: 6 }}>WhatsApp, opcional</label>
+          <input value={clientWhatsapp} onChange={(e) => setClientWhatsapp(e.target.value)} placeholder="Só para confirmação, se necessário" disabled={loading} style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b, marginBottom: 12 }} />
+
+          <label style={{ display: "block", fontWeight: 700, fontSize: 13, color: C.dk, marginBottom: 6 }}>Comentário</label>
+          <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Conte rapidamente como foi o atendimento..." rows="4" disabled={loading} style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.gB}`, borderRadius: 10, fontSize: 14, outline: "none", fontFamily: font.b, marginBottom: 14, resize: "vertical" }} />
+
+          <button onClick={salvar} disabled={loading} style={{ width: "100%", padding: 14, background: `linear-gradient(135deg, ${C.pri}, ${C.acc})`, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 900, cursor: loading ? "wait" : "pointer", fontFamily: font.d, opacity: loading ? 0.7 : 1 }}>
+            {loading ? "Enviando avaliação..." : "Enviar avaliação"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1200,6 +1378,8 @@ function EditProfile({ nav, user, onUpdated }) {
     cover_url: "",
     gallery_photos: [],
     attends_24h: false,
+    categories: [],
+    novaCat: "",
   });
 
   useEffect(() => {
@@ -1217,6 +1397,8 @@ function EditProfile({ nav, user, onUpdated }) {
             cover_url: data.cover_url || "",
             gallery_photos: normalizeGalleryPhotos(data.gallery_photos || data.photos),
             attends_24h: data.attends_24h === true,
+            categories: parseCategories(data.categories),
+            novaCat: "",
           });
         }
       } catch (e) {}
@@ -1280,9 +1462,29 @@ function EditProfile({ nav, user, onUpdated }) {
     }));
   };
 
+  const addEditCategory = () => {
+    const value = f.novaCat.trim();
+    if (!value) return;
+    const exists = f.categories.some((cat) => normalizeText(cat) === normalizeText(value));
+    if (exists) {
+      setF((prev) => ({ ...prev, novaCat: "" }));
+      return;
+    }
+    if (f.categories.length >= 5) {
+      setErro("Você pode usar até 5 categorias no perfil.");
+      return;
+    }
+    setF((prev) => ({ ...prev, categories: [...prev.categories, value], novaCat: "" }));
+  };
+
+  const removeEditCategory = (category) => {
+    setF((prev) => ({ ...prev, categories: prev.categories.filter((cat) => cat !== category) }));
+  };
+
   const salvar = async () => {
     setErro(""); setOk(false);
     if (!f.name.trim()) { setErro("O nome não pode ficar vazio."); return; }
+    if (!f.categories || f.categories.length === 0) { setErro("Escolha pelo menos uma categoria para seu perfil aparecer nas buscas."); return; }
     setSalvando(true);
     try {
       const fields = {
@@ -1295,6 +1497,7 @@ function EditProfile({ nav, user, onUpdated }) {
         cover_url: f.cover_url || null,
         gallery_photos: f.gallery_photos || [],
         attends_24h: f.attends_24h === true,
+        categories: f.categories || [],
       };
       const { error } = await window.SupabaseAPI.updateProfile(user.id, fields);
       if (error) throw error;
@@ -1305,6 +1508,7 @@ function EditProfile({ nav, user, onUpdated }) {
         avatar_url: fields.avatar_url,
         cover_url: fields.cover_url,
         attends_24h: fields.attends_24h,
+        categories: fields.categories,
       });
     } catch (e) {
       setErro(e?.message || "Não foi possível salvar. Tente novamente.");
@@ -1377,6 +1581,31 @@ function EditProfile({ nav, user, onUpdated }) {
             </div>
 
             <div style={sectionStyle}>
+              <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Categorias do perfil</div>
+              <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Escolha onde seu perfil deve aparecer nas buscas. Você pode adicionar ou remover categorias quando quiser.</div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                {f.categories.length > 0 ? f.categories.map((cat) => (
+                  <button key={cat} type="button" onClick={() => removeEditCategory(cat)} disabled={salvando} style={{ padding: "8px 10px", borderRadius: 999, border: `1.5px solid ${C.pri}`, background: C.priLt, color: C.priDk, fontSize: 12, fontWeight: 800, cursor: salvando ? "wait" : "pointer", fontFamily: font.b }}>
+                    {cat} ×
+                  </button>
+                )) : (
+                  <div style={{ background: C.gBg, borderRadius: 10, padding: 12, color: C.g, fontSize: 12, width: "100%" }}>Nenhuma categoria escolhida ainda.</div>
+                )}
+              </div>
+
+              <label style={labelStyle}>Adicionar categoria</label>
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <input list="categorias-edicao" value={f.novaCat} onChange={(e) => setF({ ...f, novaCat: e.target.value })} placeholder="Ex.: Eletricista, Loja, Manicure" disabled={salvando} style={{ ...inputStyle, marginBottom: 0 }} />
+                <button type="button" onClick={addEditCategory} disabled={salvando} style={{ width: 46, border: "none", borderRadius: 10, background: C.pri, color: "#fff", fontSize: 22, fontWeight: 900, cursor: salvando ? "wait" : "pointer" }}>+</button>
+              </div>
+              <datalist id="categorias-edicao">
+                {CATEGORIES.map((cat) => <option key={cat.name} value={cat.name} />)}
+              </datalist>
+              <div style={{ fontSize: 11, color: C.gL }}>Dica: toque numa categoria marcada para remover.</div>
+            </div>
+
+            <div style={sectionStyle}>
               <div style={{ fontFamily: font.d, fontWeight: 800, fontSize: 16, color: C.dk, marginBottom: 4 }}>Atendimento</div>
               <div style={{ fontSize: 12, color: C.gL, marginBottom: 12 }}>Marque esta opção se você atende chamados a qualquer horário.</div>
               <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 12, border: `1.5px solid ${f.attends_24h ? C.acc : C.gB}`, borderRadius: 12, background: f.attends_24h ? C.accLt : C.gBg, cursor: salvando ? "wait" : "pointer" }}>
@@ -1419,6 +1648,25 @@ function NovaSenhaScreen({ onConcluido }) {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [ok, setOk] = useState(false);
+
+  const addEditCategory = () => {
+    const value = f.novaCat.trim();
+    if (!value) return;
+    const exists = f.categories.some((cat) => normalizeText(cat) === normalizeText(value));
+    if (exists) {
+      setF((prev) => ({ ...prev, novaCat: "" }));
+      return;
+    }
+    if (f.categories.length >= 5) {
+      setErro("Você pode usar até 5 categorias no perfil.");
+      return;
+    }
+    setF((prev) => ({ ...prev, categories: [...prev.categories, value], novaCat: "" }));
+  };
+
+  const removeEditCategory = (category) => {
+    setF((prev) => ({ ...prev, categories: prev.categories.filter((cat) => cat !== category) }));
+  };
 
   const salvar = async () => {
     setErro("");
@@ -1571,7 +1819,12 @@ export default function App() {
 
   const renderScreen = () => {
     if (mode === "login") {
-      return <Login onLoginSuccess={(userData) => { setUser(userData); setMode("logged"); setScreen("home"); }} />;
+      return (
+        <Login
+          onLoginSuccess={(userData) => { setUser(userData); setMode("logged"); setScreen("home"); }}
+          onRegister={() => setMode("register")}
+        />
+      );
     }
 
     if (mode === "register") {
@@ -1597,6 +1850,7 @@ export default function App() {
         case "categories": return <CategoriesScreen nav={nav} setSearchFilter={setSearchFilter} />;
         case "favorites": return <FavoritesScreen nav={nav} mode={mode} onLogin={() => setMode("login")} />;
         case "profile": return <LoggedProfile nav={nav} data={screenData} user={user} />;
+        case "avaliar": return <ReviewScreen nav={nav} data={screenData} user={user} />;
         case "chat": return <ChatScreen nav={nav} />;
         case "settings": return <Settings nav={nav} user={user} onLogout={() => { window.SupabaseAPI?.signOutUser?.(); setMode("visitor"); setUser(null); setScreen("home"); }} />;
         case "planos": return <PlanosScreen nav={nav} user={user} />;
@@ -1637,7 +1891,7 @@ export default function App() {
   // Em telas de decisão importante, como planos e edição de perfil,
   // escondemos o menu inferior. Isso evita que ele cubra botões e deixa
   // o usuário focado na ação principal da tela.
-  const mostrarRodape = !["planos", "editar"].includes(screen);
+  const mostrarRodape = !["planos", "editar", "avaliar"].includes(screen);
 
   return (
     <>
